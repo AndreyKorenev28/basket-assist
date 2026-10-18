@@ -23,6 +23,7 @@ from basket_assist.storage.tables import (
     LeagueTeam,
     Match,
     MessengerAccount,
+    NotificationLog,
     Player,
     PollMessage,
     TeamEntry,
@@ -565,3 +566,166 @@ async def test_refresh_active_polls_tenant_isolation(session, tenant_cfg):
     assert await scheduler.refresh_active_polls(session, ch) == 1
     assert [(r.peer_id, r.message_id) for r, _ in ch.edits] == [(OTHER_CHAT, "401")]
     assert "Ракета — Pokrasote" in ch.edits[0][1]
+
+
+# ---------- синхронизация результата через 3 ч после начала ----------
+
+SAT_NIGHT = msk(2026, 10, 24, 4, 0).astimezone(UTC)  # ночная полная субботы — занимаем её заранее
+
+
+def _utc_naive(local: datetime) -> datetime:
+    return local.astimezone(UTC).replace(tzinfo=None)
+
+
+async def _result_setup(session, tenant_cfg, starts):
+    """Наши матчи в АБЛ с заданным началом (время лиги). Возвращает id выступлений."""
+    _, t, ours, rival = await _abl(session, tenant_cfg)
+    for i, start in enumerate(starts):
+        session.add(_match(t, ours, rival, f"r{i}", start=_utc_naive(start)))
+    await session.commit()
+    return [e.id for e in (await session.scalars(select(TeamEntry).order_by(TeamEntry.id))).all()]
+
+
+async def _job_keys(session):
+    return sorted(
+        (n.tenant_id, n.dedup_key)
+        for n in (await session.scalars(select(NotificationLog).filter_by(kind="job"))).all()
+    )
+
+
+async def _result_keys(session):
+    return [(tid, k) for tid, k in await _job_keys(session) if ":result:" in k]
+
+
+@pytest.mark.parametrize(
+    ("after", "expected"),
+    [
+        (timedelta(hours=2, minutes=59), False),
+        (timedelta(hours=3), True),
+        (timedelta(hours=11, minutes=59), True),
+        (timedelta(hours=12), False),
+    ],
+    ids=["2:59", "3:00", "11:59", "12:00"],
+)
+async def test_result_window_bounds(session, tenant_cfg, fake_sync, after, expected):
+    start = msk(2026, 10, 24, 12, 0)  # сб 12:00; +12 ч = вс 00:00 — до ночной, полная не мешает
+    ids = await _result_setup(session, tenant_cfg, [start])
+    fs = fake_sync()
+    ch = FakeChannel()
+    async with httpx.AsyncClient() as client:
+        await scheduler.tick(session, ch, client, SAT_NIGHT)
+        fs.calls.clear()
+        await scheduler.tick(session, ch, client, start.astimezone(UTC) + after)
+    assert fs.calls == ([(ids[0], False, True)] if expected else [])
+
+
+async def test_result_sync_once_after_match(session, tenant_cfg, fake_sync):
+    ids = await _result_setup(session, tenant_cfg, [msk(2026, 10, 24, 17, 0)])
+    fs = fake_sync()
+    ch = FakeChannel()
+    async with httpx.AsyncClient() as client:
+        await scheduler.tick(session, ch, client, SAT_NIGHT)
+        assert fs.calls == [(i, True, True) for i in ids]
+        fs.calls.clear()
+        await scheduler.tick(session, ch, client, msk(2026, 10, 24, 20, 30).astimezone(UTC))
+        assert fs.calls == [(ids[0], False, True)]  # календарь и таблица, без заявки на сезон
+        await scheduler.tick(session, ch, client, msk(2026, 10, 24, 20, 31).astimezone(UTC))
+        await scheduler.tick(session, ch, client, msk(2026, 10, 24, 21, 30).astimezone(UTC))
+        await scheduler.tick(session, ch, client, msk(2026, 10, 24, 23, 59).astimezone(UTC))
+        assert len(fs.calls) == 1  # одна попытка: счёта нет — ждём ночную
+        # ночью матч ещё в окне, но слот результата уже занят — только полная
+        await scheduler.tick(session, ch, client, msk(2026, 10, 25, 4, 0).astimezone(UTC))
+        assert fs.calls[1:] == [(i, True, True) for i in ids]
+
+
+async def test_result_sync_two_leagues(session, tenant_cfg, fake_sync):
+    # два матча в АБЛ и один в МЛБЛ — по одной синхронизации на лигу
+    ids = await _result_setup(session, tenant_cfg, [msk(2026, 10, 24, 17, 0), msk(2026, 10, 24, 16, 0)])
+    mlbl = (await session.execute(select(League).filter_by(key="mlbl"))).scalar_one()
+    mt = (await session.execute(select(Tournament).filter_by(league_id=mlbl.id))).scalar_one()
+    m_ours = (
+        await session.execute(select(LeagueTeam).filter_by(league_id=mlbl.id, external_id="9056"))
+    ).scalar_one()
+    m_rival = LeagueTeam(league_id=mlbl.id, external_id="7777", name="Комета")
+    session.add(m_rival)
+    await session.flush()
+    session.add(_match(mt, m_rival, m_ours, "m1", start=_utc_naive(msk(2026, 10, 24, 15, 0))))  # в гостях
+    await session.commit()
+    fs = fake_sync()
+    ch = FakeChannel()
+    async with httpx.AsyncClient() as client:
+        await scheduler.tick(session, ch, client, SAT_NIGHT)
+        fs.calls.clear()
+        await scheduler.tick(session, ch, client, msk(2026, 10, 24, 20, 30).astimezone(UTC))
+        assert sorted(fs.calls) == sorted((i, False, True) for i in ids)
+        await scheduler.tick(session, ch, client, msk(2026, 10, 24, 20, 31).astimezone(UTC))
+        assert len(fs.calls) == 2
+    assert len(await _result_keys(session)) == 3  # слоты всех трёх матчей заняты
+
+
+@pytest.mark.parametrize("case", ["played", "forfeit", "cancelled", "no_time", "other_team"])
+async def test_result_sync_skips(session, tenant_cfg, fake_sync, case):
+    _, t, ours, rival = await _abl(session, tenant_cfg)
+    start = _utc_naive(msk(2026, 10, 24, 17, 0))
+    if case == "other_team":  # матч двух чужих команд в нашем турнире
+        rival2 = LeagueTeam(league_id=t.league_id, external_id="2302", name="Гроза")
+        session.add(rival2)
+        await session.flush()
+        m = _match(t, rival, rival2, "x", start=start)
+    elif case == "no_time":
+        m = _match(t, ours, rival, "x", start=start)
+        m.start_at = None
+        m.time_status = "no_time"
+    else:
+        m = _match(t, ours, rival, "x", start=start, status=case)
+    session.add(m)
+    await session.commit()
+    fs = fake_sync()
+    ch = FakeChannel()
+    async with httpx.AsyncClient() as client:
+        await scheduler.tick(session, ch, client, SAT_NIGHT)
+        fs.calls.clear()
+        await scheduler.tick(session, ch, client, msk(2026, 10, 24, 20, 30).astimezone(UTC))
+    assert fs.calls == []
+    assert await _result_keys(session) == []
+
+
+async def test_result_slot_taken_by_full(session, tenant_cfg, fake_sync):
+    # бот запущен в вс 05:00 после матча сб 21:00 (8 ч назад, в окне): одна полная, слот результата занят
+    ids = await _result_setup(session, tenant_cfg, [msk(2026, 10, 24, 21, 0)])
+    fs = fake_sync()
+    ch = FakeChannel()
+    async with httpx.AsyncClient() as client:
+        sun5 = msk(2026, 10, 25, 5, 0).astimezone(UTC)
+        await scheduler.tick(session, ch, client, sun5)
+        assert fs.calls == [(i, True, True) for i in ids]
+        await scheduler.tick(session, ch, client, sun5 + timedelta(minutes=1))
+        assert len(fs.calls) == len(ids)
+    m_id = (await session.scalars(select(Match.id))).one()
+    tid = await _our_tenant(session)
+    assert await _result_keys(session) == [(tid, f"{ids[0]}:result:{m_id}")]
+
+
+async def test_result_sync_tenant_isolation(session, tenant_cfg, fake_sync):
+    _, t, ours, rival = await _abl(session, tenant_cfg)
+    other = Tenant(key="other", name="Другая команда")
+    session.add(other)
+    await session.flush()
+    other_team = LeagueTeam(league_id=t.league_id, external_id="5000", name="Ракета")
+    session.add(other_team)
+    await session.flush()
+    other_entry = TeamEntry(
+        tenant_id=other.id, league_team_id=other_team.id, tournament_id=t.id, source_url="x"
+    )
+    session.add(other_entry)
+    m = _match(t, other_team, rival, "10", start=_utc_naive(msk(2026, 10, 24, 17, 0)))  # только другой
+    session.add(m)
+    await session.commit()
+    fs = fake_sync()
+    ch = FakeChannel()
+    async with httpx.AsyncClient() as client:
+        await scheduler.tick(session, ch, client, SAT_NIGHT)
+        fs.calls.clear()
+        await scheduler.tick(session, ch, client, msk(2026, 10, 24, 20, 30).astimezone(UTC))
+    assert fs.calls == [(other_entry.id, False, True)]
+    assert await _result_keys(session) == [(other.id, f"{other_entry.id}:result:{m.id}")]

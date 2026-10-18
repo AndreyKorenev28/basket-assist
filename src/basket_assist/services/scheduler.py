@@ -4,6 +4,7 @@
 - Раз в сутки ночью — полная синхронизация (календарь, заявка на сезон, таблица).
 - Ср–Пт, каждый час 9:00–23:00 по времени лиги — только календарь (решение владельца 2026-10-18:
   с утра среды, к запуску опросов; в выходные переносов не бывает; АБЛ публикует тур во вторник — его подхватит ночная синхронизация).
+- Через 3 ч после начала нашего матча — календарь и таблица, чтобы счёт был в тот же вечер.
 - После синхронизации: анонсы изменившихся матчей обновляются; о переносе и смене времени — сообщение в беседу.
 Факт запуска хранится в notification_log (kind = "job"), поэтому перезапуск бота не повторяет синхронизацию.
 """
@@ -43,6 +44,8 @@ TICK = 60  # секунд
 NIGHT_HOUR = 4  # полная синхронизация — первая проверка после 04:00 по времени лиги
 HOURLY_DAYS = (2, 3, 4)  # ср–пт (понедельник = 0); в выходные переносов не бывает (решение владельца)
 HOURLY_FROM, HOURLY_TO = 9, 23
+RESULT_AFTER = timedelta(hours=3)  # через сколько после начала нашего матча забрать счёт
+RESULT_WINDOW = timedelta(hours=12)  # бот был выключен дольше — ждём ночной синхронизации
 MATCH_KINDS = (ChangeKind.RESCHEDULED, ChangeKind.TIME_CHANGED, ChangeKind.TIME_SET, ChangeKind.MATCH_ADDED)
 
 
@@ -57,6 +60,30 @@ def due_jobs(local: datetime) -> list[tuple[str, str]]:
     if local.weekday() in HOURLY_DAYS and HOURLY_FROM <= local.hour <= HOURLY_TO:
         jobs.append(("matches", f"matches:{local:%Y-%m-%dT%H}"))
     return jobs
+
+
+async def _awaiting_result(session: AsyncSession, entry: TeamEntry, now: datetime) -> list[int]:
+    """Наши матчи, начавшиеся RESULT_AFTER назад (но не раньше RESULT_WINDOW) и ещё без результата.
+
+    По каждому — одна синхронизация календаря и таблицы, чтобы счёт появился в тот же вечер
+    (решение владельца 2026-10-18). Не успел появиться на сайте — подхватит ночная синхронизация.
+    """
+    naive = now.astimezone(UTC).replace(tzinfo=None)
+    return list(
+        (
+            await session.scalars(
+                select(Match.id).where(
+                    Match.tournament_id == entry.tournament_id,
+                    or_(
+                        Match.home_team_id == entry.league_team_id, Match.away_team_id == entry.league_team_id
+                    ),
+                    Match.status.not_in(FINISHED),
+                    Match.start_at <= naive - RESULT_AFTER,
+                    Match.start_at > naive - RESULT_WINDOW,
+                )
+            )
+        ).all()
+    )
 
 
 async def run(sessions: async_sessionmaker, channel: ChannelAdapter, client: httpx.AsyncClient) -> None:
@@ -84,20 +111,26 @@ async def tick(
         team = await session.get(LeagueTeam, entry.league_team_id)
         league = await session.get(League, team.league_id)
         # занимаем все положенные слоты разом: полная включает календарь, повторять его следом не нужно
+        slots = due_jobs(now.astimezone(ZoneInfo(league.timezone)))
+        slots += [("result", f"result:{m_id}") for m_id in await _awaiting_result(session, entry, now)]
         new = [
             kind
-            for kind, slot in due_jobs(now.astimezone(ZoneInfo(league.timezone)))
+            for kind, slot in slots
             if await notify.once(session, entry.tenant_id, "job", f"{entry.id}:{slot}")
         ]
-        job = new[0] if new else None  # полная идёт первой
+        job = new[0] if new else None  # полная идёт первой и включает всё остальное
         if job is None:
             continue
         await session.commit()  # слот занят сразу: при падении сайта не долбим его каждую минуту
         adapter = make_adapter(league.platform, client, league.store_birth_date)
-        only_matches = job == "matches"
         try:
             r = await sync_team_entry(
-                session, entry, adapter, matches=True, roster=not only_matches, standings=not only_matches
+                session,
+                entry,
+                adapter,
+                matches=True,
+                roster=job == "full",
+                standings=job in ("full", "result"),
             )
         except (SourceError, httpx.HTTPError) as e:
             await session.rollback()
