@@ -14,6 +14,7 @@ from basket_assist.bot.handlers import (
     HELP_CHAT,
     HELP_DM,
     HELP_LEADER,
+    HELP_LEADER_TEXT,
     HELP_RIGHTS,
     PLAYERS_TEXT_WORDS,
     UNKNOWN,
@@ -46,7 +47,9 @@ from tests.test_roster import CAPTAIN, CHAT, MEMBERS, VICE, _entry_id, _player, 
 
 PETROV, SIDOROV, FRIEND = "10", "11", "13"
 NL = "\n"
-LEADER_HELP = f"{HELP_DM}\n\n{HELP_LEADER}"  # помощь руководителю без строки «права»
+LEADER_HELP = f"{HELP_DM}\n\n{HELP_LEADER}"  # начало помощи руководителю: до «права» и «✍️»
+CAPTAIN_HELP = LEADER_HELP + HELP_RIGHTS + HELP_LEADER_TEXT  # капитан и заместитель
+ACTING_HELP = LEADER_HELP + HELP_LEADER_TEXT  # и. о. капитана — без «права»
 
 
 async def _open_dm(session, *vk_ids: str) -> None:
@@ -1175,6 +1178,34 @@ def _commands(rows) -> list[list[tuple[str, str, str]]]:
     return [[(b.label, b.payload["c"], b.color) for b in row] for row in rows]
 
 
+def _help_bullets(section: str) -> list[str]:
+    """Команды из строк «• команда — пояснение» (первое слово; «мои данные» — целиком)."""
+    out = []
+    for line in section.splitlines():
+        if line.startswith("• "):
+            cmd = line[2:].split(" — ")[0]
+            out.append(cmd if cmd == "мои данные" else cmd.split()[0])
+    return out
+
+
+def _assert_help_matches_buttons(text: str, rows) -> None:
+    """Подсказка руководителю согласована с кнопками: всё, что под кнопками, — в «Кнопками ниже»,
+    а у команд из «✍️ Только текстом» кнопок нет."""
+    pressed = {b.payload["c"] for row in rows for b in row}
+    head, _, rest = text.partition("Кнопками ниже или текстом:\n")
+    assert rest, "нет раздела «Кнопками ниже»"
+    buttons_section, _, text_only = rest.partition("✍️ Только текстом")
+    assert text_only, "нет раздела «✍️ Только текстом»"
+    listed = set(_help_bullets(buttons_section))
+    common = set(_help_bullets(HELP_DM))  # игры, мои данные — в общей части, кнопки у всех
+    assert pressed - common <= listed, pressed - common - listed
+    assert listed <= pressed, listed - pressed  # в разделе «Кнопками ниже» нет команд без кнопки
+    text_cmds = _help_bullets(text_only)
+    assert set(text_cmds) == {"исправить", "номер", "время"}
+    for cmd in text_cmds:
+        assert not any(c == cmd or c.startswith(cmd + " ") for c in pressed), cmd
+
+
 @pytest.mark.parametrize("cmd", ["помощь", "Команды", "help", "?", "!!"])
 async def test_dm_help_for_player(session, tenant_cfg, cmd):
     await _ready(session, tenant_cfg)
@@ -1192,9 +1223,11 @@ async def test_dm_help_for_captain_and_vice_with_rights(session, tenant_cfg, cmd
     for who in (CAPTAIN, VICE):
         await handle(session, ch, IncomingMessage(who, who, cmd, is_chat=False, mentioned=False))
         _, text, buttons = ch.sent[-1]
-        assert text == LEADER_HELP + HELP_RIGHTS + HELP_BUTTONS_HINT
+        assert text == CAPTAIN_HELP
         assert _commands(buttons) == CAPTAIN_COMMANDS
         assert "игроки" in text and "сопоставление" in text and "исправить" in text and "• права" in text
+        _assert_help_matches_buttons(text, buttons)
+        assert text.index("• права") < text.index("✍️")
 
 
 async def test_dm_help_for_acting_captain_without_rights(session, tenant_cfg):
@@ -1205,9 +1238,10 @@ async def test_dm_help_for_acting_captain_without_rights(session, tenant_cfg):
     ch = FakeChannel()
     await handle(session, ch, IncomingMessage(PETROV, PETROV, "помощь", is_chat=False, mentioned=False))
     _, text, buttons = ch.sent[-1]
-    assert text == LEADER_HELP + HELP_BUTTONS_HINT
+    assert text == ACTING_HELP
     assert "• права" not in text
     assert _commands(buttons) == ACTING_COMMANDS
+    _assert_help_matches_buttons(text, buttons)
 
 
 async def test_dm_start_is_welcome_plus_help(session, tenant_cfg):
@@ -1226,7 +1260,7 @@ async def test_dm_start_is_welcome_plus_help(session, tenant_cfg):
     (p1, t1, b1), (p2, t2, b2) = ch.sent
     assert (p1, t1) == (SIDOROV, WELCOME_DM + NL + HELP_DM + HELP_BUTTONS_HINT)
     assert _commands(b1) == PLAYER_COMMANDS
-    assert (p2, t2) == (CAPTAIN, WELCOME_DM + NL + LEADER_HELP + HELP_RIGHTS + HELP_BUTTONS_HINT)
+    assert (p2, t2) == (CAPTAIN, WELCOME_DM + NL + CAPTAIN_HELP)
     assert _commands(b2) == CAPTAIN_COMMANDS
 
 
@@ -1553,8 +1587,12 @@ def _lineup_buttons(rows):
 
 def test_help_leader_starts_with_lineup():
     assert HELP_LEADER.startswith(
-        "Для руководителей команды:\n\n• состав — кто отметился на ближайшую игру в каждой лиге"
+        "Для руководителей команды.\n\nКнопками ниже или текстом:\n"
+        "• состав — кто отметился на ближайшую игру в каждой лиге"
     )
+    assert HELP_RIGHTS.startswith("\n• права — ")
+    assert HELP_LEADER_TEXT.startswith("\n\n✍️ Только текстом")
+    assert HELP_BUTTONS_HINT not in CAPTAIN_HELP and HELP_BUTTONS_HINT not in ACTING_HELP
 
 
 @pytest.mark.parametrize("cmd", ["состав", "Состав", "кто идёт", "Кто идет?"])
