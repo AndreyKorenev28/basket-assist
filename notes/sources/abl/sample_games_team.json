@@ -1,0 +1,148 @@
+{
+ "_source": "GET https://mtgame.ru/api/v1/tournament/4145/games/?page=1&size=50&team_id=279 (одна запись; logo/photo заменены на null)",
+ "_fetched": "2026-10-18",
+ "data": [
+  {
+   "additional_data": {},
+   "competitor_team": {
+    "city": {
+     "country": "RU",
+     "id": 1,
+     "name": "Москва"
+    },
+    "id": 2301,
+    "logo": null,
+    "name": "Pokrasote",
+    "sport": {
+     "id": 3,
+     "is_hidden": false,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1
+    },
+    "unique_code": "6MFX"
+   },
+   "competitor_team_id": 2301,
+   "competitor_team_name": null,
+   "competitor_team_score": 76,
+   "competitor_tournament_team": {
+    "additional_data": {
+     "color": null,
+     "nickname": null
+    },
+    "field_values": [],
+    "id": 31989,
+    "logo": null,
+    "name": "Pokrasote"
+   },
+   "competitor_tournament_team_id": 31989,
+   "datetime": "2026-10-17T17:40:00.000000Z",
+   "division_id": null,
+   "game_config": {
+    "timer_type": 1,
+    "period_time": 12,
+    "timeout_time": 60,
+    "overtime_time": 4,
+    "overtime_type": null,
+    "periods_count": 4,
+    "timeout_count": 2,
+    "game_time_type": 2,
+    "overtime_score": null,
+    "statistic_type": 2,
+    "game_up_to_score": null,
+    "max_game_players": 5,
+    "shot_clock_enabled": false,
+    "overtime_timeout_count": 1,
+    "basketball_rules_version": 2
+   },
+   "id": 163719,
+   "location": "Россия, Москва, 2-я Магистральная улица, 16А",
+   "media_count": null,
+   "media_live_count": null,
+   "mhl_carousel": null,
+   "playoff_number": null,
+   "playoff_round": null,
+   "playoff_stage": "",
+   "result_type": "competitor_team_won",
+   "score_by_period": {
+    "1": [
+     24,
+     13
+    ],
+    "2": [
+     6,
+     24
+    ],
+    "3": [
+     11,
+     24
+    ],
+    "4": [
+     16,
+     15
+    ]
+   },
+   "status": "closed",
+   "team": {
+    "city": {
+     "country": "RU",
+     "id": 1,
+     "name": "Москва"
+    },
+    "id": 279,
+    "logo": null,
+    "name": "Whestchester",
+    "sport": {
+     "id": 3,
+     "is_hidden": false,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1
+    },
+    "unique_code": "3D0M"
+   },
+   "team_id": 279,
+   "team_score": 57,
+   "tournament": {
+    "alias": "shelepiha27",
+    "id": 4145,
+    "league_id": 2,
+    "logo": null,
+    "name": "Шелепиха",
+    "preview_image": null
+   },
+   "tournament_court": {
+    "address": "Россия, Москва, 2-я Магистральная улица, 16А",
+    "id": 2,
+    "league_id": 2,
+    "name": "Шелепиха"
+   },
+   "tournament_group": {
+    "id": 6514,
+    "name": "Шелепиха",
+    "sort": 1,
+    "tournament_stage_id": null,
+    "tournament_round_id": null,
+    "division_id": null
+   },
+   "tournament_id": 4145,
+   "tournament_playoff": null,
+   "tournament_playoff_id": null,
+   "tournament_round_id": null,
+   "tournament_stage": null,
+   "tournament_stage_id": null,
+   "tournament_team": {
+    "additional_data": {
+     "color": null,
+     "nickname": null
+    },
+    "field_values": [],
+    "id": 31988,
+    "logo": null,
+    "name": "Westchester"
+   },
+   "tournament_team_id": 31988,
+   "tournament_tour": 7
+  }
+ ]
+}

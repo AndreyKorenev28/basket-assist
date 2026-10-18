@@ -1,0 +1,146 @@
+{
+ "_source": "GET https://mtgame.ru/api/v1/tournament_team/31988/users/ (1 из 19 записей; ПДн заменены заглушками, basketball_profile взят по форме из другой записи, logo/photo -> null)",
+ "_fetched": "2026-10-18",
+ "data": [
+  {
+   "id": 0,
+   "tournament_team": {
+    "id": 31988,
+    "name": "Westchester",
+    "logo": null,
+    "team_photo": null,
+    "team_uniform": null,
+    "team": {
+     "id": 279,
+     "name": "Whestchester",
+     "logo": null,
+     "city": {
+      "id": 1,
+      "name": "Москва",
+      "name_en": "Moscow",
+      "country": "RU"
+     },
+     "sport": {
+      "id": 3,
+      "name": "Баскетбол",
+      "name_en": null,
+      "parent_id": 1,
+      "is_hidden": false
+     },
+     "unique_code": "3D0M"
+    },
+    "points": 9,
+    "mt_points": 0,
+    "final_standing": null,
+    "team_id": 279,
+    "tournament_id": 4145,
+    "additional_data": {
+     "color": null,
+     "nickname": null
+    }
+   },
+   "team_user": {
+    "id": 0,
+    "user": {
+     "id": 0,
+     "first_name": "Имя",
+     "last_name": "Фамилия",
+     "middle_name": null,
+     "photo": null,
+     "gender": "male",
+     "birth_date": "YYYY-MM-DD",
+     "city": {
+      "id": 1,
+      "name": "Москва",
+      "name_en": "Moscow",
+      "country": "RU"
+     },
+     "profile": {
+      "user_id": 0,
+      "height": 190,
+      "weight": 90
+     },
+     "basketball_profile": {
+      "user_id": 0,
+      "position": "center",
+      "work_hand": null
+     },
+     "volleyball_profile": null,
+     "hockey_profile": null,
+     "football_profile": null,
+     "handball_profile": null,
+     "rugby_profile": null,
+     "waterpolo_profile": null,
+     "wrestball_profile": null,
+     "is_active": true,
+     "unique_code": "XXXX",
+     "rsv_account_id": null,
+     "teams": []
+    },
+    "role": "member",
+    "permission_role": "member",
+    "number": "0",
+    "team_id": 279,
+    "created_at": "2025-06-11T09:50:08.421358Z",
+    "updated_at": "2026-10-11T14:27:11.387132Z"
+   },
+   "disqualified": false,
+   "league_player": {
+    "id": 0,
+    "user_id": 0,
+    "league_id": 2,
+    "rating": null,
+    "first_name": "Имя",
+    "last_name": "Фамилия",
+    "middle_name": null,
+    "photo": null,
+    "gender": "male",
+    "birth_date": "YYYY-MM-DD",
+    "has_changes": false,
+    "license_number": null,
+    "additional_data": null,
+    "qualification": null,
+    "achievements": [],
+    "field_values": [
+     {
+      "id": 0,
+      "league_player_id": 0,
+      "league_player_field_id": 31,
+      "league_player_field": {
+       "id": 31,
+       "league_id": 2,
+       "name": "Мед. справка",
+       "type": "select",
+       "is_multiple": false,
+       "variants": [
+        {
+         "uuid": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+         "name": "сдал"
+        },
+        {
+         "uuid": "2ee12565-bc4e-478e-8ac0-c38b102bc800",
+         "name": "не сдал"
+        }
+       ],
+       "show_in_application_file": false,
+       "sort": null
+      },
+      "file": null,
+      "value": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+      "value_text": "сдал"
+     }
+    ]
+   },
+   "active": true,
+   "disqualification": null,
+   "conditional_disqualification": null,
+   "last_name": null,
+   "first_name": null,
+   "middle_name": null,
+   "photo": null,
+   "playoff_admission": null,
+   "field_values": [],
+   "created_at": "2026-08-31T20:07:51.164824Z"
+  }
+ ]
+}

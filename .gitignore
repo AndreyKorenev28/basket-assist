@@ -1,0 +1,23 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Секреты и локальные данные
+.env
+*.sqlite
+*.db
+data/
+
+# IDE / ОС
+.vscode/
+.idea/
+Thumbs.db
+
+# Логи spike-проверок (содержат ID пользователей)
+spikes/**/events.jsonl
+
+# Локальная конфигурация команды (реальные имена, VK ID)
+config/tenant.toml
