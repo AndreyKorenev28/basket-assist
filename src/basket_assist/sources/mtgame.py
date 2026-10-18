@@ -113,7 +113,7 @@ def parse_roster(items: list[dict], with_birth_date: bool) -> list[RosterEntryDT
 
 class MtgameAdapter:
     platform = "mtgame"
-    roster_fields = frozenset({"number", "position", "birth_date"})
+    roster_fields = frozenset({"number", "position", "birth_date"})  # номера — в заявке на сезон
 
     def __init__(self, client: httpx.AsyncClient, store_birth_date: bool = False):
         self._client = client

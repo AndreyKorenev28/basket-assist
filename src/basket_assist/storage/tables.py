@@ -112,6 +112,7 @@ class SeasonRosterEntry(Base):
     first_name: Mapped[str] = mapped_column(String(100))
     middle_name: Mapped[str | None] = mapped_column(String(100))
     number: Mapped[str | None] = mapped_column(String(10))
+    number_source: Mapped[str | None] = mapped_column(String(20))  # roster | protocol
     position: Mapped[str | None] = mapped_column(String(50))
     birth_date: Mapped[date | None] = mapped_column(Date)  # только если league.store_birth_date
     active: Mapped[bool] = mapped_column(Boolean, default=True)

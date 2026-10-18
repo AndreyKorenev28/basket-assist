@@ -4,17 +4,21 @@ python -m basket_assist                 — запустить бота (VK Long
 python -m basket_assist --check         — проверить конфиг и БД, загрузить команду
 python -m basket_assist --sync --show   — синхронизировать лиги и показать ближайшие матчи
 python -m basket_assist --post-poll ID  — вручную опубликовать анонс-голосование по матчу
+python -m basket_assist --import-chat   — загрузить участников беседы и подтверждения сопоставления (data/)
 """
 
 import argparse
 import asyncio
+import json
 import logging
 import sys
+from pathlib import Path
 
 from sqlalchemy import func, select
 
 from basket_assist import app
 from basket_assist.config import Settings, load_tenant_config
+from basket_assist.services.roster import import_chat_members
 from basket_assist.services.schedule import format_when, upcoming_matches
 from basket_assist.services.sync import sync_team_entry
 from basket_assist.sources import make_adapter
@@ -26,7 +30,7 @@ from basket_assist.storage.tables import League, LeagueTeam, SeasonRosterEntry, 
 log = logging.getLogger("basket_assist")
 
 
-async def _prepare(settings: Settings, do_sync: bool, do_show: bool) -> int:
+async def _prepare(settings: Settings, do_sync: bool, do_show: bool, do_import: bool = False) -> int:
     cfg = load_tenant_config(settings.tenant_config)
     engine = db.make_engine(settings.db_url)
     code = 0
@@ -40,6 +44,8 @@ async def _prepare(settings: Settings, do_sync: bool, do_show: bool) -> int:
             )
             if do_sync:
                 code = await _sync_all(session, entries)
+            if do_import:
+                await _import(session, tenant.id)
             if do_show:
                 await _show(session, tenant.id, entries)
     finally:
@@ -65,6 +71,22 @@ async def _sync_all(session, entries) -> int:
                 f"заявка на сезон {r.roster_size}, таблица {r.standings}, изменений {len(r.changes)}"
             )
     return code
+
+
+async def _import(session, tenant_id: int) -> None:
+    members_file, confirmed_file = Path("data/team_chat_members.json"), Path("data/matching_confirmed.json")
+    if not members_file.exists():
+        print(f"Нет {members_file}: список участников беседы (vk_id, first_name, last_name)")
+        return
+    members = json.loads(members_file.read_text(encoding="utf-8"))
+    confirmed = json.loads(confirmed_file.read_text(encoding="utf-8")) if confirmed_file.exists() else {}
+    stats = await import_chat_members(
+        session, tenant_id, members, confirmed.get("links", []), confirmed.get("confirmed_by_vk_id")
+    )
+    print(
+        f"Импорт беседы: новых игроков {stats['players']}, подтверждённых связей {stats['confirmed']}, "
+        f"предложенных (однозначных) {stats['suggested']}"
+    )
 
 
 async def _show(session, tenant_id: int, entries) -> None:
@@ -97,6 +119,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--sync", action="store_true", help="синхронизировать данные лиг")
     parser.add_argument("--show", action="store_true", help="показать таблицу и ближайшие матчи")
     parser.add_argument("--post-poll", type=int, metavar="ID", help="опубликовать анонс-голосование по матчу")
+    parser.add_argument("--import-chat", action="store_true", help="импорт участников беседы и сопоставления")
     args = parser.parse_args(argv)
 
     settings = Settings()
@@ -108,10 +131,10 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     db.upgrade(settings.db_url, settings.db_path)
-    code = asyncio.run(_prepare(settings, args.sync, args.show))
+    code = asyncio.run(_prepare(settings, args.sync, args.show, args.import_chat))
     if args.post_poll is not None:
         print(asyncio.run(app.post_poll(settings, args.post_poll)))
-    elif not (args.check or args.sync or args.show):
+    elif not (args.check or args.sync or args.show or args.import_chat):
         try:
             asyncio.run(app.run_bot(settings))
         except KeyboardInterrupt:

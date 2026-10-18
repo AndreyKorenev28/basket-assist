@@ -114,6 +114,9 @@ class VkChannel:
                 ref=msg.get("ref"),
                 payload=_payload(msg.get("payload")),
                 action=(msg.get("action") or {}).get("type"),
+                action_member_id=(
+                    str(msg["action"]["member_id"]) if (msg.get("action") or {}).get("member_id") else None
+                ),
             )
         if kind == "message_event":
             return ButtonPress(
@@ -205,7 +208,9 @@ class VkChannel:
             event_id=press.event_id,
             user_id=press.user_id,
             peer_id=press.peer_id,
-            event_data={"type": "show_snackbar", "text": toast[:90]},
+            event_data={"type": "show_snackbar", "text": toast[:90]}
+            if toast
+            else None,  # пусто — просто подтвердить
         )
 
     async def chat_members(self, peer_id: str) -> list[str]:

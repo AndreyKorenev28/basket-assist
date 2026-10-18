@@ -54,8 +54,7 @@ async def _ensure_leader(session: AsyncSession, tenant: Tenant, person: PersonCo
         )
     else:
         player = await session.get(Player, account.player_id)
-        player.role = role
-        player.display_name = person.display_name
+        player.role = role  # имя не трогаем: актуальное — из профиля VK
 
 
 async def apply_tenant_config(session: AsyncSession, cfg: TenantConfig) -> Tenant:

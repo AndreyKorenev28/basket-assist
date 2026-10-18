@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from basket_assist.channels.base import Button, ButtonPress, ChannelAdapter, MessageRef
 from basket_assist.domain.models import MatchStatus, Vote
+from basket_assist.services import leaders, notify, roster
 from basket_assist.services.players import get_or_create_player
 from basket_assist.storage.tables import (
     Attendance,
@@ -67,11 +68,17 @@ async def _context(session: AsyncSession, match: Match, tenant_id: int):
     if entry is None:
         raise PollError(f"матч {match.id} — не наш")
     ours, rival = (home, away) if entry.league_team_id == home.id else (away, home)
-    return league, ours, rival
+    return league, ours, rival, entry
+
+
+async def player_name(session: AsyncSession, tenant_id: int, player: Player, entry: TeamEntry) -> str:
+    """Имя для анонса и заявки: ФИО из заявки на сезон этой лиги, если игрок сопоставлен."""
+    r = await roster.roster_entry_for(session, tenant_id, player.id, entry.id)
+    return f"{r.last_name} {r.first_name}" if r else player.display_name
 
 
 async def render(session: AsyncSession, match: Match, tenant_id: int) -> str:
-    league, ours, rival = await _context(session, match, tenant_id)
+    league, ours, rival, entry = await _context(session, match, tenant_id)
     tz = ZoneInfo(league.timezone)
     if match.start_at:
         local = match.start_at.replace(tzinfo=UTC).astimezone(tz)
@@ -82,15 +89,15 @@ async def render(session: AsyncSession, match: Match, tenant_id: int) -> str:
 
     rows = (
         await session.execute(
-            select(Attendance.vote, Player.display_name)
+            select(Attendance.vote, Player)
             .join(Player, Player.id == Attendance.player_id)
             .where(Attendance.tenant_id == tenant_id, Attendance.match_id == match.id)
             .order_by(Attendance.updated_at, Attendance.id)
         )
     ).all()
     by_vote: dict[str, list[str]] = {v: [] for v in VOTE_LABELS}
-    for vote, name in rows:
-        by_vote[vote].append(name)
+    for vote, player in rows:
+        by_vote[vote].append(await player_name(session, tenant_id, player, entry))
 
     lines = [
         f"🏀 {league.name}: {ours.name} — {rival.name}",
@@ -202,3 +209,39 @@ async def on_vote(session: AsyncSession, channel: ChannelAdapter, tenant_id: int
         await channel.answer_button(press, f"Отмечено: {VOTE_LABELS[vote]}")
         if changed:  # повторное нажатие той же кнопки ничего не меняет (domain.md)
             await refresh(session, channel, tenant_id, match)
+    if changed and vote == Vote.GOING:
+        await _signal_not_in_roster(session, channel, tenant_id, match, player)
+
+
+async def _signal_not_in_roster(
+    session: AsyncSession, channel: ChannelAdapter, tenant_id: int, match: Match, player: Player
+) -> None:
+    """«Буду», но игрока нет в заявке на сезон этой лиги — сигнал игроку и руководителям (один раз на матч)."""
+    league, ours, rival, entry = await _context(session, match, tenant_id)
+    status = await roster.roster_status(session, tenant_id, player.id, entry.id)
+    if status == "in_roster":
+        return
+    if not await notify.once(
+        session, tenant_id, "not_in_roster", f"{match.id}:{player.id}", match_id=match.id, player_id=player.id
+    ):
+        return
+    await session.commit()
+    what = "нет в заявке на сезон" if status == "not_in_roster" else "не сопоставлен с заявкой на сезон"
+    await notify.dm(
+        session,
+        channel,
+        tenant_id,
+        player.id,
+        f"Вы отметились «Буду» на матч {ours.name} — {rival.name} ({league.name}), но вас {what}. "
+        "Без заявки на сезон сыграть не получится — обратитесь к капитану.",
+    )
+    for lead in await leaders.leaders(session, tenant_id):
+        if lead.id != player.id:
+            await notify.dm(
+                session,
+                channel,
+                tenant_id,
+                lead.id,
+                f"⚠️ {player.display_name} отметился «Буду» на {ours.name} — {rival.name} ({league.name}), "
+                f"но {what}. Нужно дозаявить или сопоставить («сопоставление»).",
+            )

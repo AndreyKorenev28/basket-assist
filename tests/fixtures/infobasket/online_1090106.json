@@ -1,0 +1,136 @@
+{
+ "_comment": "GetOnline/1090106, урезано: только TeamID, PersonID, номера (без ФИО и статистики)",
+ "GameStatus": 1,
+ "GameTeams": [
+  {
+   "TeamID": 31742,
+   "Players": [
+    {
+     "PersonID": 19001,
+     "DisplayNumber": "16",
+     "PlayerNumber": 16
+    },
+    {
+     "PersonID": 219971,
+     "DisplayNumber": "24",
+     "PlayerNumber": 24
+    },
+    {
+     "PersonID": 241659,
+     "DisplayNumber": "87",
+     "PlayerNumber": 87
+    },
+    {
+     "PersonID": 399257,
+     "DisplayNumber": "3",
+     "PlayerNumber": 3
+    },
+    {
+     "PersonID": 433687,
+     "DisplayNumber": "9",
+     "PlayerNumber": 9
+    },
+    {
+     "PersonID": 205587,
+     "DisplayNumber": "13",
+     "PlayerNumber": 13
+    },
+    {
+     "PersonID": 298089,
+     "DisplayNumber": "6",
+     "PlayerNumber": 6
+    },
+    {
+     "PersonID": 435558,
+     "DisplayNumber": "8",
+     "PlayerNumber": 8
+    },
+    {
+     "PersonID": 286139,
+     "DisplayNumber": "19",
+     "PlayerNumber": 19
+    },
+    {
+     "PersonID": 269299,
+     "DisplayNumber": "14",
+     "PlayerNumber": 14
+    },
+    {
+     "PersonID": 266805,
+     "DisplayNumber": "88",
+     "PlayerNumber": 88
+    },
+    {
+     "PersonID": 287129,
+     "DisplayNumber": "35",
+     "PlayerNumber": 35
+    }
+   ]
+  },
+  {
+   "TeamID": 9056,
+   "Players": [
+    {
+     "PersonID": 187850,
+     "DisplayNumber": "21",
+     "PlayerNumber": 21
+    },
+    {
+     "PersonID": 124922,
+     "DisplayNumber": "10",
+     "PlayerNumber": 10
+    },
+    {
+     "PersonID": 125775,
+     "DisplayNumber": "14",
+     "PlayerNumber": 14
+    },
+    {
+     "PersonID": 124929,
+     "DisplayNumber": "23",
+     "PlayerNumber": 23
+    },
+    {
+     "PersonID": 245409,
+     "DisplayNumber": "5",
+     "PlayerNumber": 5
+    },
+    {
+     "PersonID": 362480,
+     "DisplayNumber": "55",
+     "PlayerNumber": 55
+    },
+    {
+     "PersonID": 295125,
+     "DisplayNumber": "27",
+     "PlayerNumber": 27
+    },
+    {
+     "PersonID": 219838,
+     "DisplayNumber": "91",
+     "PlayerNumber": 91
+    },
+    {
+     "PersonID": 229327,
+     "DisplayNumber": "28",
+     "PlayerNumber": 28
+    },
+    {
+     "PersonID": 155770,
+     "DisplayNumber": "17",
+     "PlayerNumber": 17
+    },
+    {
+     "PersonID": 265927,
+     "DisplayNumber": "71",
+     "PlayerNumber": 71
+    },
+    {
+     "PersonID": 148245,
+     "DisplayNumber": "00",
+     "PlayerNumber": -1
+    }
+   ]
+  }
+ ]
+}

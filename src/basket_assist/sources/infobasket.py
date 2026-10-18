@@ -94,6 +94,18 @@ def parse_roster(data: dict, with_birth_date: bool) -> list[RosterEntryDTO]:
     return out
 
 
+def parse_game_numbers(data: dict, team_external_id: str) -> dict[str, str]:
+    """Номера игроков нашей команды из протокола матча: {PersonID: номер}."""
+    for team in data.get("GameTeams") or []:
+        if str(team.get("TeamID")) == team_external_id:
+            return {
+                str(p["PersonID"]): str(p.get("DisplayNumber") or p.get("PlayerNumber"))
+                for p in team.get("Players") or []
+                if p.get("PersonID") and (p.get("DisplayNumber") or p.get("PlayerNumber"))
+            }
+    return {}
+
+
 def parse_standings(items: list[dict]) -> list[StandingDTO]:
     out = []
     for t in items:
@@ -147,6 +159,18 @@ class InfobasketAdapter:
         if not isinstance(data, dict):
             raise SourceError("infobasket", "заявка на сезон — не объект")
         return parse_roster(data, self._store_birth_date)
+
+    async def fetch_game_numbers(self, team: TeamRef, game_ids: list[str]) -> dict[str, str]:
+        """Номера из протоколов: игры — от новых к старым, более свежий номер побеждает.
+
+        Протокол тяжёлый (~0,5 МБ), поэтому вызывающий передаёт 1–3 последних сыгранных матча.
+        """
+        numbers: dict[str, str] = {}
+        for game_id in game_ids:
+            data = await self._get(f"/Widget/GetOnline/{game_id}", lang="ru")
+            for person, number in parse_game_numbers(data, team.team_external_id).items():
+                numbers.setdefault(person, number)
+        return numbers
 
     async def fetch_standings(self, team: TeamRef) -> list[StandingDTO]:
         items = await self._get(f"/Widget/CompTeamResults/{team.tournament_external_id}")

@@ -8,7 +8,7 @@ import json
 import logging
 from dataclasses import dataclass, field
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from basket_assist.domain.models import ChangeKind, MatchStatus, TimeStatus
@@ -169,11 +169,12 @@ async def _sync_roster(
             "last_name": dto.last_name,
             "first_name": dto.first_name,
             "middle_name": dto.middle_name,
-            "number": dto.number,
             "position": dto.position,
             "birth_date": dto.birth_date,
             "active": True,
         }
+        if dto.number:  # номер из заявки на сезон; если его нет — не затираем номер из протокола
+            fields |= {"number": dto.number, "number_source": "roster"}
         if row is None:
             session.add(
                 SeasonRosterEntry(
@@ -234,6 +235,44 @@ async def _sync_standings(
     result.standings = len(dtos)
 
 
+PROTOCOLS_TO_READ = 3
+
+
+async def _fill_numbers_from_protocols(
+    session: AsyncSession, entry: TeamEntry, adapter: PlatformAdapter, ref: TeamRef
+) -> None:
+    """Если номеров в заявке на сезон нет (МЛБЛ), взять их из протоколов последних сыгранных матчей."""
+    if "number" in adapter.roster_fields or not hasattr(adapter, "fetch_game_numbers"):
+        return
+    missing = (
+        await session.scalars(
+            select(SeasonRosterEntry).filter_by(
+                league_team_id=entry.league_team_id, tournament_id=entry.tournament_id, active=True
+            )
+        )
+    ).all()
+    missing = [r for r in missing if r.number is None or r.number_source == "protocol"]
+    if not missing:
+        return
+    played = (
+        await session.scalars(
+            select(Match.external_id)
+            .where(Match.tournament_id == entry.tournament_id, Match.status == MatchStatus.PLAYED)
+            .where(
+                or_(Match.home_team_id == entry.league_team_id, Match.away_team_id == entry.league_team_id)
+            )
+            .order_by(Match.match_date.desc())
+            .limit(PROTOCOLS_TO_READ)
+        )
+    ).all()
+    if not played:
+        return
+    numbers = await adapter.fetch_game_numbers(ref, list(played))
+    for row in missing:
+        if number := numbers.get(row.external_person_id):
+            row.number, row.number_source = number, "protocol"
+
+
 async def sync_team_entry(
     session: AsyncSession,
     entry: TeamEntry,
@@ -250,6 +289,8 @@ async def sync_team_entry(
         await _sync_matches(session, league, entry.tournament_id, await adapter.fetch_matches(ref), result)
     if roster:
         await _sync_roster(session, entry, await adapter.fetch_roster(ref), result)
+        await session.flush()
+        await _fill_numbers_from_protocols(session, entry, adapter, ref)
     if standings:
         await _sync_standings(
             session, league, entry.tournament_id, await adapter.fetch_standings(ref), result

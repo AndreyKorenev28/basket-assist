@@ -28,6 +28,7 @@ class IncomingMessage:
     ref: str | None = None  # метка из ссылки «Подключиться»
     payload: dict = field(default_factory=dict)  # payload кнопки «Начать» и т. п.
     action: str | None = None  # служебное событие беседы (chat_invite_user и т. п.)
+    action_member_id: str | None = None  # кого добавили/исключили
 
 
 @dataclass(frozen=True)
