@@ -9,7 +9,7 @@ from basket_assist.bot.handlers import handle
 from basket_assist.channels.base import ChannelAdapter
 from basket_assist.channels.vk import VkChannel, VkClient
 from basket_assist.config import Settings
-from basket_assist.services import polls
+from basket_assist.services import polls, scheduler
 from basket_assist.sources.base import make_client
 from basket_assist.storage import db
 from basket_assist.storage.tables import Chat, Match, TeamEntry
@@ -38,12 +38,14 @@ async def run_bot(settings: Settings) -> None:
     async with make_client() as client:
         channel = make_vk_channel(settings, client)
         log.info("бот запущен")
+        planner = asyncio.create_task(scheduler.run(sessions, channel, client))
         try:
             async for event in channel.events():
                 task = asyncio.create_task(process(channel, event))
                 tasks.add(task)
                 task.add_done_callback(tasks.discard)
         finally:
+            planner.cancel()
             await engine.dispose()
 
 

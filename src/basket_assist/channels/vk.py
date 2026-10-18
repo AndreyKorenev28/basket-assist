@@ -231,13 +231,16 @@ class VkChannel:
         up = await self._api.upload(server["upload_url"], "photo", "table.png", image, "image/png")
         if not up.get("photo") or up["photo"] == "[]":
             raise ChannelError(None, f"загрузка фото: сервер не принял файл ({up.get('error') or 'пусто'})")
-        saved = await self._api.call(
-            "photos.saveMessagesPhoto", photo=up["photo"], server=up["server"], hash=up["hash"]
-        )
-        p = saved[0]
-        attachment = f"photo{p['owner_id']}_{p['id']}" + (
-            f"_{p['access_key']}" if p.get("access_key") else ""
-        )
+        try:
+            saved = await self._api.call(
+                "photos.saveMessagesPhoto", photo=up["photo"], server=up["server"], hash=up["hash"]
+            )
+            p = saved[0]
+            attachment = f"photo{p['owner_id']}_{p['id']}" + (
+                f"_{p['access_key']}" if p.get("access_key") else ""
+            )
+        except (KeyError, IndexError, TypeError) as e:  # неожиданный формат ответа — вызывающий пошлёт текст
+            raise ChannelError(None, f"загрузка фото: неожиданный ответ VK ({e!r})") from e
         return await self.send(peer_id, text, buttons, attachment=attachment)
 
     async def edit(self, msg: MessageRef, text: str, buttons: list[list[Button]] | None = None) -> bool:
