@@ -69,8 +69,12 @@ async def _week_match(session, entry, ext: str, day: date = SAT, hhmm: tuple[int
     return m
 
 
-def _to(ch: FakeChannel, peer: str) -> list[tuple[str, list | None]]:
-    return [(t, b) for p, t, b in ch.sent if p == peer]
+REMIND = "⏰ Напоминание"
+
+
+def _to(ch: FakeChannel, peer: str, reminders: bool = False) -> list[tuple[str, list | None]]:
+    """Сообщения в peer; напоминания молчащим (за 30 ч) — только если reminders=True."""
+    return [(t, b) for p, t, b in ch.sent if p == peer and (reminders or not t.startswith(REMIND))]
 
 
 def _texts(ch: FakeChannel, peer: str, prefix: str = "") -> list[str]:
@@ -283,7 +287,11 @@ START = at(SAT, 12)
 
 
 def _dg_buttons(m: Match, kind: str) -> list[list[Button]]:
-    return [[Button("Обновить", {"a": "dg", "m": m.id, "k": kind}, "secondary")]]
+    ref = {"m": m.id, "k": kind}
+    return [
+        [Button("Обновить", {"a": "dg", **ref}, "secondary")],
+        [Button("Добавить в заявку", {"a": "aa", **ref}), Button("Убрать из заявки", {"a": "ar", **ref})],
+    ]
 
 
 async def test_digest24_and_digest2_once_each(session, tenant_cfg):
@@ -299,7 +307,7 @@ async def test_digest24_and_digest2_once_each(session, tenant_cfg):
         [(digest, buttons), (application, app_buttons)] = _to(ch, peer)
         assert digest.startswith(f"{D24}\n\n🏀 АБЛ: Соперник g1 — Westchester")
         assert "  №7 Петров Александр" in digest
-        assert digest.endswith(f"\n\n{weekly.APPLICATION_HINT}")
+        assert digest.endswith(f"\n\n{weekly.NUMBER_HINT}\n\n{weekly.APPLICATION_HINT}")
         assert buttons == _dg_buttons(m, "digest24")
         assert application == "7 Петров Александр" and app_buttons is None
     assert _to(ch, PETROV) == []

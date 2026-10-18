@@ -202,6 +202,7 @@ class VkChannel:
         buttons: list[list[Button]] | None = None,
         *,
         attachment: str | None = None,
+        notify_mentions: bool = False,
     ) -> MessageRef:
         # peer_ids (а не peer_id) — чтобы в ответе был conversation_message_id
         resp = await self._api.call(
@@ -211,7 +212,8 @@ class VkChannel:
             attachment=attachment,
             random_id=random.randint(1, 2**31),
             keyboard=keyboard(buttons),
-            disable_mentions=1,
+            # 1 — упоминания без уведомления (по умолчанию); напоминанию молчащим уведомление нужно
+            disable_mentions=None if notify_mentions else 1,
         )
         item = resp[0]
         if "error" in item:
@@ -290,6 +292,15 @@ class VkChannel:
             return {}
         resp = await self._api.call("users.get", user_ids=",".join(user_ids))
         return {str(u["id"]): f"{u['first_name']} {u['last_name']}".strip() for u in resp}
+
+    def mention(self, user_id: str, name: str) -> str:
+        """Упоминание в тексте беседы: в VK — [id123|Имя]."""
+        clean = name.replace("[", "(").replace("]", ")").replace("|", "/")
+        return f"[id{user_id}|{clean}]"
+
+    async def send_with_mentions(self, peer_id: str, text: str) -> MessageRef:
+        """Сообщение, в котором упомянутые получают уведомление (напоминание молчащим)."""
+        return await self.send(peer_id, text, notify_mentions=True)
 
     def connect_link(self, ref: str) -> str:
         return f"https://vk.me/club{self._group_id}?ref={ref}"

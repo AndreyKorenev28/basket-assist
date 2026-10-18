@@ -3,6 +3,7 @@
 По запросу (команда «состав») и в сводках за 24 ч и 2 ч до матча (`match_digest`, services/weekly.py).
 """
 
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
@@ -13,6 +14,7 @@ from basket_assist.domain.models import Vote
 from basket_assist.services import polls, roster
 from basket_assist.services.schedule import format_when, kit_hint, teams, upcoming_matches
 from basket_assist.storage.tables import (
+    ApplicationEntry,
     Attendance,
     League,
     LeagueTeam,
@@ -84,14 +86,20 @@ async def _match_block(session: AsyncSession, tenant_id: int, league, ours, riva
     )
     players = (await session.scalars(select(Player).filter_by(tenant_id=tenant_id))).all()
 
-    going_ok, going_bad, not_going, silent = [], [], [], []
+    app = await application(session, tenant_id, match)
+    in_app = {row.player_id for row in app}
+    removed = await _removed_ids(session, tenant_id, match.id)
+
+    going_bad, going_removed, not_going, silent = [], [], [], []
     for p in players:
+        if p.id in in_app:
+            continue  # в заявке на игру — выводится ниже из `app`
         status = await roster.roster_status(session, tenant_id, p.id, entry.id)
         name = await polls.player_name(session, tenant_id, p, entry)
         vote = votes.get(p.id)
         if vote == Vote.GOING:
-            if status == "in_roster":
-                going_ok.append((name, await _number(session, tenant_id, p.id, entry)))
+            if p.id in removed:
+                going_removed.append(f"✖️ {name} — убран из заявки руководителем")
             else:
                 going_bad.append(f"⚠️ {name} — {NOT_ELIGIBLE[status]}")
         elif vote == Vote.NOT_GOING:
@@ -99,12 +107,16 @@ async def _match_block(session: AsyncSession, tenant_id: int, league, ours, riva
         elif p.active and status == "in_roster":  # ждём ответа только от заявленных в этой лиге
             silent.append(name + ("" if p.id in dm_open else " 🔕"))
 
-    going_ok.sort(key=lambda t: _sort_key(t[0]))
+    voted = [row for row in app if not row.added]
+    added = [row for row in app if row.added]
     lines = [*head, ""]
-    lines.append(f"Буду ({len(going_ok) + len(going_bad)}):")
-    lines += [f"  {'№' + num if num else '№ ?'} {name}" for name, num in going_ok]
-    lines += [f"  {line}" for line in sorted(going_bad, key=_sort_key)]
-    lines.append(_size_note(len(going_ok), league.min_players, league.max_players))
+    lines.append(f"Буду ({len(voted) + len(going_bad) + len(going_removed)}):")
+    lines += [f"  {row.line_with_sign()}" for row in voted]
+    lines += [f"  {line}" for line in sorted(going_bad + going_removed, key=_sort_key)]
+    if added:
+        lines.append(f"Добавлены руководителем ({len(added)}):")
+        lines += [f"  {row.line_with_sign()}" for row in added]
+    lines.append(_size_note(len(app), league.min_players, league.max_players))
     lines.append(f"Не буду ({len(not_going)}): " + (", ".join(sorted(not_going, key=_sort_key)) or "—"))
     lines.append(f"Не ответили ({len(silent)}): " + (", ".join(sorted(silent, key=_sort_key)) or "—"))
     return "\n".join(lines)
@@ -118,30 +130,75 @@ async def match_digest(session: AsyncSession, tenant_id: int, match: Match, titl
     return f"{title}\n\n{block}\n\nНа {now:%d.%m %H:%M}"
 
 
-async def application_text(session: AsyncSession, tenant_id: int, match: Match) -> str | None:
-    """Черновик заявки на игру для копирования: «номер ФИО» построчно, только заявленные на сезон, «Буду».
+@dataclass
+class AppRow:
+    """Строка заявки на игру."""
 
-    None — некого подавать. Отдельным сообщением: в VK на телефоне сообщение копируется целиком.
+    player_id: int
+    name: str  # ФИО из заявки на сезон
+    number: str  # "" — номера нет
+    added: bool  # добавлен руководителем (а не по голосу «Буду»)
+
+    def line(self) -> str:
+        return f"{self.number or '?'} {self.name}"
+
+    def line_with_sign(self) -> str:
+        return f"{'№' + self.number if self.number else '№ ?'} {self.name}"
+
+
+async def application(session: AsyncSession, tenant_id: int, match: Match) -> list[AppRow]:
+    """Заявка на игру сейчас: «Буду» среди заявленных на сезон + правки руководителя (domain.md).
+
+    Правка руководителя сильнее голоса: убранный не вернётся, даже если снова нажмёт «Буду»;
+    добавленный остаётся, даже если ответил «Не буду». В заявку идут только заявленные на сезон.
     """
     _, _, _, entry = await polls._context(session, match, tenant_id)
-    going = (
-        await session.scalars(
-            select(Player)
-            .join(Attendance, Attendance.player_id == Player.id)
-            .where(
-                Attendance.tenant_id == tenant_id,
-                Attendance.match_id == match.id,
-                Attendance.vote == Vote.GOING,
+    going = set(
+        (
+            await session.scalars(
+                select(Attendance.player_id).filter_by(
+                    tenant_id=tenant_id, match_id=match.id, vote=Vote.GOING
+                )
             )
-        )
-    ).all()
+        ).all()
+    )
+    edits = {
+        e.player_id: e
+        for e in (
+            await session.scalars(select(ApplicationEntry).filter_by(tenant_id=tenant_id, match_id=match.id))
+        ).all()
+    }
+    ids = {pid for pid in going if not (pid in edits and edits[pid].removed_by_captain)}
+    ids |= {pid for pid, e in edits.items() if not e.removed_by_captain}
     rows = []
-    for p in going:
-        if await roster.roster_status(session, tenant_id, p.id, entry.id) != "in_roster":
+    for pid in ids:
+        if await roster.roster_status(session, tenant_id, pid, entry.id) != "in_roster":
             continue
-        name = await polls.player_name(session, tenant_id, p, entry)
-        rows.append((_sort_key(name), f"{await _number(session, tenant_id, p.id, entry) or '?'} {name}"))
-    return "\n".join(line for _, line in sorted(rows)) or None
+        player = await session.get(Player, pid)
+        name = await polls.player_name(session, tenant_id, player, entry)
+        number = await _number(session, tenant_id, pid, entry)
+        rows.append(AppRow(pid, name, number, added=pid not in going))
+    return sorted(rows, key=lambda r: (_sort_key(r.name), r.player_id))
+
+
+async def _removed_ids(session: AsyncSession, tenant_id: int, match_id: int) -> set[int]:
+    return set(
+        (
+            await session.scalars(
+                select(ApplicationEntry.player_id).filter_by(
+                    tenant_id=tenant_id, match_id=match_id, removed_by_captain=True
+                )
+            )
+        ).all()
+    )
+
+
+async def application_text(session: AsyncSession, tenant_id: int, match: Match) -> str | None:
+    """Заявка на игру для копирования: «номер ФИО» построчно. None — некого подавать.
+
+    Отдельным сообщением: в VK на телефоне сообщение копируется только целиком.
+    """
+    return "\n".join(row.line() for row in await application(session, tenant_id, match)) or None
 
 
 def _size_note(n: int, lo: int, hi: int) -> str:
@@ -164,4 +221,4 @@ async def _number(session: AsyncSession, tenant_id: int, player_id: int, entry: 
 
 
 def _sort_key(text: str) -> str:
-    return text.removeprefix("⚠️ ").lower().replace("ё", "е")
+    return text.removeprefix("⚠️ ").removeprefix("✖️ ").lower().replace("ё", "е")

@@ -20,6 +20,9 @@ class FakeChannel:
             tuple[str, bytes, str, list | None]
         ] = []  # send_image: (peer, png, подпись, кнопки)
         self.image_error: ChannelError | None = None  # если задано — send_image падает с этой ошибкой
+        self.members: list[str] | None = None  # участники беседы; None — ключи names
+        self.members_error: ChannelError | None = None  # если задано — chat_members падает
+        self.mention_sent: list[tuple[str, str]] = []  # send_with_mentions: (peer, текст)
         self._next = 100
 
     async def events(self):
@@ -64,7 +67,16 @@ class FakeChannel:
         self.links.append(link)
 
     async def chat_members(self, peer_id: str) -> list[str]:
-        return list(self.names)
+        if self.members_error is not None:
+            raise self.members_error
+        return list(self.names) if self.members is None else list(self.members)
+
+    def mention(self, user_id: str, name: str) -> str:
+        return f"@{user_id}({name})"
+
+    async def send_with_mentions(self, peer_id: str, text: str) -> MessageRef:
+        self.mention_sent.append((peer_id, text))
+        return await self.send(peer_id, text)
 
     async def user_names(self, user_ids: list[str]) -> dict[str, str]:
         return {u: self.names.get(u, f"id{u}") for u in user_ids}

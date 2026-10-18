@@ -6,6 +6,7 @@
   только если время известно. Время появилось позже — опрос сразу, на ближайшей минуте.
 - Без времени опроса нет: руководителям «время не назначено — свяжитесь с лигой», раз в сутки.
 - Сводки за 24 ч и за 2 ч до начала: состав на матч + заявка на игру отдельным сообщением для копирования.
+- За 30 ч — напоминание не ответившим: в личку с кнопками или упоминанием в беседе.
 - После сводки за 24 ч каждое изменение ответа — короткое сообщение руководителям (`vote_changed`).
 """
 
@@ -17,9 +18,18 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from basket_assist.channels.base import Button, ChannelAdapter, ChannelError
-from basket_assist.services import digests, leaders, notify, polls
+from basket_assist.services import digests, leaders, notify, polls, roster
 from basket_assist.services.schedule import FINISHED, format_when, teams
-from basket_assist.storage.tables import Chat, League, LeagueTeam, Match, Player, TeamEntry
+from basket_assist.storage.tables import (
+    Attendance,
+    Chat,
+    League,
+    LeagueTeam,
+    Match,
+    MessengerAccount,
+    Player,
+    TeamEntry,
+)
 
 log = logging.getLogger(__name__)
 
@@ -27,6 +37,8 @@ DIGESTS = {  # вид сводки → (за сколько до начала, �
     "digest24": (timedelta(hours=24), "📋 Сводка за сутки до игры"),
     "digest2": (timedelta(hours=2), "📋 Финальная сводка: игра через 2 часа"),
 }
+REMIND_BEFORE = timedelta(hours=30)  # напоминание молчащим (architecture.md §5)
+NUMBER_HINT = "Нет номера или он другой — напишите «номер Петров 23»."
 APPLICATION_HINT = "Следующим сообщением — заявка на игру (номер и ФИО), его удобно скопировать целиком."
 
 
@@ -67,7 +79,74 @@ async def tick(session: AsyncSession, channel: ChannelAdapter, now: datetime | N
                 await _warn_no_time(session, channel, entry.tenant_id, match, league, today)
             else:
                 await _ensure_poll(session, channel, entry.tenant_id, match, now_utc)
+                await _remind_silent(session, channel, entry, match, now_utc)
                 await _send_digests(session, channel, entry.tenant_id, match, now_utc)
+
+
+async def _remind_silent(
+    session: AsyncSession, channel: ChannelAdapter, entry: TeamEntry, match: Match, now_utc: datetime
+) -> None:
+    """За 30 ч до начала — напоминание заявленным на сезон, кто ещё не ответил.
+
+    С открытой личкой — в личку с кнопками «Буду / Не буду» (нажатие = голос в анонсе);
+    остальным — одно сообщение в беседу с упоминаниями (domain.md, «Подключение игрока к боту»).
+    """
+    if not (match.start_at - REMIND_BEFORE <= now_utc < match.start_at - DIGESTS["digest2"][0]):
+        return
+    tenant_id = entry.tenant_id
+    if await polls._current_poll(session, tenant_id, match.id) is None:
+        return  # без анонса напоминать не о чем; попробуем на следующей минуте
+    if not await notify.once(session, tenant_id, "remind30", str(match.id), match_id=match.id):
+        return
+    await session.commit()
+    league, ours, rival, _ = await polls._context(session, match, tenant_id)
+    voted = set(
+        (
+            await session.scalars(
+                select(Attendance.player_id).filter_by(tenant_id=tenant_id, match_id=match.id)
+            )
+        ).all()
+    )
+    what = f"{teams(match, ours, rival)} ({league.name}), {format_when(match, league)}"
+    no_dm: list[tuple[str, str]] = []  # (id в мессенджере, имя) — личка не открыта
+    for p in (await session.scalars(select(Player).filter_by(tenant_id=tenant_id, active=True))).all():
+        if p.id in voted or await roster.roster_status(session, tenant_id, p.id, entry.id) != "in_roster":
+            continue
+        text = f"⏰ Напоминание: {what}.\nВы ещё не ответили — будете? Ответ можно поменять до начала игры."
+        if not await notify.dm(session, channel, tenant_id, p.id, text, polls.vote_buttons(match.id)):
+            account = (
+                await session.execute(
+                    select(MessengerAccount).filter_by(
+                        tenant_id=tenant_id, player_id=p.id, channel=channel.channel
+                    )
+                )
+            ).scalar_one_or_none()
+            if account is not None:
+                no_dm.append(
+                    (account.external_user_id, await polls.player_name(session, tenant_id, p, entry))
+                )
+    chat = (
+        (await session.execute(select(Chat).filter_by(tenant_id=tenant_id, channel=channel.channel)))
+        .scalars()
+        .first()
+    )
+    if not no_dm or chat is None:
+        return
+    # упоминаем только участников беседы: иначе из тестовой беседы потревожим настоящих игроков
+    try:
+        members = set(await channel.chat_members(chat.peer_id))
+    except ChannelError as e:
+        log.warning("не получил участников беседы для напоминания (%s) — без упоминаний", e)
+        return
+    in_chat = [channel.mention(uid, name) for uid, name in no_dm if uid in members]
+    if in_chat:
+        try:
+            await channel.send_with_mentions(
+                chat.peer_id,
+                f"⏰ {what}. Ещё не ответили: {', '.join(in_chat)}.\nОтметьтесь в закреплённом анонсе — «Буду» или «Не буду».",
+            )
+        except ChannelError as e:
+            log.warning("напоминание в беседу по матчу %s не отправлено: %s", match.id, e)
 
 
 async def _warn_no_time(
@@ -142,10 +221,15 @@ async def send_digest(
 async def digest_message(
     session: AsyncSession, tenant_id: int, match: Match, kind: str
 ) -> tuple[str, list[list[Button]]]:
-    """Текст сводки и кнопка [Обновить] (перерисовывает это же сообщение, leader.on_button «dg»)."""
+    """Текст сводки и кнопки: [Обновить], [Добавить в заявку] [Убрать из заявки] (leader.on_button)."""
     title = DIGESTS.get(kind, DIGESTS["digest24"])[1]
     text = await digests.match_digest(session, tenant_id, match, title)
-    return text, [[Button("Обновить", {"a": "dg", "m": match.id, "k": kind}, "secondary")]]
+    text += f"\n\n{NUMBER_HINT}"
+    ref = {"m": match.id, "k": kind}
+    return text, [
+        [Button("Обновить", {"a": "dg", **ref}, "secondary")],
+        [Button("Добавить в заявку", {"a": "aa", **ref}), Button("Убрать из заявки", {"a": "ar", **ref})],
+    ]
 
 
 async def vote_changed(

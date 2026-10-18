@@ -14,6 +14,7 @@ from basket_assist.channels.base import Button, ButtonPress, ChannelAdapter
 from basket_assist.services import digests, leaders, notify, polls, roster, weekly
 from basket_assist.services.table_image import PlayersTable, TableRow, render_players
 from basket_assist.storage.tables import (
+    ApplicationEntry,
     Chat,
     League,
     LeagueTeam,
@@ -121,6 +122,58 @@ async def item_card(session: AsyncSession, tenant_id: int, player_id: int, entry
         r = await roster.roster_entry_for(session, tenant_id, player_id, entry_id)
         now += f": {_fio(r)}"
     return f"{text}\n\nСейчас: {now}", rows
+
+
+async def number_command(session: AsyncSession, tenant_id: int, args: str) -> tuple[str, list[list[Button]]]:
+    """«номер Петров 23 [лига]»: номер для заявки на игру вместо номера из заявки на сезон (по лиге)."""
+    words = args.split()
+    pos = next((i for i, w in enumerate(words) if w.isdigit() and len(w) <= 3), None)
+    if pos is None or pos == 0:
+        return (
+            "Напишите так: «номер Петров 23». Если игрок в двух лигах — можно добавить лигу: «номер Петров 23 АБЛ».",
+            [],
+        )
+    query, number, league_q = " ".join(words[:pos]), words[pos], " ".join(words[pos + 1 :]).lower()
+    q = query.lower().replace("ё", "е")
+    found = []  # (имя, лига, player_id, entry_id) — только заявленные на сезон
+    for entry in (
+        await session.scalars(select(TeamEntry).filter_by(tenant_id=tenant_id).order_by(TeamEntry.id))
+    ).all():
+        league = await _league_name(session, entry)
+        if league_q and league_q not in league.lower():
+            continue
+        for p in (await session.scalars(select(Player).filter_by(tenant_id=tenant_id, active=True))).all():
+            r = await roster.roster_entry_for(session, tenant_id, p.id, entry.id)
+            if r is None:
+                continue
+            name = f"{r.last_name} {r.first_name}"
+            if q in name.lower().replace("ё", "е") or q in p.display_name.lower().replace("ё", "е"):
+                found.append((name, league, p.id, entry.id))
+    if not found:
+        return f"Не нашёл «{query}» среди заявленных на сезон" + (
+            f" в лиге «{league_q}»" if league_q else ""
+        ) + ".", []
+    if len(found) == 1:
+        name, league, pid, eid = found[0]
+        await set_number(session, tenant_id, pid, eid, number)
+        return f"Номер записан: {name} — №{number} ({league}). В заявку на игру пойдёт он.", []
+    if len(found) > 6:
+        return f"Нашлось много игроков по «{query}» — уточните фамилию.", []
+    rows = [
+        [Button(_label(f"{name} — {league}"), {"a": "num", "p": pid, "e": eid, "n": number})]
+        for name, league, pid, eid in found
+    ]
+    return f"Кому записать №{number}?", rows
+
+
+async def set_number(
+    session: AsyncSession, tenant_id: int, player_id: int, entry_id: int, number: str
+) -> None:
+    link = await roster._link(session, tenant_id, player_id, entry_id)
+    if link is None:
+        raise ValueError("нет связи с заявкой на сезон")
+    link.number_override = number
+    await session.commit()
 
 
 async def find_players(session: AsyncSession, tenant_id: int, query: str) -> tuple[str, list[list[Button]]]:
@@ -414,6 +467,75 @@ async def _announce_in_chat(
 # ---------- Обработка кнопок ----------
 
 
+APP_PAGE = 4  # игроков на странице выбора: + «Далее» + «Назад к сводке» ≤ 6 рядов VK
+
+
+async def _application_button(
+    session: AsyncSession,
+    channel: ChannelAdapter,
+    tenant_id: int,
+    me: Player,
+    press: ButtonPress,
+    match: Match,
+    d,
+):
+    """Кнопки под сводкой: обновить; добавить в заявку на игру / убрать из неё (domain.md, «Заявка на игру»)."""
+    await polls._context(session, match, tenant_id)  # чужой матч → PollError до любых записей и ответов
+    a, kind = d["a"], str(d.get("k", "digest24"))
+    ref = {"m": match.id, "k": kind}
+    if a in ("aa1", "ar1"):
+        await _edit_application(session, tenant_id, match.id, int(d["p"]), me.id, removed=a == "ar1")
+        await session.commit()
+        await channel.answer_button(press, "Добавлен в заявку" if a == "aa1" else "Убран из заявки")
+        return await weekly.digest_message(session, tenant_id, match, kind)
+    if a == "dg":
+        await channel.answer_button(press, "Обновлено")
+        return await weekly.digest_message(session, tenant_id, match, kind)
+
+    app = await digests.application(session, tenant_id, match)
+    if a == "ar":
+        options = [(row.name, row.player_id) for row in app]
+        title = "Кого убрать из заявки на игру?"
+    else:  # "aa": заявленные на сезон в этой лиге, которых в заявке на игру нет
+        _, _, _, entry = await polls._context(session, match, tenant_id)
+        in_app = {row.player_id for row in app}
+        options = []
+        for p in (await session.scalars(select(Player).filter_by(tenant_id=tenant_id, active=True))).all():
+            if (
+                p.id not in in_app
+                and await roster.roster_status(session, tenant_id, p.id, entry.id) == "in_roster"
+            ):
+                options.append((await polls.player_name(session, tenant_id, p, entry), p.id))
+        options.sort(key=lambda t: (t[0].lower().replace("ё", "е"), t[1]))
+        title = "Кого добавить в заявку на игру? (только заявленные на сезон)"
+    await channel.answer_button(press, "")
+    back = Button("← К сводке", {"a": "dg", **ref}, "secondary")
+    if not options:
+        return ("В заявке на игру никого нет." if a == "ar" else "Добавить некого."), [[back]]
+    page = int(d.get("pg", 0))
+    chunk = options[page * APP_PAGE : (page + 1) * APP_PAGE]
+    rows = [[Button(_label(name), {"a": a + "1", **ref, "p": pid})] for name, pid in chunk]
+    last = [back]
+    if (page + 1) * APP_PAGE < len(options):
+        last.append(Button("Далее →", {"a": a, **ref, "pg": page + 1}))
+    rows.append(last)
+    return title, rows
+
+
+async def _edit_application(
+    session: AsyncSession, tenant_id: int, match_id: int, player_id: int, by_id: int, *, removed: bool
+) -> None:
+    row = (
+        await session.execute(
+            select(ApplicationEntry).filter_by(tenant_id=tenant_id, match_id=match_id, player_id=player_id)
+        )
+    ).scalar_one_or_none()
+    if row is None:
+        row = ApplicationEntry(tenant_id=tenant_id, match_id=match_id, player_id=player_id, source="captain")
+        session.add(row)
+    row.source, row.removed_by_captain, row.changed_by_player_id = "captain", removed, by_id
+
+
 async def on_button(
     session: AsyncSession, channel: ChannelAdapter, tenant_id: int, me: Player, press: ButtonPress
 ):
@@ -426,17 +548,22 @@ async def on_button(
     if a == "lineup":  # «Обновить» под составом — перерисовываем то же сообщение
         await channel.answer_button(press, "Обновлено")
         return await lineup(session, tenant_id)
-    if a == "dg":  # «Обновить» под сводкой за 24 ч / 2 ч
+    if a in ("dg", "aa", "aa1", "ar", "ar1"):  # сводка за 24 ч / 2 ч и правка заявки на игру
         match = await session.get(Match, d.get("m"))
         try:
             if match is None:
                 raise polls.PollError("нет матча")
-            result = await weekly.digest_message(session, tenant_id, match, str(d.get("k", "digest24")))
+            return await _application_button(session, channel, tenant_id, me, press, match, d)
         except polls.PollError:  # чужой (другой команды сервиса) или удалённый матч
             await channel.answer_button(press, "Матч не найден")
             return None
-        await channel.answer_button(press, "Обновлено")
-        return result
+    if a == "num":  # выбор игрока для «номер …», когда нашлось несколько
+        if await roster.roster_status(session, tenant_id, int(d["p"]), int(d["e"])) != "in_roster":
+            await channel.answer_button(press, "Игрок не заявлен на сезон в этой лиге")
+            return None
+        await set_number(session, tenant_id, int(d["p"]), int(d["e"]), str(d["n"]))
+        await channel.answer_button(press, f"Номер записан: №{d['n']}")
+        return f"Номер записан: №{d['n']}. В заявку на игру пойдёт он.", []
     if a == "lall":
         n = await roster.confirm_all_unambiguous(session, tenant_id, me.id)
         await session.commit()
