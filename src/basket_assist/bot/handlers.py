@@ -31,7 +31,8 @@ WELCOME_DM = (
 )
 DM_COMMANDS = "Команды: «игры» — ближайшие матчи, «мои данные» — ваша привязка к заявкам на сезон."
 LEADER_COMMANDS = (
-    "Для руководителей: «сопоставление» — привязка игроков к заявкам на сезон, «права» — и. о. капитана."
+    "Для руководителей: «игроки» — все игроки и их статусы по лигам, «сопоставление» — привязка игроков "
+    "к заявкам на сезон, «исправить <имя>» — изменить привязку, «права» — и. о. капитана."
 )
 
 
@@ -138,6 +139,8 @@ async def _my_data(session, channel: ChannelAdapter, tenant_id: int, player_id: 
             lines.append(f"• {label}: {r.last_name} {r.first_name}{num}")
         elif status == "not_in_roster":
             lines.append(f"• {label}: нет в заявке на сезон")
+        elif status == "not_in_league":
+            lines.append(f"• {label}: не играет в этой лиге")
         else:
             lines.append(f"• {label}: ещё не сопоставлены")
     return "\n".join(lines), [[Button("Это ошибка", {"a": "err"}, "negative")]]
@@ -161,10 +164,14 @@ async def _dm(session, channel: ChannelAdapter, tenant_id: int, event: IncomingM
         await channel.send(event.peer_id, text, buttons)
     elif cmd in ("сопоставление", "сопоставить") and is_leader:
         await channel.send(event.peer_id, *await leader.matching_summary(session, tenant_id))
+    elif cmd in ("игроки", "список") and is_leader:
+        for text in await leader.players_list(session, tenant_id):
+            await channel.send(event.peer_id, text)
     elif cmd.startswith("исправить") and is_leader:
         query = event.text.strip()[len("исправить") :].strip()
-        if not query:
-            await channel.send(event.peer_id, "Напишите «исправить <имя или фамилия>».")
+        if not query:  # без имени — общий список, из него видно, кого исправлять
+            for text in await leader.players_list(session, tenant_id):
+                await channel.send(event.peer_id, text)
         else:
             await channel.send(event.peer_id, *await leader.find_players(session, tenant_id, query))
     elif cmd in ("права", "и. о.", "ио") and is_leader:

@@ -226,22 +226,27 @@ async def _signal_not_in_roster(
     ):
         return
     await session.commit()
-    what = "нет в заявке на сезон" if status == "not_in_roster" else "не сопоставлен с заявкой на сезон"
-    await notify.dm(
-        session,
-        channel,
-        tenant_id,
-        player.id,
-        f"Вы отметились «Буду» на матч {ours.name} — {rival.name} ({league.name}), но вас {what}. "
-        "Без заявки на сезон сыграть не получится — обратитесь к капитану.",
-    )
+    match_text = f"{ours.name} — {rival.name} ({league.name})"
+    if status == "not_in_league":
+        to_player = (
+            f"Вы отметились «Буду» на матч {match_text}, но у вас отметка «не играет в этой лиге». "
+            "Если хотите играть — обратитесь к капитану."
+        )
+        to_leader = (
+            f"⚠️ {player.display_name} отметился «Буду» на {match_text}, но отмечен «не играет в этой лиге». "
+            f"Если он будет играть — дозаявите и исправьте отметку («исправить {player.display_name}»)."
+        )
+    else:
+        what = "нет в заявке на сезон" if status == "not_in_roster" else "не сопоставлен с заявкой на сезон"
+        to_player = (
+            f"Вы отметились «Буду» на матч {match_text}, но вас {what}. "
+            "Без заявки на сезон сыграть не получится — обратитесь к капитану."
+        )
+        to_leader = (
+            f"⚠️ {player.display_name} отметился «Буду» на {match_text}, "
+            f"но {what}. Нужно дозаявить или сопоставить («сопоставление»)."
+        )
+    await notify.dm(session, channel, tenant_id, player.id, to_player)
     for lead in await leaders.leaders(session, tenant_id):
         if lead.id != player.id:
-            await notify.dm(
-                session,
-                channel,
-                tenant_id,
-                lead.id,
-                f"⚠️ {player.display_name} отметился «Буду» на {ours.name} — {rival.name} ({league.name}), "
-                f"но {what}. Нужно дозаявить или сопоставить («сопоставление»).",
-            )
+            await notify.dm(session, channel, tenant_id, lead.id, to_leader)

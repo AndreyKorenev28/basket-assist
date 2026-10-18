@@ -22,7 +22,7 @@ from basket_assist.storage.tables import (
     utcnow,
 )
 
-DONE = (RosterLinkStatus.CONFIRMED, RosterLinkStatus.NOT_IN_ROSTER)
+DONE = (RosterLinkStatus.CONFIRMED, RosterLinkStatus.NOT_IN_ROSTER, RosterLinkStatus.NOT_IN_LEAGUE)
 
 
 class MatchConflict(Exception):
@@ -128,7 +128,11 @@ async def queue(session: AsyncSession, tenant_id: int) -> list[QueueItem]:
     ).all()
     players = (
         await session.scalars(
-            select(Player).filter_by(tenant_id=tenant_id, active=True).order_by(Player.display_name)
+            select(Player)
+            .filter_by(tenant_id=tenant_id, active=True)
+            .order_by(
+                Player.display_name, Player.id
+            )  # стабильный порядок — на нём держится «дальше по очереди»
         )
     ).all()
     out = []
@@ -187,6 +191,15 @@ async def mark_not_in_roster(
     )
 
 
+async def mark_not_in_league(
+    session: AsyncSession, tenant_id: int, player_id: int, entry_id: int, by_player_id: int
+) -> RosterLink:
+    """Игрок команды, но в этом выступлении не играет и не должен — дозаявлять не нужно."""
+    return await _set_link(
+        session, tenant_id, player_id, entry_id, RosterLinkStatus.NOT_IN_LEAGUE, None, by_player_id
+    )
+
+
 async def mark_not_team_player(session: AsyncSession, tenant_id: int, player_id: int) -> None:
     player = await session.get(Player, player_id)
     if player is not None and player.tenant_id == tenant_id:
@@ -215,11 +228,14 @@ async def confirm_all_unambiguous(session: AsyncSession, tenant_id: int, by_play
 
 
 async def roster_status(session: AsyncSession, tenant_id: int, player_id: int, entry_id: int) -> str:
-    """in_roster / not_in_roster / unmatched (domain.md)."""
+    """in_roster / not_in_roster / not_in_league / unmatched (domain.md)."""
     link = await _link(session, tenant_id, player_id, entry_id)
     if link is None or link.status not in DONE:
         return "unmatched"
-    return "in_roster" if link.status == RosterLinkStatus.CONFIRMED else "not_in_roster"
+    return {
+        RosterLinkStatus.CONFIRMED: "in_roster",
+        RosterLinkStatus.NOT_IN_LEAGUE: "not_in_league",
+    }.get(link.status, "not_in_roster")
 
 
 async def roster_entry_for(

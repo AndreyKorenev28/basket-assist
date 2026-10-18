@@ -56,6 +56,7 @@ class RosterLinkStatus(StrEnum):
     CONFIRMED = "confirmed"
     REJECTED = "rejected"
     NOT_IN_ROSTER = "not_in_roster"  # руководитель отметил «нет в заявке на сезон»
+    NOT_IN_LEAGUE = "not_in_league"  # руководитель отметил «не играет в этой лиге» (дозаявлять не нужно)
 
 
 class ApplicationSource(StrEnum):

@@ -81,7 +81,7 @@ basket-assist/
 | `chat` | id, tenant_id, channel (`vk`), peer_id, is_admin |
 | `player` | id, tenant_id, display_name, role (`player`/`captain`/`vice_captain`), active |
 | `messenger_account` | id, tenant_id, player_id, channel, external_user_id, dm_allowed, connected_at |
-| `roster_link` | id, tenant_id, player_id, season_roster_entry_id, status (`suggested`/`confirmed`/`rejected`/`not_in_roster`), confirmed_by, confirmed_at, number_override |
+| `roster_link` | id, tenant_id, player_id, season_roster_entry_id, status (`suggested`/`confirmed`/`rejected`/`not_in_roster`/`not_in_league`), confirmed_by, confirmed_at, number_override |
 | `permission_grant` | id, tenant_id, player_id, permission (`acting_captain`), suppress_digests_for_grantor (bool), granted_by, granted_at, valid_until (null = до отмены), revoked_at |
 | `attendance` | id, tenant_id, match_id, player_id, vote (`going`/`not_going`), updated_at |
 | `application_entry` | id, tenant_id, match_id, player_id, source (`poll`/`added_by_captain`), removed_by_captain, updated_at |

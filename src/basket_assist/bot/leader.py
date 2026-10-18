@@ -11,7 +11,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from basket_assist.channels.base import Button, ButtonPress, ChannelAdapter
 from basket_assist.services import leaders, notify, roster
-from basket_assist.storage.tables import Chat, Player, RosterLink, SeasonRosterEntry, TeamEntry, utcnow
+from basket_assist.storage.tables import (
+    Chat,
+    League,
+    LeagueTeam,
+    MessengerAccount,
+    Player,
+    RosterLink,
+    SeasonRosterEntry,
+    TeamEntry,
+    utcnow,
+)
 
 PAGE = 6
 DURATIONS = {3: "3 дня", 7: "7 дней", 14: "14 дней", 0: "До отмены"}
@@ -43,18 +53,38 @@ async def matching_summary(session: AsyncSession, tenant_id: int) -> tuple[str, 
 
 
 async def matching_card(
-    session: AsyncSession, tenant_id: int, after: tuple[int, int] | None = None
+    session: AsyncSession,
+    tenant_id: int,
+    after: tuple[int, int] | None = None,
+    *,
+    same: bool = False,
 ) -> tuple[str, list[list[Button]]]:
-    """Карточка первого (или следующего после `after`) элемента очереди."""
+    """Карточка первого элемента очереди или следующего после `after` (игрок, выступление).
+
+    `same=True` — показать сам `after`, если он ещё в очереди (отмена, конфликт).
+
+    Очередь идёт по кругу: после последнего — снова с начала. Поэтому пропущенные
+    возвращаются только после всех остальных, а `after` может быть уже решённым элементом.
+    """
     items = await roster.queue(session, tenant_id)
-    if after is not None:
-        keys = [(i.player.id, i.entry.id) for i in items]
-        if after in keys:
-            items = items[keys.index(after) + 1 :]
     if not items:
         return "Очередь сопоставления пуста.", []
-    text, rows = await _card(session, tenant_id, items[0])
+    current = items[0]
+    if after is not None:
+        player, entry = await session.get(Player, after[0]), await session.get(TeamEntry, after[1])
+        if player is not None and entry is not None:
+            pos = _queue_key(player, entry.id)
+            current = next(
+                (i for i in items if (k := _queue_key(i.player, i.entry.id)) > pos or (same and k == pos)),
+                items[0],
+            )
+    text, rows = await _card(session, tenant_id, current)
     return f"{text}\n\nОсталось в очереди: {len(items)}", rows
+
+
+def _queue_key(player: Player, entry_id: int) -> tuple:
+    """Тот же порядок, что в roster.queue: выступление, имя, id."""
+    return (entry_id, player.display_name, player.id)
 
 
 async def item_card(session: AsyncSession, tenant_id: int, player_id: int, entry_id: int):
@@ -72,6 +102,7 @@ async def item_card(session: AsyncSession, tenant_id: int, player_id: int, entry
     now = {
         "in_roster": "сопоставлен",
         "not_in_roster": "нет в заявке на сезон",
+        "not_in_league": "не играет в этой лиге",
         "unmatched": "не сопоставлен",
     }[status]
     if status == "in_roster":
@@ -103,6 +134,81 @@ async def find_players(session: AsyncSession, tenant_id: int, query: str) -> tup
     return "Кого исправить?", rows
 
 
+PLAYERS_MARKS = {"in_roster": "✅", "not_in_roster": "⚠️", "not_in_league": "➖", "unmatched": "❓"}
+PLAYERS_LEGEND = (
+    "✅ сопоставлен (№ из заявки на сезон) · ⚠️ нет в заявке — нужно дозаявить · "
+    "➖ не играет в лиге · ❓ не сопоставлен · 🔕 не открыл личку с ботом"
+)
+MESSAGE_LIMIT = 3500  # VK режет сообщения длиннее 4096 символов
+FIGURE_SPACE = " "  # пробел шириной в цифру — выравнивает номера в пропорциональном шрифте
+GAP = FIGURE_SPACE * 2
+
+
+async def players_list(session: AsyncSession, tenant_id: int) -> list[str]:
+    """«игроки»: все игроки команды со статусами по каждой лиге. Список сообщений (длинный — частями)."""
+    entries = (
+        await session.scalars(select(TeamEntry).filter_by(tenant_id=tenant_id).order_by(TeamEntry.id))
+    ).all()
+    leagues = [(e, await _league_name(session, e)) for e in entries]
+    players = (
+        await session.scalars(
+            select(Player).filter_by(tenant_id=tenant_id).order_by(Player.display_name, Player.id)
+        )
+    ).all()
+    dm_open = set(
+        (
+            await session.scalars(
+                select(MessengerAccount.player_id).filter_by(tenant_id=tenant_id, dm_allowed=True)
+            )
+        ).all()
+    )
+    active = [p for p in players if p.active]
+    # Сначала собираем ячейки (значок, номер), потом выравниваем: в VK шрифт не моноширинный,
+    # поэтому ровными делаем только начало строки — значки и номера, добитые пробелом шириной в цифру.
+    table: list[tuple[list[tuple[str, str]], str]] = []
+    for p in active:
+        cells = []
+        for entry, _ in leagues:
+            status = await roster.roster_status(session, tenant_id, p.id, entry.id)
+            number = ""
+            if status == "in_roster":
+                r = await roster.roster_entry_for(session, tenant_id, p.id, entry.id)
+                number = r.number if r is not None and r.number else ""
+            cells.append((PLAYERS_MARKS[status], str(number)))
+        dm = "" if p.id in dm_open else " 🔕"
+        table.append((cells, f"{p.display_name}{dm}"))
+    width = max((len(n) for cells, _ in table for _, n in cells), default=0)
+    lines = [
+        f"Игроки команды: {len(active)}",
+        PLAYERS_LEGEND,
+        "Колонки слева направо: " + " · ".join(name for _, name in leagues),
+        "",
+    ]
+    for cells, name in table:
+        row = GAP.join(mark + FIGURE_SPACE + num.rjust(width, FIGURE_SPACE) for mark, num in cells)
+        lines.append(f"{row}{GAP}{name}")
+    others = [p.display_name for p in players if not p.active]
+    if others:
+        lines += ["", f"Не игроки команды ({len(others)}): " + ", ".join(others)]
+    lines += ["", "Изменить: «исправить <имя или фамилия>»."]
+    return _split(lines)
+
+
+def _split(lines: list[str]) -> list[str]:
+    chunks, cur = [], ""
+    for line in lines:
+        if cur and len(cur) + len(line) + 1 > MESSAGE_LIMIT:
+            chunks.append(cur)
+            cur = ""
+        cur = f"{cur}\n{line}" if cur else line
+    return [*chunks, cur] if cur else chunks
+
+
+async def _league_name(session: AsyncSession, entry: TeamEntry) -> str:
+    team = await session.get(LeagueTeam, entry.league_team_id)
+    return (await session.get(League, team.league_id)).name
+
+
 async def player_overview(session: AsyncSession, tenant_id: int, player_id: int):
     player = await session.get(Player, player_id)
     lines = [f"👤 {player.display_name}" + ("" if player.active else " — отмечен «не игрок команды»")]
@@ -121,6 +227,7 @@ def status_text(status: str) -> str:
     return {
         "in_roster": "сопоставлен",
         "not_in_roster": "нет в заявке на сезон",
+        "not_in_league": "не играет в этой лиге",
         "unmatched": "не сопоставлен",
     }[status]
 
@@ -142,10 +249,15 @@ async def _card(session: AsyncSession, tenant_id: int, item: roster.QueueItem):
     rows.append(
         [
             Button("Нет в заявке", {"a": "ln", "p": p, "e": e}),
-            Button("Не игрок команды", {"a": "lx", "p": p, "e": e}, "negative"),
+            Button("Не играет в лиге", {"a": "lnl", "p": p, "e": e}),
         ]
     )
-    rows.append([Button("Пропустить", {"a": "lskip", "p": p, "e": e})])
+    rows.append(
+        [
+            Button("Не игрок команды", {"a": "lx", "p": p, "e": e}, "negative"),
+            Button("Пропустить", {"a": "lskip", "p": p, "e": e}),
+        ]
+    )
     return "\n".join(lines), rows
 
 
@@ -250,9 +362,12 @@ async def on_button(
             await session.commit()
         await channel.answer_button(press, "Возвращён в команду")
         return await player_overview(session, tenant_id, d["p"])
-    if a in ("lnext", "lcard"):
+    if a == "lnext":
         await channel.answer_button(press, "")
         return await matching_card(session, tenant_id)
+    if a == "lcard":
+        await channel.answer_button(press, "")
+        return await matching_card(session, tenant_id, after=(d["p"], d["e"]), same=True)
     if a == "lskip":
         await channel.answer_button(press, "Пропущено")
         return await matching_card(session, tenant_id, after=(d["p"], d["e"]))
@@ -264,29 +379,39 @@ async def on_button(
             await roster.confirm(session, tenant_id, d["p"], d["e"], d["r"], me.id)
         except roster.MatchConflict:
             await channel.answer_button(press, "Эта строка уже связана с другим игроком")
-            return await matching_card(session, tenant_id)
+            return await matching_card(session, tenant_id, after=(d["p"], d["e"]), same=True)
         await session.commit()
         await channel.answer_button(press, "Связь подтверждена")
-        return await matching_card(session, tenant_id)
+        return await matching_card(session, tenant_id, after=(d["p"], d["e"]))
     if a == "ln":
         await roster.mark_not_in_roster(session, tenant_id, d["p"], d["e"], me.id)
         await session.commit()
         entry = await session.get(TeamEntry, d["e"])
         label = await roster.entry_label(session, entry)
-        await notify.dm(
-            session,
-            channel,
-            tenant_id,
-            d["p"],
-            f"Вас нет в заявке на сезон: {label}. Чтобы играть, нужно дозаявиться — обратитесь к капитану.",
-        )
+        # Игроку здесь не пишем: его предупреждают, только когда он отметит «Буду» (polls).
+        who = await session.get(Player, d["p"])
+        for lead in await leaders.leaders(session, tenant_id):
+            if lead.id != me.id:
+                await notify.dm(
+                    session,
+                    channel,
+                    tenant_id,
+                    lead.id,
+                    f"Отметка от {me.display_name}: {who.display_name} — нет в заявке на сезон ({label}). "
+                    "Нужно дозаявить.",
+                )
         await channel.answer_button(press, "Отмечено: нет в заявке")
-        return await matching_card(session, tenant_id)
+        return await matching_card(session, tenant_id, after=(d["p"], d["e"]))
+    if a == "lnl":  # дозаявлять не нужно — без уведомлений
+        await roster.mark_not_in_league(session, tenant_id, d["p"], d["e"], me.id)
+        await session.commit()
+        await channel.answer_button(press, "Отмечено: не играет в этой лиге")
+        return await matching_card(session, tenant_id, after=(d["p"], d["e"]))
     if a == "lx":
         await roster.mark_not_team_player(session, tenant_id, d["p"])
         await session.commit()
         await channel.answer_button(press, "Отмечено: не игрок команды")
-        return await matching_card(session, tenant_id)
+        return await matching_card(session, tenant_id, after=(d["p"], d["e"]))
 
     # передача прав — только капитан и заместитель
     if a in ("gm", "g1", "g2", "g3", "gr") and not await leaders.is_captain_or_vice(session, me.id):
