@@ -19,7 +19,7 @@ from sqlalchemy import func, select
 from basket_assist import app
 from basket_assist.config import Settings, load_tenant_config
 from basket_assist.services.roster import import_chat_members
-from basket_assist.services.schedule import format_when, upcoming_matches
+from basket_assist.services.schedule import format_when, teams, upcoming_matches
 from basket_assist.services.sync import sync_team_entry
 from basket_assist.sources import make_adapter
 from basket_assist.sources.base import SourceError, make_client
@@ -109,7 +109,7 @@ async def _show(session, tenant_id: int, entries) -> None:
     print("\nБлижайшие матчи (ID — для --post-poll):" if items else "\nБлижайших матчей на сайтах лиг нет")
     for league, ours, rival, m in items:
         print(
-            f"  [{m.id}] {format_when(m, league)} — {league.name}: {ours.name} — {rival.name}; {m.venue_name or ''}"
+            f"  [{m.id}] {format_when(m, league)} — {league.name}: {teams(m, ours, rival)}; {m.venue_name or ''}"
         )
 
 

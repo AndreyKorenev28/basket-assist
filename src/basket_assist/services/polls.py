@@ -18,6 +18,7 @@ from basket_assist.channels.base import Button, ButtonPress, ChannelAdapter, Mes
 from basket_assist.domain.models import MatchStatus, Vote
 from basket_assist.services import leaders, notify, roster
 from basket_assist.services.players import get_or_create_player
+from basket_assist.services.schedule import kit_hint, teams
 from basket_assist.storage.tables import (
     Attendance,
     Chat,
@@ -100,9 +101,10 @@ async def render(session: AsyncSession, match: Match, tenant_id: int) -> str:
         by_vote[vote].append(await player_name(session, tenant_id, player, entry))
 
     lines = [
-        f"🏀 {league.name}: {ours.name} — {rival.name}",
+        f"🏀 {league.name}: {teams(match, ours, rival)}",
         f"📅 {when}",
         f"📍 {place}",
+        kit_hint(match, ours),
         "",
         "Кто идёт? Отметьтесь кнопкой, ответ можно поменять до начала игры.",
         "",
@@ -226,7 +228,7 @@ async def _signal_not_in_roster(
     ):
         return
     await session.commit()
-    match_text = f"{ours.name} — {rival.name} ({league.name})"
+    match_text = f"{teams(match, ours, rival)} ({league.name})"
     if status == "not_in_league":
         to_player = (
             f"Вы отметились «Буду» на матч {match_text}, но у вас отметка «не играет в этой лиге». "

@@ -46,6 +46,17 @@ async def upcoming_matches(session: AsyncSession, tenant_id: int, limit: int = 3
     return sorted(out, key=lambda x: (x[3].match_date, x[3].start_at or datetime.max))
 
 
+def teams(match: Match, ours: LeagueTeam, rival: LeagueTeam) -> str:
+    """Команды в порядке календаря лиги: слева хозяин (в API — home), как на сайте."""
+    home, away = (ours, rival) if match.home_team_id == ours.id else (rival, ours)
+    return f"{home.name} — {away.name}"
+
+
+def kit_hint(match: Match, ours: LeagueTeam) -> str:
+    """Цвет формы: у команды слева в календаре — светлая, справа — тёмная (domain.md, «Цвет формы»)."""
+    return "👕 Наша форма: " + ("светлая" if match.home_team_id == ours.id else "тёмная")
+
+
 def format_when(match: Match, league: League) -> str:
     if match.start_at:
         local = match.start_at.replace(tzinfo=UTC).astimezone(ZoneInfo(league.timezone))
@@ -67,7 +78,8 @@ async def upcoming_text(session: AsyncSession, tenant_id: int) -> str:
             league, ours, rival, m = nearest[entry.league_team_id]
             place = ", ".join(x for x in (m.venue_name, m.venue_address) if x) or "зал пока не указан"
             blocks.append(
-                f"🏀 {league.name}: {ours.name} — {rival.name}\n📅 {format_when(m, league)}\n📍 {place}"
+                f"🏀 {league.name}: {teams(m, ours, rival)}\n📅 {format_when(m, league)}\n📍 {place}\n"
+                f"{kit_hint(m, ours)}"
             )
         else:
             ours = await session.get(LeagueTeam, entry.league_team_id)

@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from basket_assist.domain.models import Vote
 from basket_assist.services import polls, roster
-from basket_assist.services.schedule import format_when, upcoming_matches
+from basket_assist.services.schedule import format_when, kit_hint, teams, upcoming_matches
 from basket_assist.storage.tables import Attendance, League, LeagueTeam, MessengerAccount, Player, TeamEntry
 
 NOT_ELIGIBLE = {
@@ -48,7 +48,11 @@ async def lineup_text(session: AsyncSession, tenant_id: int) -> str:
 
 async def _match_block(session: AsyncSession, tenant_id: int, league, ours, rival, match) -> str:
     _, _, _, entry = await polls._context(session, match, tenant_id)
-    head = [f"🏀 {league.name}: {ours.name} — {rival.name}", f"📅 {format_when(match, league)}"]
+    head = [
+        f"🏀 {league.name}: {teams(match, ours, rival)}",
+        f"📅 {format_when(match, league)}",
+        kit_hint(match, ours),
+    ]
     if match.start_at is None:
         return "\n".join([*head, "Время не назначено — опрос не запускается, свяжитесь с лигой."])
     if await polls._current_poll(session, tenant_id, match.id) is None:
