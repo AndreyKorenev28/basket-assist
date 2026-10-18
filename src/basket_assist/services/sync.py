@@ -125,8 +125,14 @@ async def _sync_matches(
                 m.match_date, m.start_at = dto.match_date, dto.start_at
                 m.status = MatchStatus.RESCHEDULED
                 m.time_status = TimeStatus.TIME_SET if dto.start_at else TimeStatus.DATE_ONLY
+                m.time_source = None  # перенос даты: введённое вручную время больше не относится к матчу
                 changed = True
+            elif m.time_source == "manual" and dto.start_at is None:
+                pass  # на сайте времени ещё нет — оставляем время, введённое руководителем
+            elif m.time_source == "manual" and dto.start_at == m.start_at:
+                m.time_source = None  # лига подтвердила то же время — дальше источник сайт
             elif m.start_at != dto.start_at:
+                m.time_source = None  # время с сайта главнее ручного
                 kind = ChangeKind.TIME_SET if m.start_at is None else ChangeKind.TIME_CHANGED
                 _change(session, result, kind, {"was": m.start_at, "now": dto.start_at}, match_id=m.id)
                 m.time_status = (

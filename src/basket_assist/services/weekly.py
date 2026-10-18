@@ -158,7 +158,9 @@ async def _warn_no_time(
     _, ours, rival, _ = await polls._context(session, match, tenant_id)
     text = (
         f"⏰ Время матча не назначено: {teams(match, ours, rival)} ({league.name}), {format_when(match, league)}.\n"
-        "Опрос не запускается, пока лиги нет времени. Свяжитесь с лигой. Напомню завтра, если ничего не изменится."
+        "Опрос не запускается, пока у матча нет времени. Свяжитесь с лигой. "
+        f"Если лига сообщила время, а на сайте его нет — напишите «время {match.match_date:%d.%m} 18:30» "
+        "(со своим временем). Напомню завтра, если ничего не изменится."
     )
     for lead in await leaders.digest_recipients(session, tenant_id):
         await notify.dm(session, channel, tenant_id, lead.id, text)
@@ -198,8 +200,10 @@ async def _send_digests(
         if not (match.start_at - before <= now_utc < match.start_at):
             continue
         # бот был выключен и проснулся в последние 2 ч: суточную только отмечаем, хватит финальной
+        # (отдельный ключ: «digest24» значит, что суточная правда ушла — от неё считаются 🆕 и изменения)
         stale = kind == "digest24" and now_utc >= match.start_at - DIGESTS["digest2"][0]
-        if not await notify.once(session, tenant_id, kind, str(match.id), match_id=match.id):
+        key_kind = "digest24_skipped" if stale else kind
+        if not await notify.once(session, tenant_id, key_kind, str(match.id), match_id=match.id):
             continue
         await session.commit()
         if not stale:
@@ -223,7 +227,9 @@ async def digest_message(
 ) -> tuple[str, list[list[Button]]]:
     """Текст сводки и кнопки: [Обновить], [Добавить в заявку] [Убрать из заявки] (leader.on_button)."""
     title = DIGESTS.get(kind, DIGESTS["digest24"])[1]
-    text = await digests.match_digest(session, tenant_id, match, title)
+    # финальная: изменения после сводки за сутки отмечены (если суточная была)
+    since = await notify.sent_at(session, tenant_id, "digest24", str(match.id)) if kind == "digest2" else None
+    text = await digests.match_digest(session, tenant_id, match, title, since)
     text += f"\n\n{NUMBER_HINT}"
     ref = {"m": match.id, "k": kind}
     return text, [
@@ -236,7 +242,11 @@ async def vote_changed(
     session: AsyncSession, channel: ChannelAdapter, tenant_id: int, match: Match, player: Player, label: str
 ) -> None:
     """После сводки за 24 ч — каждое изменение ответа руководителям (кроме самого проголосовавшего)."""
-    if not await notify.was_sent(session, tenant_id, "digest24", str(match.id)):
+    key = str(match.id)
+    if not (
+        await notify.was_sent(session, tenant_id, "digest24", key)
+        or await notify.was_sent(session, tenant_id, "digest2", key)  # суточной не было — после финальной
+    ):
         return
     if match.start_at is None or match.start_at <= datetime.now(UTC).replace(tzinfo=None):
         return

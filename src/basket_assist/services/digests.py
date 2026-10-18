@@ -24,6 +24,7 @@ from basket_assist.storage.tables import (
     TeamEntry,
 )
 
+NEW = "🆕 "  # отметка изменений с прошлой сводки (финальная за 2 ч)
 NOT_ELIGIBLE = {
     "not_in_roster": "нет в заявке на сезон",
     "not_in_league": "не играет в этой лиге",
@@ -56,7 +57,10 @@ async def lineup_text(session: AsyncSession, tenant_id: int) -> str:
     return "\n\n".join(blocks) + f"\n\nНа {now:%d.%m %H:%M}"
 
 
-async def _match_block(session: AsyncSession, tenant_id: int, league, ours, rival, match) -> str:
+async def _match_block(
+    session: AsyncSession, tenant_id: int, league, ours, rival, match, since: datetime | None = None
+) -> str:
+    """since — время прошлой сводки: изменившиеся после неё ответы и правки отмечены NEW."""
     _, _, _, entry = await polls._context(session, match, tenant_id)
     head = [
         f"🏀 {league.name}: {teams(match, ours, rival)}",
@@ -90,43 +94,57 @@ async def _match_block(session: AsyncSession, tenant_id: int, league, ours, riva
     in_app = {row.player_id for row in app}
     removed = await _removed_ids(session, tenant_id, match.id)
 
+    changed = await _changed_since(session, tenant_id, match.id, since) if since else set()
+
+    def mark(pid: int) -> str:
+        return NEW if pid in changed else ""
+
     going_bad, going_removed, not_going, silent = [], [], [], []
     for p in players:
         if p.id in in_app:
             continue  # в заявке на игру — выводится ниже из `app`
         status = await roster.roster_status(session, tenant_id, p.id, entry.id)
         name = await polls.player_name(session, tenant_id, p, entry)
+        new = mark(p.id)  # 🆕 всегда в начале строки
         vote = votes.get(p.id)
         if vote == Vote.GOING:
             if p.id in removed:
-                going_removed.append(f"✖️ {name} — убран из заявки руководителем")
+                going_removed.append(f"{new}✖️ {name} — убран из заявки руководителем")
             else:
-                going_bad.append(f"⚠️ {name} — {NOT_ELIGIBLE[status]}")
+                going_bad.append(f"{new}⚠️ {name} — {NOT_ELIGIBLE[status]}")
         elif vote == Vote.NOT_GOING:
-            not_going.append(name)
+            not_going.append(new + name)
         elif p.active and status == "in_roster":  # ждём ответа только от заявленных в этой лиге
             silent.append(name + ("" if p.id in dm_open else " 🔕"))
 
     voted = [row for row in app if not row.added]
     added = [row for row in app if row.added]
     lines = [*head, ""]
+    if since is not None:
+        lines += [
+            f"Изменилось с прошлой сводки: {len(changed)}"
+            + (f" (отмечены {NEW.strip()})" if changed else ""),
+            "",
+        ]
     lines.append(f"Буду ({len(voted) + len(going_bad) + len(going_removed)}):")
-    lines += [f"  {row.line_with_sign()}" for row in voted]
+    lines += [f"  {mark(row.player_id)}{row.line_with_sign()}" for row in voted]
     lines += [f"  {line}" for line in sorted(going_bad + going_removed, key=_sort_key)]
     if added:
         lines.append(f"Добавлены руководителем ({len(added)}):")
-        lines += [f"  {row.line_with_sign()}" for row in added]
+        lines += [f"  {mark(row.player_id)}{row.line_with_sign()}" for row in added]
     lines.append(_size_note(len(app), league.min_players, league.max_players))
     lines.append(f"Не буду ({len(not_going)}): " + (", ".join(sorted(not_going, key=_sort_key)) or "—"))
     lines.append(f"Не ответили ({len(silent)}): " + (", ".join(sorted(silent, key=_sort_key)) or "—"))
     return "\n".join(lines)
 
 
-async def match_digest(session: AsyncSession, tenant_id: int, match: Match, title: str) -> str:
+async def match_digest(
+    session: AsyncSession, tenant_id: int, match: Match, title: str, since: datetime | None = None
+) -> str:
     """Сводка руководителю по одному матчу (за 24 ч / за 2 ч): заголовок + состав на матч."""
     league, ours, rival, _ = await polls._context(session, match, tenant_id)
     now = datetime.now(UTC).astimezone(ZoneInfo(league.timezone))
-    block = await _match_block(session, tenant_id, league, ours, rival, match)
+    block = await _match_block(session, tenant_id, league, ours, rival, match, since)
     return f"{title}\n\n{block}\n\nНа {now:%d.%m %H:%M}"
 
 
@@ -201,6 +219,23 @@ async def application_text(session: AsyncSession, tenant_id: int, match: Match) 
     return "\n".join(row.line() for row in await application(session, tenant_id, match)) or None
 
 
+async def _changed_since(session: AsyncSession, tenant_id: int, match_id: int, since: datetime) -> set[int]:
+    """Игроки, чей ответ или место в заявке на игру изменились после `since` (UTC без tzinfo)."""
+    voted = await session.scalars(
+        select(Attendance.player_id).where(
+            Attendance.tenant_id == tenant_id, Attendance.match_id == match_id, Attendance.updated_at > since
+        )
+    )
+    edited = await session.scalars(
+        select(ApplicationEntry.player_id).where(
+            ApplicationEntry.tenant_id == tenant_id,
+            ApplicationEntry.match_id == match_id,
+            ApplicationEntry.updated_at > since,
+        )
+    )
+    return set(voted.all()) | set(edited.all())
+
+
 def _size_note(n: int, lo: int, hi: int) -> str:
     """Проверка размера заявки на игру: в неё идут только заявленные на сезон."""
     note = f"В заявку на игру: {n} (нужно {lo}–{hi})"
@@ -221,4 +256,11 @@ async def _number(session: AsyncSession, tenant_id: int, player_id: int, entry: 
 
 
 def _sort_key(text: str) -> str:
-    return text.removeprefix("⚠️ ").removeprefix("✖️ ").lower().replace("ё", "е")
+    return (
+        text.removeprefix(NEW)
+        .removeprefix("⚠️ ")
+        .removeprefix("✖️ ")
+        .removeprefix(NEW)
+        .lower()
+        .replace("ё", "е")
+    )

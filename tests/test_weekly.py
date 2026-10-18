@@ -334,7 +334,12 @@ async def test_woke_up_late_only_final_digest(session, tenant_cfg):
     [(digest, buttons)] = _to(ch, CAPTAIN)  # без «Буду» — заявки вторым сообщением нет
     assert digest.startswith(D2) and weekly.APPLICATION_HINT not in digest
     assert buttons == _dg_buttons(m, "digest2")
-    assert await notify.was_sent(session, tenant.id, "digest24", str(m.id)), "суточная помечена"
+    assert await notify.was_sent(session, tenant.id, "digest24_skipped", str(m.id)), (
+        "суточная помечена пропущенной"
+    )
+    assert not await notify.was_sent(session, tenant.id, "digest24", str(m.id)), (
+        "«digest24» — только если ушла"
+    )
     await weekly.tick(session, ch, now=START - timedelta(minutes=30))
     assert len(_to(ch, CAPTAIN)) == 1
 

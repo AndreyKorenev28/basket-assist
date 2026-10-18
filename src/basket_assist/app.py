@@ -6,7 +6,7 @@ import logging
 from sqlalchemy import select
 
 from basket_assist.bot.handlers import handle
-from basket_assist.channels.base import ChannelAdapter
+from basket_assist.channels.base import ButtonPress, ChannelAdapter
 from basket_assist.channels.vk import VkChannel, VkClient
 from basket_assist.config import Settings
 from basket_assist.services import polls, scheduler
@@ -29,11 +29,23 @@ async def run_bot(settings: Settings) -> None:
     tasks: set[asyncio.Task] = set()
 
     async def process(channel: ChannelAdapter, event) -> None:
+        if isinstance(event, ButtonPress):  # без ID пользователя: только где и какая кнопка
+            where = "личка" if event.peer_id == event.user_id else f"беседа {event.peer_id}"
+            log.info(
+                "нажатие (%s): %s",
+                where,
+                {k: event.payload[k] for k in ("a", "c", "v") if k in event.payload},
+            )
         try:
             async with sessions() as session:
                 await handle(session, channel, event)
         except Exception:
             log.exception("ошибка обработки события %s", type(event).__name__)
+            if isinstance(event, ButtonPress):  # иначе у пользователя «крутится» кнопка до таймаута VK
+                try:
+                    await channel.answer_button(event, "Не получилось, попробуйте ещё раз")
+                except Exception:
+                    log.warning("не удалось ответить на нажатие после ошибки")
 
     async with make_client() as client:
         channel = make_vk_channel(settings, client)

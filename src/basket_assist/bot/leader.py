@@ -4,14 +4,17 @@
 Ограничения VK для inline-клавиатуры: ≤ 10 кнопок, ≤ 6 рядов, подпись ≤ 40 символов.
 """
 
-from datetime import UTC, datetime, timedelta
+import re
+from datetime import UTC, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from basket_assist.channels.base import Button, ButtonPress, ChannelAdapter
+from basket_assist.domain.models import TimeStatus
 from basket_assist.services import digests, leaders, notify, polls, roster, weekly
+from basket_assist.services.schedule import format_when, teams, upcoming_matches
 from basket_assist.services.table_image import PlayersTable, TableRow, render_players
 from basket_assist.storage.tables import (
     ApplicationEntry,
@@ -164,6 +167,51 @@ async def number_command(session: AsyncSession, tenant_id: int, args: str) -> tu
         for name, league, pid, eid in found
     ]
     return f"Кому записать №{number}?", rows
+
+
+TIME_RE = re.compile(r"(\d{1,2})\.(\d{1,2})\s+(\d{1,2})[:.](\d{2})")
+
+
+async def time_command(session: AsyncSession, tenant_id: int, args: str) -> tuple[str, list[list[Button]]]:
+    """«время 25.10 18:30»: время матча, если лига его ещё не назначила (domain.md, «Жизненный цикл матча»)."""
+    m = TIME_RE.search(args)
+    if m is None:
+        return "Напишите так: «время 25.10 18:30» — дата матча и время начала.", []
+    day, month, hh, mm = (int(x) for x in m.groups())
+    if not (0 <= hh <= 23 and 0 <= mm <= 59):
+        return "Не понял время. Пример: «время 25.10 18:30».", []
+    found = [
+        (league, ours, rival, match)
+        for league, ours, rival, match in await upcoming_matches(session, tenant_id, limit=10)
+        if (match.match_date.day, match.match_date.month) == (day, month)
+    ]
+    if not found:
+        return f"Не нашёл нашего предстоящего матча на {day:02d}.{month:02d}.", []
+    hm = f"{hh:02d}:{mm:02d}"
+    if len(found) == 1:
+        return await set_manual_time(session, tenant_id, found[0][3], hm), []
+    rows = [
+        [Button(_label(f"{league.name}: {teams(match, ours, rival)}"), {"a": "tm", "m": match.id, "t": hm})]
+        for league, ours, rival, match in found[:5]
+    ]
+    return f"В этот день несколько матчей — для какого время {hm}?", rows
+
+
+async def set_manual_time(session: AsyncSession, tenant_id: int, match: Match, hm: str) -> str:
+    """Записать время, введённое руководителем. Если время уже есть на сайте лиги — оно главнее."""
+    league, ours, rival, _ = await polls._context(session, match, tenant_id)
+    if match.start_at is not None and match.time_source != "manual":
+        return f"У матча уже есть время с сайта лиги: {format_when(match, league)}. Оно главнее — если лига ошиблась, свяжитесь с ней."
+    hh, mm = (int(x) for x in hm.split(":"))
+    local = datetime.combine(match.match_date, time(hh, mm), ZoneInfo(league.timezone))
+    match.start_at = local.astimezone(UTC).replace(tzinfo=None)
+    match.time_status, match.time_source = TimeStatus.TIME_SET, "manual"
+    await session.commit()
+    return (
+        f"Время записано: {teams(match, ours, rival)} ({league.name}) — {format_when(match, league)}.\n"
+        "Опрос запустится сам (в день опроса, а если он уже прошёл — в ближайшую минуту). "
+        "Когда лига опубликует время на сайте, бот возьмёт его оттуда."
+    )
 
 
 async def set_number(
@@ -557,6 +605,17 @@ async def on_button(
         except polls.PollError:  # чужой (другой команды сервиса) или удалённый матч
             await channel.answer_button(press, "Матч не найден")
             return None
+    if a == "tm":  # выбор матча для «время …», когда в этот день несколько
+        match = await session.get(Match, d.get("m"))
+        try:
+            if match is None:
+                raise polls.PollError("нет матча")
+            text = await set_manual_time(session, tenant_id, match, str(d["t"]))
+        except polls.PollError:
+            await channel.answer_button(press, "Матч не найден")
+            return None
+        await channel.answer_button(press, "Готово")
+        return text, []
     if a == "num":  # выбор игрока для «номер …», когда нашлось несколько
         if await roster.roster_status(session, tenant_id, int(d["p"]), int(d["e"])) != "in_roster":
             await channel.answer_button(press, "Игрок не заявлен на сезон в этой лиге")

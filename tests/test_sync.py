@@ -107,3 +107,63 @@ async def test_repeated_sync_without_changes_is_quiet(session, tenant_cfg):
     await sync_team_entry(session, entry, src)
     r = await sync_team_entry(session, entry, src)
     assert (r.matches_new, r.matches_updated, r.changes) == (0, 0, [])
+
+
+# ---------- время, введённое руководителем («время ДД.ММ ЧЧ:ММ») ----------
+
+MANUAL = datetime(2026, 10, 24, 15, 30)  # 18:30 МСК
+
+
+async def _manual(session, tenant_cfg):
+    """Матч на сайте без времени, руководитель ввёл 18:30."""
+    entry = await _abl_entry(session, tenant_cfg)
+    src = FakeAdapter()
+    src.matches = [replace(src.matches[0], start_at=None)]
+    await sync_team_entry(session, entry, src)
+    m = (await session.scalars(select(Match))).one()
+    assert m.time_status == TimeStatus.DATE_ONLY
+    m.start_at, m.time_status, m.time_source = MANUAL, TimeStatus.TIME_SET, "manual"
+    await session.commit()
+    return entry, src, m
+
+
+async def test_manual_time_kept_while_site_has_none(session, tenant_cfg):
+    entry, src, m = await _manual(session, tenant_cfg)
+    r = await sync_team_entry(session, entry, src)
+    await session.refresh(m)
+    assert (m.start_at, m.time_status, m.time_source) == (MANUAL, TimeStatus.TIME_SET, "manual")
+    assert await _kinds(session) == [] and r.matches_updated == 0
+
+
+async def test_manual_time_confirmed_by_site_is_quiet(session, tenant_cfg):
+    entry, src, m = await _manual(session, tenant_cfg)
+    src.matches = [replace(src.matches[0], start_at=MANUAL)]
+    await sync_team_entry(session, entry, src)
+    await session.refresh(m)
+    assert (m.start_at, m.time_status, m.time_source) == (MANUAL, TimeStatus.TIME_SET, None)
+    assert await _kinds(session) == []
+    # дальше источник — сайт: исчезновение времени на сайте уже обычное изменение
+    src.matches = [replace(src.matches[0], start_at=datetime(2026, 10, 24, 16, 0))]
+    await sync_team_entry(session, entry, src)
+    assert await _kinds(session) == [ChangeKind.TIME_CHANGED]
+
+
+async def test_manual_time_replaced_by_other_site_time(session, tenant_cfg):
+    entry, src, m = await _manual(session, tenant_cfg)
+    site = datetime(2026, 10, 24, 17, 0)
+    src.matches = [replace(src.matches[0], start_at=site)]
+    await sync_team_entry(session, entry, src)
+    await session.refresh(m)
+    assert (m.start_at, m.time_status, m.time_source) == (site, TimeStatus.TIME_CHANGED, None)
+    [event] = (await session.scalars(select(ChangeEvent))).all()
+    assert event.kind == ChangeKind.TIME_CHANGED and event.match_id == m.id
+
+
+async def test_reschedule_drops_manual_time(session, tenant_cfg):
+    entry, src, m = await _manual(session, tenant_cfg)
+    src.matches = [replace(src.matches[0], match_date=date(2026, 10, 25), start_at=None)]
+    await sync_team_entry(session, entry, src)
+    await session.refresh(m)
+    assert m.match_date == date(2026, 10, 25) and m.start_at is None
+    assert (m.time_status, m.time_source, m.status) == (TimeStatus.DATE_ONLY, None, MatchStatus.RESCHEDULED)
+    assert await _kinds(session) == [ChangeKind.RESCHEDULED]

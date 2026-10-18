@@ -1,6 +1,7 @@
 """Отправка «ровно один раз» через notification_log и личные сообщения игрокам."""
 
 import logging
+from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -40,10 +41,14 @@ async def once(
 
 async def was_sent(session: AsyncSession, tenant_id: int, kind: str, dedup_key: str) -> bool:
     """Отправляли ли уже (есть ли запись в журнале) — без записи."""
-    found = await session.scalar(
-        select(NotificationLog.id).filter_by(tenant_id=tenant_id, kind=kind, dedup_key=dedup_key)
+    return await sent_at(session, tenant_id, kind, dedup_key) is not None
+
+
+async def sent_at(session: AsyncSession, tenant_id: int, kind: str, dedup_key: str) -> datetime | None:
+    """Когда отправили (UTC без tzinfo) или None."""
+    return await session.scalar(
+        select(NotificationLog.sent_at).filter_by(tenant_id=tenant_id, kind=kind, dedup_key=dedup_key)
     )
-    return found is not None
 
 
 async def dm(

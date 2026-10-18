@@ -52,6 +52,7 @@ HELP_LEADER = (
     "• сопоставление — привязать новых игроков к заявкам на сезон\n"
     "• исправить Петров — изменить привязку игрока (по имени или фамилии)\n"
     "• номер Петров 23 — номер для заявки на игру вместо номера из заявки на сезон\n"
+    "• время 25.10 18:30 — время матча, если лига сообщила его, а на сайте пока нет\n"
     "Сводки за сутки и за 2 часа до игры приходят сюда сами; заявку на игру можно поправить кнопками под сводкой."
 )
 HELP_RIGHTS = "\n• права — назначить или снять и. о. капитана"  # только капитану и заместителю
@@ -236,6 +237,10 @@ async def _dm_command(
         await _players(session, channel, tenant_id, peer_id)
     elif cmd in PLAYERS_TEXT_WORDS and is_leader:
         await _players(session, channel, tenant_id, peer_id, as_text=True)
+    elif (cmd == "время" or cmd.startswith("время ")) and is_leader:
+        await channel.send(
+            peer_id, *await leader.time_command(session, tenant_id, text.strip()[len("время") :])
+        )
     elif (cmd == "номер" or cmd.startswith("номер ")) and is_leader:
         await channel.send(
             peer_id, *await leader.number_command(session, tenant_id, text.strip()[len("номер") :])

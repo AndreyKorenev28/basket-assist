@@ -89,6 +89,8 @@ class Match(Base):
     match_date: Mapped[date] = mapped_column(Date)
     start_at: Mapped[datetime | None] = mapped_column(DateTime)  # UTC
     time_status: Mapped[str] = mapped_column(String(20))
+    # "manual" — время ввёл руководитель (на сайте лиги его ещё нет); None — время с сайта лиги
+    time_source: Mapped[str | None] = mapped_column(String(10))
     status: Mapped[str] = mapped_column(String(20))
     venue_name: Mapped[str | None] = mapped_column(String(200))
     venue_address: Mapped[str | None] = mapped_column(String(255))
