@@ -72,6 +72,12 @@
 ## Технологии / стек
 [ADR 0005](docs/decisions/0005-mvp-stack-and-architecture.md), схема — `docs/architecture.md`. Python 3.13, один asyncio-процесс; свой тонкий клиент VK на httpx за `ChannelAdapter`; адаптеры лиг `mtgame` / `infobasket` за `PlatformAdapter`; SQLite + SQLAlchemy 2 + Alembic; свой минутный планировщик по состоянию БД; pytest + respx; ruff.
 
+## Тестирование — субагент `tester`
+Прогон тестов, разбор падений, дописывание тестов и проверку на ПДн делегировать субагенту `tester`
+(`.claude/agents/tester.md`), чтобы не тратить контекст основной сессии. Когда: после заметных изменений кода и обязательно
+перед коммитом этапа. В задаче указывать, что изменилось (файлы, функции) и что проверить; живые проверки в VK — только явно.
+Субагент меняет только `tests/`, ошибки в коде возвращает отчётом — их исправляет основная сессия.
+
 ## Команды
 Все — из корня проекта, в venv `.venv` (PowerShell: `.venv\Scripts\Activate.ps1`; Git Bash: `.venv/Scripts/python`).
 - Установка: `py -3.13 -m venv .venv` → `python -m pip install -e ".[dev]"`

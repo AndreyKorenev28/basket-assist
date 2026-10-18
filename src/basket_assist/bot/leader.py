@@ -179,11 +179,17 @@ async def rights_menu(session: AsyncSession, tenant_id: int, page: int = 0) -> t
     grants = await leaders.active_grants(session, tenant_id)
     lines = ["Передача прав капитана (и. о.)."]
     rows: list[list[Button]] = []
-    for g in grants[:3]:
+    acting = set()
+    for i, g in enumerate(grants):
         who = await session.get(Player, g.player_id)
+        acting.add(g.player_id)
         until = f"до {g.valid_until:%d.%m}" if g.valid_until else "до отмены"
         lines.append(f"• Сейчас и. о.: {who.display_name}, {until}")
-        rows.append([Button(_label(f"Отозвать: {who.display_name}"), {"a": "gr", "g": g.id}, "negative")])
+        if i < 2:  # ≤ 2 ряда «Отозвать», чтобы игроки и «Далее →» уместились в 6 рядов VK
+            rows.append([Button(_label(f"Отозвать: {who.display_name}"), {"a": "gr", "g": g.id}, "negative")])
+    if len(grants) > 2:
+        lines.append("(отозвать остальных — после отзыва первых)")
+    per_page = 6 - len(rows) - 1  # один ряд оставляем под «Далее →»
     matched = (
         await session.scalars(
             select(Player)
@@ -193,12 +199,13 @@ async def rights_menu(session: AsyncSession, tenant_id: int, page: int = 0) -> t
             .order_by(Player.display_name)
         )
     ).all()
-    chunk = matched[page * 4 : (page + 1) * 4]
+    matched = [p for p in matched if p.id not in acting]  # действующих и. о. повторно не предлагаем
+    chunk = matched[page * per_page : (page + 1) * per_page]
     lines.append("Кому передать? (только сопоставленные игроки)")
     rows += [[Button(_label(p.display_name), {"a": "g1", "p": p.id})] for p in chunk]
-    if (page + 1) * 4 < len(matched):
+    if (page + 1) * per_page < len(matched):
         rows.append([Button("Далее →", {"a": "gm", "pg": page + 1})])
-    return "\n".join(lines), rows[:6]
+    return "\n".join(lines), rows
 
 
 async def _announce_in_chat(

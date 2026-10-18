@@ -14,6 +14,7 @@ class FakeChannel:
         self.pins: list[MessageRef] = []
         self.toasts: list[str] = []
         self.messages: dict[tuple[str, str], str] = {}
+        self.buttons: dict[tuple[str, str], list | None] = {}  # клавиатура сообщения (последняя)
         self._next = 100
 
     async def events(self):
@@ -25,6 +26,7 @@ class FakeChannel:
         ref = MessageRef(peer_id, str(self._next))
         self.sent.append((peer_id, text, buttons))
         self.messages[(peer_id, ref.message_id)] = text
+        self.buttons[(peer_id, ref.message_id)] = buttons
         return ref
 
     async def edit(self, msg: MessageRef, text: str, buttons=None) -> bool:
@@ -33,6 +35,7 @@ class FakeChannel:
             return False
         self.edits.append((msg, text))
         self.messages[(msg.peer_id, msg.message_id)] = text
+        self.buttons[(msg.peer_id, msg.message_id)] = buttons
         return True
 
     async def pin(self, msg: MessageRef) -> bool:

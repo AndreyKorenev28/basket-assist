@@ -50,6 +50,8 @@ def test_compound_last_name_and_unique_first_name():
     assert keys(suggest("Denis", "Petrovich", roster + [RosterName(8, "Орлов", "Денис")])) == [
         (8, Confidence.PROBABLE)
     ]  # отчество вместо фамилии
-    assert suggest("Макс", "Прохоров", roster + [RosterName(9, "Карпов", "Максим")]) == []  # фамилия настоящая
+    assert (
+        suggest("Макс", "Прохоров", roster + [RosterName(9, "Карпов", "Максим")]) == []
+    )  # фамилия настоящая
     roster2 = roster + [RosterName(10, "Орлов", "Алексей")]
     assert suggest("Alex", "Alex", roster2) == []  # Александр или Алексей — неоднозначно

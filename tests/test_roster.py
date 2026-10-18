@@ -300,3 +300,40 @@ async def test_numbers_from_protocols(session, tenant_cfg):
         )
     ).scalar_one()
     assert (row.number, row.number_source) == ("21", "protocol")
+
+
+async def test_numbers_from_protocols_only_last_played_and_not_for_numbered_rosters(session, tenant_cfg):
+    tenant, entries = await _setup(session, tenant_cfg)
+    entry = entries["mlbl"]
+    today = utcnow().date()
+    for i in range(5):
+        session.add(
+            Match(
+                tournament_id=entry.tournament_id,
+                external_id=f"p{i}",
+                home_team_id=entry.league_team_id,
+                away_team_id=entry.league_team_id,
+                match_date=today - timedelta(days=i),
+                time_status="time_set",
+                status="played" if i != 1 else "scheduled",
+            )
+        )
+    await session.commit()
+    calls = []
+
+    class Adapter:
+        roster_fields = frozenset()
+
+        async def fetch_game_numbers(self, ref, game_ids):
+            calls.append(game_ids)
+            return {"m2": "33"}
+
+    _, ref = await team_ref(session, entry)
+    await _fill_numbers_from_protocols(session, entry, Adapter(), ref)
+    assert calls == [["p0", "p2", "p3"]]  # 3 последних сыгранных, от новых к старым
+
+    class Numbered(Adapter):
+        roster_fields = frozenset({"number"})  # номера есть в заявке на сезон (АБЛ) — протоколы не читаем
+
+    await _fill_numbers_from_protocols(session, entry, Numbered(), ref)
+    assert len(calls) == 1

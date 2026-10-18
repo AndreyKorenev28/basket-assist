@@ -122,3 +122,40 @@ async def test_infobasket_adapter_handles_bom():
 def test_infobasket_garbage_is_loud():
     with pytest.raises(SourceError):
         infobasket.parse_roster({"TeamID": 1}, with_birth_date=False)
+
+
+def _protocol(team_id: str, players: list[dict]) -> dict:
+    return {
+        "GameTeams": [
+            {"TeamID": 1, "Players": [{"PersonID": 5, "DisplayNumber": "99"}]},
+            {"TeamID": int(team_id), "Players": players},
+        ]
+    }
+
+
+def test_infobasket_game_numbers_fallbacks():
+    data = _protocol(
+        "9056",
+        [
+            {"PersonID": 1, "DisplayNumber": "7"},
+            {"PersonID": 2, "PlayerNumber": 23},  # нет DisplayNumber — берём PlayerNumber
+            {"PersonID": 3},  # без номера — пропускаем
+            {"DisplayNumber": "4"},  # без PersonID — пропускаем
+        ],
+    )
+    assert infobasket.parse_game_numbers(data, "9056") == {"1": "7", "2": "23"}
+    assert infobasket.parse_game_numbers(data, "1234") == {}  # нашей команды в протоколе нет
+    assert infobasket.parse_game_numbers({}, "9056") == {}
+
+
+@respx.mock
+async def test_infobasket_fetch_game_numbers_newest_wins():
+    respx.get(url__startswith="https://reg.infobasket.su/Widget/GetOnline/2").respond(
+        json=_protocol("9056", [{"PersonID": 1, "DisplayNumber": "8"}])
+    )
+    respx.get(url__startswith="https://reg.infobasket.su/Widget/GetOnline/1").respond(
+        json=_protocol("9056", [{"PersonID": 1, "DisplayNumber": "7"}, {"PersonID": 2, "DisplayNumber": "5"}])
+    )
+    async with httpx.AsyncClient() as client:
+        numbers = await infobasket.InfobasketAdapter(client).fetch_game_numbers(MLBL, ["2", "1"])
+    assert numbers == {"1": "8", "2": "5"}  # игры — от новых к старым
