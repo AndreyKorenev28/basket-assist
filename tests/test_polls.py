@@ -1,0 +1,158 @@
+"""Анонс-голосование: публикация, нажатия, смена ответа, переопубликация, приватность беседы."""
+
+from datetime import timedelta
+
+from sqlalchemy import select
+
+from basket_assist.bot.handlers import handle
+from basket_assist.channels.base import ButtonPress, IncomingMessage, MessageRef
+from basket_assist.services import polls
+from basket_assist.storage.bootstrap import apply_tenant_config
+from basket_assist.storage.tables import (
+    Attendance,
+    Chat,
+    League,
+    LeagueTeam,
+    Match,
+    PollMessage,
+    Tournament,
+    utcnow,
+)
+from tests.fakes import FakeChannel
+
+CHAT = "2000000001"  # из config/tenant.example.toml
+
+
+async def _setup(session, tenant_cfg, start_in=timedelta(days=3)):
+    await apply_tenant_config(session, tenant_cfg)
+    league = (await session.execute(select(League).filter_by(key="abl"))).scalar_one()
+    tournament = (await session.execute(select(Tournament).filter_by(league_id=league.id))).scalar_one()
+    ours = (
+        await session.execute(select(LeagueTeam).filter_by(league_id=league.id, external_id="279"))
+    ).scalar_one()
+    rival = LeagueTeam(league_id=league.id, external_id="2301", name="Pokrasote")
+    session.add(rival)
+    await session.flush()
+    start = utcnow() + start_in
+    m = Match(
+        tournament_id=tournament.id,
+        external_id="1",
+        home_team_id=ours.id,
+        away_team_id=rival.id,
+        match_date=start.date(),
+        start_at=start,
+        time_status="time_set",
+        status="scheduled",
+        venue_name="Шелепиха",
+    )
+    session.add(m)
+    await session.commit()
+    chat = (await session.execute(select(Chat))).scalar_one()
+    return chat, m
+
+
+def press(match_id: int, user: str, vote: str, cmid: str = "101") -> ButtonPress:
+    return ButtonPress(CHAT, user, MessageRef(CHAT, cmid), {"m": match_id, "v": vote}, event_id="e")
+
+
+async def test_publish_render_and_pin(session, tenant_cfg):
+    chat, m = await _setup(session, tenant_cfg)
+    ch = FakeChannel()
+    poll = await polls.publish(session, ch, chat, m)
+    assert poll.message_ref == "101" and ch.pins == [MessageRef(CHAT, "101")]
+    text = ch.sent[0][1]
+    assert "АБЛ: Westchester — Pokrasote" in text and "Шелепиха" in text
+    assert "Буду (0): —" in text and "Не буду (0): —" in text
+    assert "Под вопросом" not in text
+    assert [b.label for b in ch.sent[0][2][0]] == ["Буду", "Не буду"]
+    # повторная публикация не дублирует анонс
+    await polls.publish(session, ch, chat, m)
+    assert len(ch.sent) == 1
+
+
+async def test_votes_change_and_names(session, tenant_cfg):
+    chat, m = await _setup(session, tenant_cfg)
+    ch = FakeChannel(names={"10": "Иван Петров", "11": "Олег Сидоров"})
+    await polls.publish(session, ch, chat, m)
+
+    await handle(session, ch, press(m.id, "10", "going"))
+    await handle(session, ch, press(m.id, "11", "going"))
+    await handle(session, ch, press(m.id, "10", "not_going"))  # передумал
+    text = ch.messages[(CHAT, "101")]
+    assert "Буду (1): Олег Сидоров" in text
+    assert "Не буду (1): Иван Петров" in text
+    assert ch.toasts == ["Отмечено: Буду", "Отмечено: Буду", "Отмечено: Не буду"]
+
+    edits_before = len(ch.edits)
+    await handle(session, ch, press(m.id, "10", "not_going"))  # повторное нажатие — без изменений
+    assert len(ch.edits) == edits_before
+    assert len((await session.scalars(select(Attendance))).all()) == 2
+
+
+async def test_republish_when_edit_fails(session, tenant_cfg):
+    chat, m = await _setup(session, tenant_cfg)
+    ch = FakeChannel(names={"10": "Иван Петров"})
+    await polls.publish(session, ch, chat, m)
+    ch.editable = False  # VK не даёт отредактировать старый анонс (ошибка 909)
+
+    await handle(session, ch, press(m.id, "10", "going"))
+    assert len(ch.sent) == 2 and "Буду (1): Иван Петров" in ch.sent[1][1]
+    assert ch.pins[-1] == MessageRef(CHAT, "102")
+    assert "устарел" in ch.messages[(CHAT, "101")]
+    current = (await session.scalars(select(PollMessage).where(PollMessage.superseded_by_id.is_(None)))).one()
+    assert current.message_ref == "102"
+
+    # кнопка на старом анонсе продолжает работать и обновляет новый
+    await handle(session, ch, press(m.id, "10", "not_going", cmid="101"))
+    assert "Не буду (1): Иван Петров" in ch.messages[(CHAT, "102")]
+
+
+async def test_voting_closed_after_start(session, tenant_cfg):
+    chat, m = await _setup(session, tenant_cfg, start_in=timedelta(minutes=-5))
+    ch = FakeChannel()
+    await handle(session, ch, press(m.id, "10", "going"))
+    assert ch.toasts == ["Голосование закрыто — матч уже начался"]
+    assert (await session.scalars(select(Attendance))).all() == []
+
+
+async def test_chat_messages_without_mention_are_ignored(session, tenant_cfg):
+    await _setup(session, tenant_cfg)
+    ch = FakeChannel()
+    await handle(
+        session, ch, IncomingMessage(CHAT, "10", "обсуждаем тренировку", is_chat=True, mentioned=False)
+    )
+    assert ch.sent == []
+    await handle(session, ch, IncomingMessage(CHAT, "10", "игры", is_chat=True, mentioned=True))
+    assert "Westchester — Pokrasote" in ch.sent[0][1]
+
+
+async def test_unknown_chat_is_ignored(session, tenant_cfg):
+    await _setup(session, tenant_cfg)
+    ch = FakeChannel()
+    await handle(session, ch, IncomingMessage("2000000099", "10", "игры", is_chat=True, mentioned=True))
+    assert ch.sent == []
+
+
+async def test_start_in_dm_enables_dm(session, tenant_cfg):
+    await _setup(session, tenant_cfg)
+    ch = FakeChannel(names={"10": "Иван Петров"})
+    await handle(
+        session,
+        ch,
+        IncomingMessage(
+            "10", "10", "Начать", is_chat=False, mentioned=False, payload={"command": "start"}, ref="chat"
+        ),
+    )
+    assert "подключены" in ch.sent[0][1]
+    from basket_assist.storage.tables import MessengerAccount
+
+    acc = (await session.execute(select(MessengerAccount).filter_by(external_user_id="10"))).scalar_one()
+    assert acc.dm_allowed is True and acc.connected_at is not None
+
+
+async def test_render_without_time(session, tenant_cfg):
+    chat, m = await _setup(session, tenant_cfg)
+    m.start_at, m.time_status = None, "date_only"
+    await session.commit()
+    text = await polls.render(session, m, chat.tenant_id)
+    assert "время не назначено" in text

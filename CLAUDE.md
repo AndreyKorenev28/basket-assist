@@ -78,6 +78,7 @@
 - Линтер и формат: `python -m ruff check src tests scripts` и `python -m ruff format src tests scripts`
 - Проверка конфига и БД: `python -m basket_assist --check`
 - Синхронизация с лигами и просмотр: `python -m basket_assist --sync --show`
+- Запуск бота: `python -m basket_assist`; анонс вручную (до M4): `python -m basket_assist --post-poll ID`
 - Обновить фикстуры API лиг (обезличенные): `python scripts/capture_fixtures.py`
 - Новая миграция после изменения `storage/tables.py`: см. `tests/test_storage.py::test_migrations_match_models` — тест падает, если миграция не создана.
 
@@ -98,5 +99,6 @@
 - [x] Провайдер VPS — FirstVDS «Прогрев» (ADR 0001)
 - [x] **M0** каркас: pyproject, конфиг, схема БД (18 таблиц) + миграция, `--check`, тесты
 - [x] **M1** данные лиг: адаптеры `mtgame`, `infobasket`, синхронизация с обнаружением изменений, `--sync --show`; проверено на живых данных Westchester и МИРЭА
-- [ ] **M2** бот VK и анонс-голосование → M3 заявки на сезон → M4 сводки → M5 VPS → M6 пилот
+- [x] **M2** бот VK: Long Poll, анонс-голосование с именами, закрепление, переопубликация при ошибке редактирования, «Начать», команда «игры»; приватность беседы; `--post-poll ID`; проверено в тестовой беседе
+- [ ] **M3** заявки на сезон и сопоставление → M4 сводки и планировщик → M5 VPS → M6 пилот
 - [ ] После MVP: скилл проекта, публикация на GitHub, подготовка к защите (`docs/course-project.md`)
