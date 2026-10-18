@@ -1,6 +1,6 @@
 """Фальшивый канал для тестов сервисов: запоминает, что бот отправил."""
 
-from basket_assist.channels.base import Button, ButtonPress, MessageRef
+from basket_assist.channels.base import Button, ButtonPress, ChannelError, MessageRef
 
 
 class FakeChannel:
@@ -16,6 +16,10 @@ class FakeChannel:
         self.links: list[str | None] = []  # ссылка в ответе на нажатие (open_link), параллельно toasts
         self.messages: dict[tuple[str, str], str] = {}
         self.buttons: dict[tuple[str, str], list | None] = {}  # клавиатура сообщения (последняя)
+        self.images: list[
+            tuple[str, bytes, str, list | None]
+        ] = []  # send_image: (peer, png, подпись, кнопки)
+        self.image_error: ChannelError | None = None  # если задано — send_image падает с этой ошибкой
         self._next = 100
 
     async def events(self):
@@ -26,6 +30,18 @@ class FakeChannel:
         self._next += 1
         ref = MessageRef(peer_id, str(self._next))
         self.sent.append((peer_id, text, buttons))
+        self.messages[(peer_id, ref.message_id)] = text
+        self.buttons[(peer_id, ref.message_id)] = buttons
+        return ref
+
+    async def send_image(
+        self, peer_id: str, image: bytes, text: str = "", buttons: list[list[Button]] | None = None
+    ) -> MessageRef:
+        if self.image_error is not None:
+            raise self.image_error
+        self._next += 1
+        ref = MessageRef(peer_id, str(self._next))
+        self.images.append((peer_id, image, text, buttons))
         self.messages[(peer_id, ref.message_id)] = text
         self.buttons[(peer_id, ref.message_id)] = buttons
         return ref

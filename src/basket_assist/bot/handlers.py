@@ -231,13 +231,13 @@ async def _dm_command(
     elif cmd in ("состав", "кто идёт", "кто идет") and is_leader:
         await channel.send(peer_id, *await leader.lineup(session, tenant_id))
     elif cmd in ("игроки", "список") and is_leader:
-        for text in await leader.players_list(session, tenant_id):
-            await channel.send(peer_id, text)
+        await _players(session, channel, tenant_id, peer_id)
+    elif cmd in PLAYERS_TEXT_WORDS and is_leader:
+        await _players(session, channel, tenant_id, peer_id, as_text=True)
     elif cmd.startswith("исправить") and is_leader:
         query = text.strip()[len("исправить") :].strip()
         if not query:  # без имени — общий список, из него видно, кого исправлять
-            for text in await leader.players_list(session, tenant_id):
-                await channel.send(peer_id, text)
+            await _players(session, channel, tenant_id, peer_id)
         else:
             await channel.send(peer_id, *await leader.find_players(session, tenant_id, query))
     elif cmd in ("права", "и. о.", "ио") and is_leader:
@@ -247,6 +247,27 @@ async def _dm_command(
             await channel.send(peer_id, "Передавать права может только капитан или заместитель.")
     else:
         await channel.send(peer_id, UNKNOWN, UNKNOWN_BUTTONS)
+
+
+PLAYERS_TEXT_WORDS = ("игроки текстом", "список текстом", "текстом")
+
+
+async def _players(
+    session, channel: ChannelAdapter, tenant_id: int, peer_id: str, as_text: bool = False
+) -> None:
+    """«игроки»: картинкой (ровные колонки на любом телефоне), при сбое или по просьбе — текстом."""
+    if not as_text:
+        image, caption = await leader.players_image(session, tenant_id)
+        if image is not None:
+            try:
+                await channel.send_image(
+                    peer_id, image, caption, [[_cmd("Списком текстом", "игроки текстом", "secondary")]]
+                )
+                return
+            except ChannelError as e:
+                log.warning("не удалось отправить «игроки» картинкой: %s — шлю текстом", e)
+    for part in await leader.players_list(session, tenant_id):
+        await channel.send(peer_id, part)
 
 
 async def _help_dm(session, player_id: int, is_leader: bool) -> tuple[str, list[list[Button]]]:

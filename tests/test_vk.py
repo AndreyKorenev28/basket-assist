@@ -4,7 +4,14 @@ import httpx
 import pytest
 import respx
 
-from basket_assist.channels.base import ButtonPress, ChannelError, DmAllowed, IncomingMessage, MessageRef
+from basket_assist.channels.base import (
+    Button,
+    ButtonPress,
+    ChannelError,
+    DmAllowed,
+    IncomingMessage,
+    MessageRef,
+)
 from basket_assist.channels.vk import VkChannel, VkClient
 
 GROUP = 242389357
@@ -350,3 +357,105 @@ async def test_answer_button_event_data(toast, link, expected):
     form = dict(httpx.QueryParams(route.calls[0].request.content.decode()))
     assert form["event_id"] == "ev1" and form["user_id"] == "10" and form["peer_id"] == "2000000001"
     assert form.get("event_data") == expected
+
+
+# ---------- send_image: картинка в сообщении (photos.getMessagesUploadServer → загрузка → save → send) ----------
+
+UPLOAD_URL = "https://pu.vk.test/upload.php?act=do_add"
+PNG = b"\x89PNG\r\n\x1a\nfake"
+UPLOADED = {"server": 123, "photo": '[{"photo":"abc"}]', "hash": "h1"}
+
+
+def _form(call) -> dict:
+    return dict(httpx.QueryParams(call.request.content.decode()))
+
+
+def _image_routes(upload_json=None, saved=None):
+    server = respx.post("https://api.vk.com/method/photos.getMessagesUploadServer").respond(
+        json={"response": {"upload_url": UPLOAD_URL, "album_id": -64, "group_id": GROUP}}
+    )
+    upload = respx.post(UPLOAD_URL).respond(json=UPLOADED if upload_json is None else upload_json)
+    save = respx.post("https://api.vk.com/method/photos.saveMessagesPhoto").respond(
+        json={"response": saved or [{"id": 457239017, "owner_id": -GROUP, "access_key": "k3y"}]}
+    )
+    send = respx.post("https://api.vk.com/method/messages.send").respond(
+        json={"response": [{"peer_id": 5, "message_id": 0, "conversation_message_id": 21}]}
+    )
+    return server, upload, save, send
+
+
+@respx.mock
+async def test_send_image_chain_and_attachment():
+    server, upload, save, send = _image_routes()
+    async with httpx.AsyncClient() as client:
+        ref = await channel(client).send_image(
+            "5", PNG, "Игроки команды: 3", [[Button("Списком текстом", {"c": "игроки текстом"})]]
+        )
+    assert ref == MessageRef("5", "21")
+    assert _form(server.calls[0])["peer_id"] == "5"
+    body = upload.calls[0].request.content
+    assert b'name="photo"; filename="table.png"' in body and b"image/png" in body and PNG in body
+    form = _form(save.calls[0])
+    assert (form["photo"], form["server"], form["hash"]) == (UPLOADED["photo"], "123", "h1")
+    form = _form(send.calls[0])
+    assert form["attachment"] == f"photo-{GROUP}_457239017_k3y"
+    assert form["message"] == "Игроки команды: 3" and form["peer_ids"] == "5"
+    assert "игроки текстом" in form["keyboard"]
+
+
+@respx.mock
+async def test_send_image_without_access_key():
+    _, _, _, send = _image_routes(saved=[{"id": 7, "owner_id": -GROUP}])
+    async with httpx.AsyncClient() as client:
+        await channel(client).send_image("5", PNG)
+    assert _form(send.calls[0])["attachment"] == f"photo-{GROUP}_7"
+
+
+@pytest.mark.parametrize(
+    "upload_json", [{"server": 1, "photo": "[]", "hash": "h"}, {"server": 1, "photo": "", "hash": "h"}, {}]
+)
+@respx.mock
+async def test_send_image_empty_photo_raises(upload_json):
+    _, _, save, send = _image_routes(upload_json=upload_json)
+    async with httpx.AsyncClient() as client:
+        with pytest.raises(ChannelError) as e:
+            await channel(client).send_image("5", PNG)
+    assert e.value.code is None
+    assert not save.called and not send.called
+
+
+@pytest.mark.parametrize("fail", ["network", "not_json"])
+@respx.mock
+async def test_send_image_upload_failure_raises(fail):
+    _, upload, save, send = _image_routes()
+    if fail == "network":
+        upload.mock(side_effect=httpx.ConnectError("нет сети"))
+    else:
+        upload.respond(502, text="<html>Bad Gateway</html>")
+    async with httpx.AsyncClient() as client:
+        with pytest.raises(ChannelError) as e:
+            await channel(client).send_image("5", PNG)
+    assert e.value.code is None
+    assert not save.called and not send.called
+
+
+@respx.mock
+async def test_send_image_no_photo_rights_raises():
+    """Без права «photos» у ключа сообщества VK отвечает ошибкой уже на getMessagesUploadServer."""
+    respx.post("https://api.vk.com/method/photos.getMessagesUploadServer").respond(
+        json={"error": {"error_code": 15, "error_msg": "Access denied"}}
+    )
+    async with httpx.AsyncClient() as client:
+        with pytest.raises(ChannelError) as e:
+            await channel(client).send_image("5", PNG)
+    assert e.value.code == 15
+
+
+@respx.mock
+async def test_send_without_attachment_has_no_attachment_param():
+    route = respx.post("https://api.vk.com/method/messages.send").respond(
+        json={"response": [{"peer_id": 5, "message_id": 0, "conversation_message_id": 1}]}
+    )
+    async with httpx.AsyncClient() as client:
+        await channel(client).send("5", "текст")
+    assert "attachment" not in _form(route.calls[0])

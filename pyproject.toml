@@ -14,6 +14,7 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0.30",
     "aiosqlite>=0.20",
     "alembic>=1.13",
+    "pillow>=10.1",  # «игроки» картинкой (services/table_image.py)
     "tzdata; sys_platform == 'win32'",  # на Windows нет системной базы часовых поясов
 ]
 

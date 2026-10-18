@@ -4,13 +4,15 @@
 Ограничения VK для inline-клавиатуры: ≤ 10 кнопок, ≤ 6 рядов, подпись ≤ 40 символов.
 """
 
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from basket_assist.channels.base import Button, ButtonPress, ChannelAdapter
 from basket_assist.services import digests, leaders, notify, roster
+from basket_assist.services.table_image import PlayersTable, TableRow, render_players
 from basket_assist.storage.tables import (
     Chat,
     League,
@@ -153,12 +155,19 @@ FIGURE_SPACE = " "  # пробел шириной в цифру — вырав
 GAP = FIGURE_SPACE * 2
 
 
-async def players_list(session: AsyncSession, tenant_id: int) -> list[str]:
-    """«игроки»: все игроки команды со статусами по каждой лиге. Список сообщений (длинный — частями)."""
+PLAYERS_HINT = "Изменить: «исправить <имя или фамилия>»."
+
+
+async def _players_table(session: AsyncSession, tenant_id: int) -> tuple[PlayersTable, list[str]]:
+    """Данные для «игроков» (и текстом, и картинкой) + имена отмеченных «не игрок команды».
+
+    Сопоставленным — ФИО из заявки на сезон (первой лиги, где есть связь), сортировка по фамилии;
+    не сопоставленным ни в одной лиге — имя из VK, отдельным блоком в конце.
+    """
     entries = (
         await session.scalars(select(TeamEntry).filter_by(tenant_id=tenant_id).order_by(TeamEntry.id))
     ).all()
-    leagues = [(e, await _league_name(session, e)) for e in entries]
+    leagues = [await _league(session, e) for e in entries]
     players = (
         await session.scalars(
             select(Player).filter_by(tenant_id=tenant_id).order_by(Player.display_name, Player.id)
@@ -171,48 +180,71 @@ async def players_list(session: AsyncSession, tenant_id: int) -> list[str]:
             )
         ).all()
     )
-    active = [p for p in players if p.active]
-    # Сначала собираем ячейки (значок, номер), потом выравниваем: в VK шрифт не моноширинный,
-    # поэтому ровными делаем только начало строки — значки и номера, добитые пробелом шириной в цифру.
-    # Сопоставленным — ФИО из заявки на сезон (первой лиги, где есть связь), сортировка по фамилии;
-    # не сопоставленным ни в одной лиге — имя из VK, отдельным блоком в конце.
-    matched: list[tuple[tuple, list[tuple[str, str]], str]] = []
-    unmatched: list[tuple[list[tuple[str, str]], str]] = []
-    for p in active:
+    matched: list[tuple[tuple, TableRow]] = []
+    unmatched: list[TableRow] = []
+    for p in (p for p in players if p.active):
         cells, fio = [], None
-        for entry, _ in leagues:
+        for entry in entries:
             status = await roster.roster_status(session, tenant_id, p.id, entry.id)
             number = ""
             if status == "in_roster":
                 r = await roster.roster_entry_for(session, tenant_id, p.id, entry.id)
                 if r is not None:
-                    number = r.number or ""
+                    number = str(r.number or "")
                     fio = fio or (r.last_name, r.first_name)
-            cells.append((PLAYERS_MARKS[status], str(number)))
-        dm = "" if p.id in dm_open else " 🔕"
+            cells.append((status, number))
         if fio:
             key = (fio[0].lower().replace("ё", "е"), fio[1].lower().replace("ё", "е"), p.id)
-            matched.append((key, cells, f"{fio[0]} {fio[1]}{dm}"))
+            matched.append((key, TableRow(f"{fio[0]} {fio[1]}", cells, p.id in dm_open)))
         else:
-            unmatched.append((cells, f"{p.display_name}{dm}"))
+            unmatched.append(TableRow(p.display_name, cells, p.id in dm_open))
     matched.sort(key=lambda t: t[0])
-    table = [(c, n) for _, c, n in matched] + unmatched
-    width = max((len(n) for cells, _ in table for _, n in cells), default=0)
+    tz = ZoneInfo(leagues[0].timezone) if leagues else UTC  # в MVP у всех лиг Europe/Moscow
+    table = PlayersTable(
+        leagues=[lg.name for lg in leagues],
+        matched=[row for _, row in matched],
+        unmatched=unmatched,
+        at=datetime.now(UTC).astimezone(tz),
+    )
+    return table, [p.display_name for p in players if not p.active]
 
-    def fmt(cells: list[tuple[str, str]], name: str) -> str:
-        row = GAP.join(mark + FIGURE_SPACE + num.rjust(width, FIGURE_SPACE) for mark, num in cells)
-        return f"{row}{GAP}{name}"
 
-    lines = [f"Игроки команды: {len(active)}", PLAYERS_LEGEND, "", _header([n for _, n in leagues], width)]
-    lines += [fmt(c, n) for _, c, n in matched]
-    if unmatched:
+async def players_list(session: AsyncSession, tenant_id: int) -> list[str]:
+    """«игроки» текстом: все игроки команды со статусами по каждой лиге. Длинный список — частями.
+
+    В VK шрифт не моноширинный, поэтому ровными делаем только начало строки — значки и номера,
+    добитые пробелом шириной в цифру.
+    """
+    table, others = await _players_table(session, tenant_id)
+    rows = table.matched + table.unmatched
+    width = max((len(num) for row in rows for _, num in row.cells), default=0)
+
+    def fmt(row: TableRow) -> str:
+        cells = GAP.join(
+            PLAYERS_MARKS[status] + FIGURE_SPACE + num.rjust(width, FIGURE_SPACE) for status, num in row.cells
+        )
+        return f"{cells}{GAP}{row.name}" + ("" if row.dm_open else " 🔕")
+
+    lines = [f"Игроки команды: {len(rows)}", PLAYERS_LEGEND, "", _header(table.leagues, width)]
+    lines += [fmt(row) for row in table.matched]
+    if table.unmatched:
         lines += ["", "Не сопоставлены ни в одной лиге (имя из VK):"]
-        lines += [fmt(c, n) for c, n in unmatched]
-    others = [p.display_name for p in players if not p.active]
-    if others:
-        lines += ["", f"Не игроки команды ({len(others)}): " + ", ".join(others)]
-    lines += ["", "Изменить: «исправить <имя или фамилия>»."]
+        lines += [fmt(row) for row in table.unmatched]
+    lines += _others_lines(others)
+    lines += ["", PLAYERS_HINT]
     return _split(lines)
+
+
+async def players_image(session: AsyncSession, tenant_id: int) -> tuple[bytes | None, str]:
+    """«игроки» картинкой: (PNG или None, если нарисовать не получилось; подпись к картинке)."""
+    table, others = await _players_table(session, tenant_id)
+    caption = [f"Игроки команды: {len(table.matched) + len(table.unmatched)}", *_others_lines(others)]
+    caption += ["", PLAYERS_HINT]
+    return render_players(table), "\n".join(caption)
+
+
+def _others_lines(others: list[str]) -> list[str]:
+    return ["", f"Не игроки команды ({len(others)}): " + ", ".join(others)] if others else []
 
 
 def _header(leagues: list[str], width: int) -> str:
@@ -235,9 +267,13 @@ def _split(lines: list[str]) -> list[str]:
     return [*chunks, cur] if cur else chunks
 
 
-async def _league_name(session: AsyncSession, entry: TeamEntry) -> str:
+async def _league(session: AsyncSession, entry: TeamEntry) -> League:
     team = await session.get(LeagueTeam, entry.league_team_id)
-    return (await session.get(League, team.league_id)).name
+    return await session.get(League, team.league_id)
+
+
+async def _league_name(session: AsyncSession, entry: TeamEntry) -> str:
+    return (await _league(session, entry)).name
 
 
 async def player_overview(session: AsyncSession, tenant_id: int, player_id: int):

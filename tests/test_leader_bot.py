@@ -15,6 +15,7 @@ from basket_assist.bot.handlers import (
     HELP_DM,
     HELP_LEADER,
     HELP_RIGHTS,
+    PLAYERS_TEXT_WORDS,
     UNKNOWN,
     UNKNOWN_BUTTONS,
     WELCOME_DM,
@@ -23,7 +24,7 @@ from basket_assist.bot.handlers import (
 from basket_assist.channels.base import ButtonPress, ChannelError, IncomingMessage, MessageRef
 from basket_assist.domain.matching import Candidate, Confidence
 from basket_assist.domain.models import RosterLinkStatus
-from basket_assist.services import leaders, polls, roster
+from basket_assist.services import leaders, polls, roster, table_image
 from basket_assist.storage.tables import (
     Chat,
     League,
@@ -420,14 +421,14 @@ async def test_going_not_in_roster_warns_player_and_leaders(session, tenant_cfg)
     assert len([t for t in _dms(ch, PETROV) if "нет в заявке на сезон" in t]) == 1
 
 
-async def test_dm_leader_commands_hidden_from_players(session, tenant_cfg):
+async def test_dm_leader_commands_hidden_from_players(session, tenant_cfg, fake_png):
     tenant, _ = await _ready(session, tenant_cfg)
     ch = FakeChannel()
     for cmd in ("сопоставление", "исправить петров", "права"):
         await handle(session, ch, IncomingMessage(SIDOROV, SIDOROV, cmd, is_chat=False, mentioned=False))
         assert ch.sent[-1][1:] == (UNKNOWN, UNKNOWN_BUTTONS) and "Для руководителей" not in ch.sent[-1][1]
     await handle(session, ch, IncomingMessage(CAPTAIN, CAPTAIN, "исправить", is_chat=False, mentioned=False))
-    assert "исправить <имя" in ch.sent[-1][1]
+    assert "исправить <имя" in ch.images[-1][2]  # «исправить» без имени — список игроков картинкой
 
 
 # ---------- Новый участник беседы и «Это ошибка» ----------
@@ -897,6 +898,32 @@ def _row(cells, name, width):
     return leader.GAP.join(m + fs + n.rjust(width, fs) for m, n in cells) + leader.GAP + name
 
 
+FAKE_PNG = b"\x89PNG fake"
+PLAYERS_TEXT_BUTTON = ("Списком текстом", "игроки текстом", "secondary")
+
+
+@pytest.fixture
+def fake_png(monkeypatch):
+    """Рендер «игроков» без шрифтов и Pillow: возвращает FAKE_PNG и запоминает переданные таблицы."""
+    tables = []
+
+    def render(table):
+        tables.append(table)
+        return FAKE_PNG
+
+    monkeypatch.setattr(leader, "render_players", render)
+    return tables
+
+
+@pytest.fixture
+def no_fonts(monkeypatch):
+    """Ни одного шрифта из списка FONTS нет: render_players → None (кэш поиска сбрасывается до и после)."""
+    monkeypatch.setattr(table_image, "FONTS", [("/нет/шрифта.ttf", "/нет/шрифта-bold.ttf")])
+    table_image._font_paths.cache_clear()
+    yield
+    table_image._font_paths.cache_clear()
+
+
 UNMATCHED_TITLE = "Не сопоставлены ни в одной лиге (имя из VK):"
 
 
@@ -1102,14 +1129,23 @@ async def test_players_list_all_matched_no_unmatched_block(session, tenant_cfg):
 
 
 @pytest.mark.parametrize("cmd", ["игроки", "Список", "исправить"])
-async def test_players_command_for_leader(session, tenant_cfg, cmd):
-    """«игроки», «список» и «исправить» без имени — список игроков (только руководителю)."""
+async def test_players_command_for_leader(session, tenant_cfg, cmd, fake_png):
+    """«игроки», «список» и «исправить» без имени — список игроков картинкой с подписью (только руководителю)."""
     tenant, _ = await _players_marked(session, tenant_cfg)
-    expected = await leader.players_list(session, tenant.id)
+    _, caption = await leader.players_image(session, tenant.id)
     ch = FakeChannel()
     await handle(session, ch, IncomingMessage(VICE, VICE, cmd, is_chat=False, mentioned=False))
-    assert _dms(ch, VICE) == expected
-    assert expected[0].startswith("Игроки команды: 5")
+    assert ch.sent == []
+    assert [(p, img, t, _commands(b)) for p, img, t, b in ch.images] == [
+        (VICE, FAKE_PNG, caption, [[PLAYERS_TEXT_BUTTON]])
+    ]
+    assert caption.split("\n") == [
+        "Игроки команды: 5",
+        "",
+        "Не игроки команды (1): Друг Команды",
+        "",
+        "Изменить: «исправить <имя или фамилия>».",
+    ]
 
 
 @pytest.mark.parametrize("cmd", ["игроки", "список", "исправить"])
@@ -1228,9 +1264,10 @@ def _cmd_press(peer: str, user: str, command: str) -> ButtonPress:
 
 
 async def _replies(session, event) -> tuple[list, FakeChannel]:
+    """Ответы бота: текстом и картинкой (картинка — как (peer, подпись, кнопки), без байтов PNG)."""
     ch = FakeChannel()
     await handle(session, ch, event)
-    return ch.sent, ch
+    return ch.sent + [(p, t, b) for p, _, t, b in ch.images], ch
 
 
 async def _assert_dm_buttons_like_text(session, who: str, rows) -> None:
@@ -1476,18 +1513,18 @@ async def test_players_list_isolated_between_tenants(session, tenant_cfg):
 
 
 async def test_players_command_leader_sees_only_own_tenant(session, tenant_cfg):
-    """Руководитель A пишет «игроки» в личку — получает список своей команды без игроков B, и наоборот."""
+    """Руководитель A пишет «игроки текстом» в личку — получает список своей команды без игроков B, и наоборот."""
     tenant, entries = await _players_marked(session, tenant_cfg)
     b, _, _ = await _second_tenant(session, entries)
     ch = FakeChannel()
-    await handle(session, ch, IncomingMessage(VICE, VICE, "игроки", is_chat=False, mentioned=False))
+    await handle(session, ch, IncomingMessage(VICE, VICE, "игроки текстом", is_chat=False, mentioned=False))
     a_text = "\n".join(_dms(ch, VICE))
     assert _dms(ch, VICE) == await leader.players_list(session, tenant.id)
     assert a_text.startswith("Игроки команды: 5")
     for name in B_NAMES:
         assert name not in a_text
 
-    await handle(session, ch, IncomingMessage("900", "900", "игроки", is_chat=False, mentioned=False))
+    await handle(session, ch, IncomingMessage("900", "900", "игроки текстом", is_chat=False, mentioned=False))
     b_text = "\n".join(_dms(ch, "900"))
     assert b_text.startswith("Игроки команды: 2")
     for name in A_NAMES:
@@ -1756,3 +1793,104 @@ async def test_rights_cancel_denied_for_acting_and_player(session, tenant_cfg):
     await handle(session, ch, _press(SIDOROV, {"a": "gx"}))
     assert ch.toasts[-1] == "Это доступно только руководителям команды"
     assert ch.edits == []
+
+
+# ---------- «игроки» картинкой: подпись, запасной текст, «игроки текстом» ----------
+
+
+async def test_players_image_no_font_falls_back_to_text(session, tenant_cfg, no_fonts):
+    tenant, _ = await _players_marked(session, tenant_cfg)
+    image, caption = await leader.players_image(session, tenant.id)
+    assert image is None and caption.startswith("Игроки команды: 5")
+    ch = FakeChannel()
+    await handle(session, ch, IncomingMessage(VICE, VICE, "игроки", is_chat=False, mentioned=False))
+    assert ch.images == []
+    assert _dms(ch, VICE) == await leader.players_list(session, tenant.id)
+
+
+async def test_players_image_send_error_falls_back_to_text(session, tenant_cfg, fake_png):
+    tenant, _ = await _players_marked(session, tenant_cfg)
+    ch = FakeChannel()
+    ch.image_error = ChannelError(None, "загрузка фото: сервер не принял файл")
+    await handle(session, ch, IncomingMessage(VICE, VICE, "игроки", is_chat=False, mentioned=False))
+    assert ch.images == [] and len(fake_png) == 1
+    assert _dms(ch, VICE) == await leader.players_list(session, tenant.id)
+
+
+@pytest.mark.parametrize("cmd", [*PLAYERS_TEXT_WORDS, "Игроки Текстом"])
+async def test_players_as_text_words(session, tenant_cfg, fake_png, cmd):
+    """«игроки текстом» (и синонимы) — сразу текст, картинку даже не рисуем."""
+    tenant, _ = await _players_marked(session, tenant_cfg)
+    ch = FakeChannel()
+    await handle(session, ch, IncomingMessage(CAPTAIN, CAPTAIN, cmd, is_chat=False, mentioned=False))
+    assert ch.images == [] and fake_png == []
+    assert _dms(ch, CAPTAIN) == await leader.players_list(session, tenant.id)
+
+
+async def test_players_text_button_under_image(session, tenant_cfg, fake_png):
+    """Кнопка «Списком текстом» под картинкой отвечает тем же текстом, что и «игроки текстом»."""
+    tenant, _ = await _players_marked(session, tenant_cfg)
+    ch = FakeChannel()
+    await handle(session, ch, IncomingMessage(VICE, VICE, "игроки", is_chat=False, mentioned=False))
+    command = ch.images[0][3][0][0].payload["c"]
+    sent, ch2 = await _replies(session, _cmd_press(VICE, VICE, command))
+    assert [t for _, t, _ in sent] == await leader.players_list(session, tenant.id)
+    assert ch2.images == [] and ch2.toasts == [""]
+
+
+@pytest.mark.parametrize("cmd", ["игроки", *PLAYERS_TEXT_WORDS])
+async def test_players_image_and_text_hidden_from_player(session, tenant_cfg, fake_png, cmd):
+    await _players_marked(session, tenant_cfg)
+    ch = FakeChannel()
+    await handle(session, ch, IncomingMessage(SIDOROV, SIDOROV, cmd, is_chat=False, mentioned=False))
+    assert ch.images == [] and fake_png == []
+    assert ch.sent == [(SIDOROV, UNKNOWN, UNKNOWN_BUTTONS)]
+    sent, ch2 = await _replies(session, _cmd_press(SIDOROV, SIDOROV, "игроки текстом"))  # подделанная кнопка
+    assert sent == [(SIDOROV, UNKNOWN, UNKNOWN_BUTTONS)] and ch2.images == []
+
+
+async def test_players_image_table_matches_text(session, tenant_cfg, fake_png):
+    """Картинка строится из тех же данных, что и текст: лиги, порядок, статусы, номера, личка."""
+    tenant, _ = await _players_marked(session, tenant_cfg)
+    assert (await leader.players_image(session, tenant.id))[0] == FAKE_PNG
+    (table,) = fake_png
+    assert table.leagues == ["АБЛ", "МЛБЛ"]
+    assert [r.name for r in table.matched][:1] == ["Капитанов Иван"]
+    assert [r.name for r in table.unmatched] == ["Denis Petrovich", "Заместитель"]
+    petrovich = table.unmatched[0]
+    assert petrovich.cells == [("not_in_league", ""), ("unmatched", "")] and petrovich.dm_open is False
+    for row in table.matched + table.unmatched:
+        assert len(row.cells) == 2
+        assert all(status in leader.PLAYERS_MARKS for status, _ in row.cells)
+    assert table.at is not None and table.at.utcoffset() is not None
+
+
+async def test_players_image_isolated_between_tenants(session, tenant_cfg, fake_png):
+    """Мультитенантность «игроки» картинкой: в таблице и подписи — только своя команда."""
+    tenant, entries = await _players_marked(session, tenant_cfg)
+    b, _, _ = await _second_tenant(session, entries)
+    _, a_caption = await leader.players_image(session, tenant.id)
+    _, b_caption = await leader.players_image(session, b.id)
+    a_table, b_table = fake_png
+    a_text = a_caption + str(a_table)
+    b_text = b_caption + str(b_table)
+    assert a_caption.startswith("Игроки команды: 5") and b_caption.startswith("Игроки команды: 2")
+    assert a_table.leagues == ["АБЛ", "МЛБЛ"] and b_table.leagues == ["АБЛ", "ВЛБЛ"]
+    assert "Не игроки команды (1): Гость Чужаков" in b_caption
+    assert [r.name for r in b_table.matched] == ["Петров Александр"]
+    assert [r.name for r in b_table.unmatched] == ["Пётр Лесной"]
+    for name in B_NAMES:
+        assert name not in a_text
+    for name in A_NAMES:
+        assert name not in b_text
+
+
+async def test_players_real_image_via_handler(session, tenant_cfg):
+    """Без подмен: на машине со шрифтом «игроки» приходят настоящим PNG."""
+    if table_image._font_paths() is None:
+        pytest.skip("нет шрифта с кириллицей")
+    await _players_marked(session, tenant_cfg)
+    ch = FakeChannel()
+    await handle(session, ch, IncomingMessage(VICE, VICE, "игроки", is_chat=False, mentioned=False))
+    assert ch.sent == [] and len(ch.images) == 1
+    assert ch.images[0][1].startswith(b"\x89PNG\r\n\x1a\n")

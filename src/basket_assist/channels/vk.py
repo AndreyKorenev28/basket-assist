@@ -49,6 +49,14 @@ class VkClient:
             raise ChannelError(err.get("error_code"), f"{method}: {err.get('error_msg')}")
         return body["response"]
 
+    async def upload(self, url: str, field: str, filename: str, content: bytes, content_type: str) -> dict:
+        """Загрузка файла на сервер VK (адрес выдаёт метод *.get…UploadServer)."""
+        try:
+            r = await self._client.post(url, files={field: (filename, content, content_type)})
+            return r.json()
+        except (httpx.HTTPError, ValueError) as e:
+            raise ChannelError(None, f"загрузка файла: {e}") from e
+
 
 def keyboard(buttons: list[list[Button]] | None) -> dict | None:
     if not buttons:
@@ -187,12 +195,20 @@ class VkChannel:
 
     # ---------- исходящие ----------
 
-    async def send(self, peer_id: str, text: str, buttons: list[list[Button]] | None = None) -> MessageRef:
+    async def send(
+        self,
+        peer_id: str,
+        text: str,
+        buttons: list[list[Button]] | None = None,
+        *,
+        attachment: str | None = None,
+    ) -> MessageRef:
         # peer_ids (а не peer_id) — чтобы в ответе был conversation_message_id
         resp = await self._api.call(
             "messages.send",
             peer_ids=peer_id,
             message=text,
+            attachment=attachment,
             random_id=random.randint(1, 2**31),
             keyboard=keyboard(buttons),
             disable_mentions=1,
@@ -203,6 +219,26 @@ class VkChannel:
                 item["error"].get("code"), f"messages.send: {item['error'].get('description')}"
             )
         return MessageRef(str(item["peer_id"]), str(item["conversation_message_id"]))
+
+    async def send_image(
+        self, peer_id: str, image: bytes, text: str = "", buttons: list[list[Button]] | None = None
+    ) -> MessageRef:
+        """Картинка PNG в сообщении: getMessagesUploadServer → загрузка → saveMessagesPhoto → send.
+
+        Ключу сообщества нужно право «photos» (dev.vk.com, photos.getMessagesUploadServer).
+        """
+        server = await self._api.call("photos.getMessagesUploadServer", peer_id=peer_id)
+        up = await self._api.upload(server["upload_url"], "photo", "table.png", image, "image/png")
+        if not up.get("photo") or up["photo"] == "[]":
+            raise ChannelError(None, f"загрузка фото: сервер не принял файл ({up.get('error') or 'пусто'})")
+        saved = await self._api.call(
+            "photos.saveMessagesPhoto", photo=up["photo"], server=up["server"], hash=up["hash"]
+        )
+        p = saved[0]
+        attachment = f"photo{p['owner_id']}_{p['id']}" + (
+            f"_{p['access_key']}" if p.get("access_key") else ""
+        )
+        return await self.send(peer_id, text, buttons, attachment=attachment)
 
     async def edit(self, msg: MessageRef, text: str, buttons: list[list[Button]] | None = None) -> bool:
         try:
