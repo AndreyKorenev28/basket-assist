@@ -37,6 +37,7 @@ DIGESTS = {  # вид сводки → (за сколько до начала, �
     "digest24": (timedelta(hours=24), "📋 Сводка за сутки до игры"),
     "digest2": (timedelta(hours=2), "📋 Финальная сводка: игра через 2 часа"),
 }
+APP_TITLE = "📝 Заявка на игру"  # карточка по запросу («заявка», кнопка под «составом»)
 REMIND_BEFORE = timedelta(hours=30)  # напоминание молчащим (architecture.md §5)
 NUMBER_HINT = "Нет номера или он другой — напишите «номер Петров 23»."
 APPLICATION_HINT = "Следующим сообщением — заявка на игру (номер и ФИО), его удобно скопировать целиком."
@@ -210,6 +211,17 @@ async def _send_digests(
             await send_digest(session, channel, tenant_id, match, kind)
 
 
+async def application_card(
+    session: AsyncSession, tenant_id: int, match: Match
+) -> list[tuple[str, list[list[Button]] | None]]:
+    """«заявка» по запросу: карточка с кнопками правки + (если есть кого подавать) текст для копирования."""
+    text, buttons = await digest_message(session, tenant_id, match, "app")
+    application = await digests.application_text(session, tenant_id, match)
+    if not application:
+        return [(text, buttons)]
+    return [(f"{text}\n\n{APPLICATION_HINT}", buttons), (application, None)]
+
+
 async def send_digest(
     session: AsyncSession, channel: ChannelAdapter, tenant_id: int, match: Match, kind: str
 ) -> None:
@@ -225,8 +237,11 @@ async def send_digest(
 async def digest_message(
     session: AsyncSession, tenant_id: int, match: Match, kind: str
 ) -> tuple[str, list[list[Button]]]:
-    """Текст сводки и кнопки: [Обновить], [Добавить в заявку] [Убрать из заявки] (leader.on_button)."""
-    title = DIGESTS.get(kind, DIGESTS["digest24"])[1]
+    """Текст сводки и кнопки: [Обновить], [Добавить в заявку] [Убрать из заявки] (leader.on_button).
+
+    kind: digest24 / digest2 — сводки по расписанию; app — карточка заявки по запросу («заявка»).
+    """
+    title = APP_TITLE if kind == "app" else DIGESTS.get(kind, DIGESTS["digest24"])[1]
     # финальная: изменения после сводки за сутки отмечены (если суточная была)
     since = await notify.sent_at(session, tenant_id, "digest24", str(match.id)) if kind == "digest2" else None
     text = await digests.match_digest(session, tenant_id, match, title, since)

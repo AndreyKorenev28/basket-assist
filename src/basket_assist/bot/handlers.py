@@ -49,6 +49,7 @@ HELP_LEADER = (  # команды, у которых есть кнопки по�
     "Для руководителей команды.\n\n"
     "Кнопками ниже или текстом:\n"
     "• состав — кто отметился на ближайшую игру в каждой лиге\n"
+    "• заявка — заявка на игру на ближайший матч: добавить или убрать игроков, текст для копирования\n"
     "• игроки — все игроки и их статусы по лигам\n"
     "• сопоставление — привязать новых игроков к заявкам на сезон"
 )
@@ -59,8 +60,7 @@ HELP_LEADER_TEXT = (  # команды с параметрами — кнопо�
     "• исправить Петров — изменить привязку игрока (по имени или фамилии)\n"
     "• номер Петров 23 — номер для заявки на игру вместо номера из заявки на сезон\n"
     "• время 25.10 18:30 — время матча, если лига сообщила его, а на сайте пока нет\n\n"
-    "Сводки за сутки и за 2 часа до игры приходят сюда сами; "
-    "заявку на игру можно поправить кнопками под сводкой."
+    "Сводки за сутки и за 2 часа до игры приходят сюда сами, с теми же кнопками правки заявки."
 )
 HELP_BUTTONS_HINT = "\n\nКоманду можно нажать кнопкой ниже или написать сообщением."
 
@@ -239,6 +239,9 @@ async def _dm_command(
         await channel.send(peer_id, *await leader.matching_summary(session, tenant_id))
     elif cmd in ("состав", "кто идёт", "кто идет") and is_leader:
         await channel.send(peer_id, *await leader.lineup(session, tenant_id))
+    elif cmd in ("заявка", "заявка на игру") and is_leader:
+        for part, buttons in await leader.application_menu(session, tenant_id):
+            await channel.send(peer_id, part, buttons)
     elif cmd in ("игроки", "список") and is_leader:
         await _players(session, channel, tenant_id, peer_id)
     elif cmd in PLAYERS_TEXT_WORDS and is_leader:
@@ -292,7 +295,8 @@ async def _help_dm(session, player_id: int, is_leader: bool) -> tuple[str, list[
     buttons = [[_cmd("Игры", "игры"), _cmd("Мои данные", "мои данные")]]
     if not is_leader:
         return HELP_DM + HELP_BUTTONS_HINT, buttons
-    buttons.append([_cmd("Состав", "состав", "secondary"), _cmd("Игроки", "игроки", "secondary")])
+    buttons.append([_cmd("Состав", "состав", "secondary"), _cmd("Заявка", "заявка", "secondary")])
+    buttons.append([_cmd("Игроки", "игроки", "secondary")])
     last_row = [_cmd("Сопоставление", "сопоставление", "secondary")]
     rights = ""
     if await leaders.is_captain_or_vice(session, player_id):

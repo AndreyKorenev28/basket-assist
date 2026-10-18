@@ -1165,10 +1165,13 @@ async def test_players_command_hidden_from_player(session, tenant_cfg, cmd):
 # ---------- «помощь» и неизвестные команды ----------
 
 PLAYER_COMMANDS = [[("Игры", "игры", "primary"), ("Мои данные", "мои данные", "primary")]]
-LEADER_ROW = [("Состав", "состав", "secondary"), ("Игроки", "игроки", "secondary")]
+LEADER_ROWS = [
+    [("Состав", "состав", "secondary"), ("Заявка", "заявка", "secondary")],
+    [("Игроки", "игроки", "secondary")],
+]
 MATCHING = ("Сопоставление", "сопоставление", "secondary")
-ACTING_COMMANDS = [*PLAYER_COMMANDS, LEADER_ROW, [MATCHING]]
-CAPTAIN_COMMANDS = [*PLAYER_COMMANDS, LEADER_ROW, [MATCHING, ("Права", "права", "secondary")]]
+ACTING_COMMANDS = [*PLAYER_COMMANDS, *LEADER_ROWS, [MATCHING]]
+CAPTAIN_COMMANDS = [*PLAYER_COMMANDS, *LEADER_ROWS, [MATCHING, ("Права", "права", "secondary")]]
 
 
 def _commands(rows) -> list[list[tuple[str, str, str]]]:
@@ -1273,7 +1276,10 @@ async def test_dm_unknown_command(session, tenant_cfg, who):
     assert _commands(UNKNOWN_BUTTONS) == [[("Помощь", "помощь", "secondary")]]
 
 
-@pytest.mark.parametrize("cmd", ["сопоставление", "права", "и. о.", "исправить Петров", "состав", "кто идёт"])
+@pytest.mark.parametrize(
+    "cmd",
+    ["сопоставление", "права", "и. о.", "исправить Петров", "состав", "кто идёт", "заявка", "заявка на игру"],
+)
 async def test_dm_leader_commands_unknown_for_player(session, tenant_cfg, cmd):
     await _ready(session, tenant_cfg)
     ch = FakeChannel()
@@ -1577,7 +1583,14 @@ def test_split_keeps_all_lines():
 
 # ---------- «состав»: состав на матч (M4) ----------
 
-LINEUP_BUTTONS = [[("Обновить", {"a": "lineup"}, "secondary")]]
+LINEUP_BUTTONS = [[("Обновить", {"a": "lineup"}, "secondary")]]  # матчей с опросом нет
+
+
+def _lineup_with_app(*matches: tuple[str, int]) -> list:
+    """[Заявка: лига] на каждый матч с запущенным опросом, затем [Обновить]."""
+    return [
+        [(f"Заявка: {league}", {"a": "ap", "m": mid}, "secondary")] for league, mid in matches
+    ] + LINEUP_BUTTONS
 
 
 def _lineup_buttons(rows):
@@ -1610,7 +1623,7 @@ async def test_lineup_text_command_for_leaders(session, tenant_cfg, cmd):
         [(peer, text, buttons)] = ch.sent
         assert peer == who
         assert text.startswith("🏀 АБЛ: Westchester — Соперник") and "Не ответили (3):" in text
-        assert _lineup_buttons(buttons) == LINEUP_BUTTONS
+        assert _lineup_buttons(buttons) == _lineup_with_app(("АБЛ", m.id))
 
 
 async def test_lineup_refresh_edits_message(session, tenant_cfg):
@@ -1633,7 +1646,7 @@ async def test_lineup_refresh_edits_message(session, tenant_cfg):
     assert ch.edits[-1][0] == ref, "«Обновить» редактирует то же сообщение"
     updated = ch.messages[(CAPTAIN, "500")]
     assert "Буду (1):" in updated and "  №11 Сидоров Евгений" in updated
-    assert _lineup_buttons(ch.buttons[(CAPTAIN, "500")]) == LINEUP_BUTTONS
+    assert _lineup_buttons(ch.buttons[(CAPTAIN, "500")]) == _lineup_with_app(("АБЛ", m.id))
     assert len(ch.sent) == sent_before, "нового сообщения нет"
 
 

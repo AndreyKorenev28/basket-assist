@@ -47,9 +47,47 @@ def _fio(r: SeasonRosterEntry) -> str:
 
 
 async def lineup(session: AsyncSession, tenant_id: int) -> tuple[str, list[list[Button]]]:
-    """«состав»: кто отметился на ближайшие игры, с кнопкой «Обновить»."""
+    """«состав»: кто отметился на ближайшие игры, с кнопками «Заявка: лига» и «Обновить»."""
     text = await digests.lineup_text(session, tenant_id)
-    return text, [[Button("Обновить", {"a": "lineup"}, "secondary")]]
+    rows = [
+        [Button(_label(f"Заявка: {league.name}"), {"a": "ap", "m": match.id})]
+        for league, _, _, match in await _open_matches(session, tenant_id)
+    ]
+    return text, [*rows, [Button("Обновить", {"a": "lineup"}, "secondary")]]
+
+
+async def _open_matches(session: AsyncSession, tenant_id: int) -> list[tuple]:
+    """Ближайший матч каждой лиги, по которому идёт опрос, — для них можно править заявку на игру."""
+    # только ближайший матч лиги — тот же, что в «составе»; нет по нему опроса — кнопки для лиги нет
+    nearest: dict[int, tuple | None] = {}
+    for league, ours, rival, match in await upcoming_matches(session, tenant_id):
+        if ours.id in nearest:
+            continue
+        has_poll = match.start_at is not None and await polls._current_poll(session, tenant_id, match.id)
+        nearest[ours.id] = (league, ours, rival, match) if has_poll else None
+    return [item for item in nearest.values() if item is not None]
+
+
+async def application_menu(
+    session: AsyncSession, tenant_id: int
+) -> list[tuple[str, list[list[Button]] | None]]:
+    """«заявка»: карточка заявки на игру на ближайший матч; если таких матчей несколько — выбор."""
+    found = await _open_matches(session, tenant_id)
+    if not found:
+        return [
+            (
+                "Сейчас нет матча с запущенным опросом — заявку на игру править пока нечего. "
+                "Опрос запускается в среду перед игрой (если время матча известно).",
+                None,
+            )
+        ]
+    if len(found) == 1:
+        return await weekly.application_card(session, tenant_id, found[0][3])
+    rows = [
+        [Button(_label(f"{league.name}: {teams(match, ours, rival)}"), {"a": "ap", "m": match.id})]
+        for league, ours, rival, match in found
+    ]
+    return [("Заявка на какой матч?", rows)]
 
 
 # ---------- Сопоставление ----------
@@ -605,6 +643,19 @@ async def on_button(
         except polls.PollError:  # чужой (другой команды сервиса) или удалённый матч
             await channel.answer_button(press, "Матч не найден")
             return None
+    if a == "ap":  # открыть карточку заявки на игру новым сообщением («состав» и выбор матча не трогаем)
+        match = await session.get(Match, d.get("m"))
+        try:
+            if match is None:
+                raise polls.PollError("нет матча")
+            messages = await weekly.application_card(session, tenant_id, match)
+        except polls.PollError:
+            await channel.answer_button(press, "Матч не найден")
+            return None
+        await channel.answer_button(press, "")
+        for text, buttons in messages:
+            await channel.send(press.peer_id, text, buttons)
+        return None
     if a == "tm":  # выбор матча для «время …», когда в этот день несколько
         match = await session.get(Match, d.get("m"))
         try:
