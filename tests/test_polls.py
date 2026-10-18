@@ -2,14 +2,15 @@
 
 from datetime import timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
-from basket_assist.bot.handlers import handle
+from basket_assist.bot.handlers import UNKNOWN_CHAT, handle
 from basket_assist.channels.base import ButtonPress, IncomingMessage, MessageRef
 from basket_assist.services import polls
 from basket_assist.storage.bootstrap import apply_tenant_config
 from basket_assist.storage.tables import (
     Attendance,
+    Base,
     Chat,
     League,
     LeagueTeam,
@@ -126,11 +127,57 @@ async def test_chat_messages_without_mention_are_ignored(session, tenant_cfg):
     assert "Westchester — Pokrasote" in ch.sent[0][1]
 
 
-async def test_unknown_chat_is_ignored(session, tenant_cfg):
+UNKNOWN_PEER = "2000000099"  # беседа, не подключённая ни к одной команде
+
+
+async def _row_counts(session) -> dict[str, int]:
+    """Число строк в каждой таблице — чтобы проверить, что ничего не сохранено."""
+    return {
+        t.name: (await session.execute(select(func.count()).select_from(t))).scalar_one()
+        for t in Base.metadata.sorted_tables
+    }
+
+
+async def test_unknown_chat_mention_gets_one_reply_and_nothing_saved(session, tenant_cfg):
+    """Обращение из неподключённой беседы — ровно один ответ UNKNOWN_CHAT без кнопок, в БД ничего."""
     await _setup(session, tenant_cfg)
+    before = await _row_counts(session)
+    ch = FakeChannel(names={"77": "Иван Иванов"})
+    await handle(session, ch, IncomingMessage(UNKNOWN_PEER, "77", "игры", is_chat=True, mentioned=True))
+    assert ch.sent == [(UNKNOWN_PEER, UNKNOWN_CHAT, None)]
+    assert ch.edits == [] and ch.pins == []
+    assert await _row_counts(session) == before
+
+
+async def test_unknown_chat_without_mention_is_silent(session, tenant_cfg):
+    await _setup(session, tenant_cfg)
+    before = await _row_counts(session)
     ch = FakeChannel()
-    await handle(session, ch, IncomingMessage("2000000099", "10", "игры", is_chat=True, mentioned=True))
-    assert ch.sent == []
+    for text in ("игры", "обсуждаем тренировку"):
+        await handle(session, ch, IncomingMessage(UNKNOWN_PEER, "10", text, is_chat=True, mentioned=False))
+    await handle(
+        session,
+        ch,
+        IncomingMessage(UNKNOWN_PEER, "77", "", is_chat=True, mentioned=False, action="chat_invite_user"),
+    )
+    assert ch.sent == [] and ch.toasts == []
+    assert await _row_counts(session) == before
+
+
+async def test_unknown_chat_buttons_are_ignored(session, tenant_cfg):
+    """Кнопки в неподключённой беседе игнорируются — даже от известного сервису игрока (капитана)."""
+    chat, m = await _setup(session, tenant_cfg)
+    before = await _row_counts(session)
+    ch = FakeChannel()
+    for user in ("77", "1"):  # незнакомый и капитан из config/tenant.example.toml
+        for payload in ({"m": m.id, "v": "going"}, {"c": "игры"}, {"c": "помощь"}, {"a": "gm"}):
+            await handle(
+                session,
+                ch,
+                ButtonPress(UNKNOWN_PEER, user, MessageRef(UNKNOWN_PEER, "5"), payload, event_id="e"),
+            )
+    assert ch.sent == [] and ch.toasts == []
+    assert await _row_counts(session) == before
 
 
 async def test_start_in_dm_enables_dm(session, tenant_cfg):
@@ -155,4 +202,4 @@ async def test_render_without_time(session, tenant_cfg):
     m.start_at, m.time_status = None, "date_only"
     await session.commit()
     text = await polls.render(session, m, chat.tenant_id)
-    assert "время не назначено" in text
+    assert "время пока не назначено" in text

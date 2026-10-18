@@ -84,7 +84,7 @@ async def render(session: AsyncSession, match: Match, tenant_id: int) -> str:
         local = match.start_at.replace(tzinfo=UTC).astimezone(tz)
         when = f"{WEEKDAYS[local.weekday()]} {local:%d.%m}, {local:%H:%M}"
     else:
-        when = f"{WEEKDAYS[match.match_date.weekday()]} {match.match_date:%d.%m}, время не назначено"
+        when = f"{WEEKDAYS[match.match_date.weekday()]} {match.match_date:%d.%m}, время пока не назначено"
     place = ", ".join(x for x in (match.venue_name, match.venue_address) if x) or "зал не указан"
 
     rows = (

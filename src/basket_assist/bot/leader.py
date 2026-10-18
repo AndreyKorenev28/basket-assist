@@ -317,6 +317,8 @@ async def roster_page(
 
 # ---------- Передача прав ----------
 
+RIGHTS_CANCEL = Button("Отмена", {"a": "gx"}, "secondary")
+
 
 async def rights_menu(session: AsyncSession, tenant_id: int, page: int = 0) -> tuple[str, list[list[Button]]]:
     grants = await leaders.active_grants(session, tenant_id)
@@ -324,31 +326,40 @@ async def rights_menu(session: AsyncSession, tenant_id: int, page: int = 0) -> t
     rows: list[list[Button]] = []
     acting = set()
     for i, g in enumerate(grants):
-        who = await session.get(Player, g.player_id)
+        who = await _name(session, tenant_id, g.player_id)
         acting.add(g.player_id)
         until = f"до {g.valid_until:%d.%m}" if g.valid_until else "до отмены"
-        lines.append(f"• Сейчас и. о.: {who.display_name}, {until}")
+        lines.append(f"• Сейчас и. о.: {who}, {until}")
         if i < 2:  # ≤ 2 ряда «Отозвать», чтобы игроки и «Далее →» уместились в 6 рядов VK
-            rows.append([Button(_label(f"Отозвать: {who.display_name}"), {"a": "gr", "g": g.id}, "negative")])
+            rows.append([Button(_label(f"Отозвать: {who}"), {"a": "gr", "g": g.id}, "negative")])
     if len(grants) > 2:
         lines.append("(отозвать остальных — после отзыва первых)")
-    per_page = 6 - len(rows) - 1  # один ряд оставляем под «Далее →»
+    per_page = 6 - len(rows) - 1  # один ряд оставляем под «Отмена» и «Далее →»
     matched = (
         await session.scalars(
             select(Player)
             .join(RosterLink, RosterLink.player_id == Player.id)
             .where(Player.tenant_id == tenant_id, Player.active.is_(True), RosterLink.status == "confirmed")
             .distinct()
-            .order_by(Player.display_name)
         )
     ).all()
-    matched = [p for p in matched if p.id not in acting]  # действующих и. о. повторно не предлагаем
-    chunk = matched[page * per_page : (page + 1) * per_page]
+    # ФИО из заявки на сезон, по фамилии — как в списке «игроки»; действующих и. о. повторно не предлагаем
+    named = sorted(
+        [(*await roster.team_name(session, tenant_id, p), p.id) for p in matched if p.id not in acting]
+    )
+    chunk = named[page * per_page : (page + 1) * per_page]
     lines.append("Кому передать? (только сопоставленные игроки)")
-    rows += [[Button(_label(p.display_name), {"a": "g1", "p": p.id})] for p in chunk]
-    if (page + 1) * per_page < len(matched):
-        rows.append([Button("Далее →", {"a": "gm", "pg": page + 1})])
+    rows += [[Button(_label(name), {"a": "g1", "p": pid})] for _, name, pid in chunk]
+    last = [RIGHTS_CANCEL]
+    if (page + 1) * per_page < len(named):
+        last.append(Button("Далее →", {"a": "gm", "pg": page + 1}))
+    rows.append(last)
     return "\n".join(lines), rows
+
+
+async def _name(session: AsyncSession, tenant_id: int, player_id: int) -> str:
+    """ФИО из заявки на сезон (или имя из VK) — для диалога прав и объявления в беседе."""
+    return (await roster.team_name(session, tenant_id, await session.get(Player, player_id)))[1]
 
 
 async def _announce_in_chat(
@@ -448,14 +459,17 @@ async def on_button(
         return await matching_card(session, tenant_id, after=(d["p"], d["e"]))
 
     # передача прав — только капитан и заместитель
-    if a in ("gm", "g1", "g2", "g3", "gr") and not await leaders.is_captain_or_vice(session, me.id):
+    if a in ("gm", "g1", "g2", "g3", "gr", "gx") and not await leaders.is_captain_or_vice(session, me.id):
         await channel.answer_button(press, "Передавать права может только капитан или заместитель")
         return None
     if a == "gm":
         await channel.answer_button(press, "")
         return await rights_menu(session, tenant_id, d.get("pg", 0))
+    if a == "gx":  # «Отмена» на любом шаге: ничего не меняем, закрываем диалог
+        await channel.answer_button(press, "Отменено")
+        return "Передача прав отменена, ничего не изменилось.", [[Button("Открыть снова", {"a": "gm"})]]
     if a == "g1":
-        who = await session.get(Player, d["p"])
+        who = await _name(session, tenant_id, d["p"])
         await channel.answer_button(press, "Выберите срок")
         rows = [
             [
@@ -464,12 +478,13 @@ async def on_button(
             ]
             for i in (0, 2)
         ]
-        return f"Передать права капитана: {who.display_name}. На какой срок?", rows
+        return f"Передать права капитана: {who}. На какой срок?", [*rows, [RIGHTS_CANCEL]]
     if a == "g2":
         await channel.answer_button(press, "Ещё вопрос")
         rows = [
             [Button("Да, не присылать", {"a": "g3", "p": d["p"], "d": d["d"], "s": 1})],
             [Button("Нет, присылать", {"a": "g3", "p": d["p"], "d": d["d"], "s": 0})],
+            [RIGHTS_CANCEL],
         ]
         return "Не присылать вам сводки на это время?", rows
     if a == "g3":
@@ -481,20 +496,20 @@ async def on_button(
             await channel.answer_button(press, str(e))
             return None
         await session.commit()
-        who = await session.get(Player, d["p"])
+        who = await _name(session, tenant_id, d["p"])
         until_text = f"до {until:%d.%m}" if until else "до отмены"
         await notify.dm(
             session,
             channel,
             tenant_id,
-            who.id,
+            d["p"],
             f"Вам переданы права капитана {until_text}: сводки, заявка на игру, сопоставление.",
         )
         await _announce_in_chat(
             session,
             channel,
             tenant_id,
-            f"{until_text.capitalize()} обязанности капитана исполняет {who.display_name}.",
+            f"{until_text.capitalize()} обязанности капитана исполняет {who}.",
         )
         await channel.answer_button(press, "Права переданы")
         return await rights_menu(session, tenant_id)

@@ -10,7 +10,15 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from basket_assist.bot import leader
-from basket_assist.channels.base import Button, ButtonPress, ChannelAdapter, DmAllowed, Event, IncomingMessage
+from basket_assist.channels.base import (
+    Button,
+    ButtonPress,
+    ChannelAdapter,
+    ChannelError,
+    DmAllowed,
+    Event,
+    IncomingMessage,
+)
 from basket_assist.services import leaders, notify, polls, roster
 from basket_assist.services.players import get_or_create_player, set_dm_allowed
 from basket_assist.services.schedule import upcoming_text
@@ -25,7 +33,7 @@ HELP_CHAT = (
     "заявка на игру для капитана.\n\n"
     "Обратитесь ко мне:\n"
     "• игры — ближайшие матчи\n"
-    "• подключиться — ссылка, чтобы получать напоминания в личку\n"
+    "• бот — перейти в личку с ботом: напоминания и ваши команды\n"
     "• помощь — этот список\n\n"
     "Остальные команды — в личке со мной."
 )
@@ -53,7 +61,12 @@ def _cmd(label: str, command: str, color: str = "primary") -> Button:
     return Button(label, {"c": command}, color)
 
 
-CHAT_BUTTONS = [[_cmd("Игры", "игры"), _cmd("Подключиться", "подключиться")]]
+GO_WORDS = ("бот", "перейти к боту", "подключиться", "старт", "начать", "личка")
+CHAT_BUTTONS = [[_cmd("Игры", "игры"), _cmd("Перейти к боту", "бот")]]
+UNKNOWN_CHAT = (
+    "Эта беседа пока не подключена к Basket Assist, поэтому здесь я не отвечаю на команды "
+    "и не публикую анонсы. Подключение настраивает администратор сервиса."
+)
 UNKNOWN_BUTTONS = [[_cmd("Помощь", "помощь", "secondary")]]
 WELCOME_DM = (
     "Привет! Вы подключены к Basket Assist.\n"
@@ -90,6 +103,8 @@ async def handle(session: AsyncSession, channel: ChannelAdapter, event: Event) -
     match event:
         case ButtonPress():
             chat_tenant = await _tenant_for_chat(session, channel, event.peer_id)
+            if chat_tenant is None and event.peer_id != event.user_id:
+                return  # кнопка в неподключённой беседе (в личке peer_id = user_id) — не обрабатываем
             tenant_id = chat_tenant or await _tenant_for_user(session, channel, event.user_id)
             if tenant_id is None:
                 return
@@ -107,8 +122,9 @@ async def handle(session: AsyncSession, channel: ChannelAdapter, event: Event) -
         case IncomingMessage(is_chat=True):
             tenant_id = await _tenant_for_chat(session, channel, event.peer_id)
             if tenant_id is None:
-                if event.mentioned:
-                    log.info("обращение из неизвестной беседы %s — игнорирую", event.peer_id)
+                if event.mentioned:  # отвечаем, чтобы молчание не выглядело поломкой; данные не сохраняем
+                    log.info("обращение из неподключённой беседы %s", event.peer_id)
+                    await channel.send(event.peer_id, UNKNOWN_CHAT)
                 return
             if event.action in ("chat_invite_user", "chat_invite_user_by_link"):
                 await _new_member(session, channel, tenant_id, event)
@@ -151,11 +167,11 @@ async def _chat_reply(session, channel: ChannelAdapter, tenant_id: int, peer_id:
     cmd = text.lower().strip(" .!?")
     if cmd in ("игры", "матчи", "расписание"):
         await channel.send(peer_id, await upcoming_text(session, tenant_id))
-    elif cmd in ("подключиться", "старт", "начать"):
+    elif cmd in GO_WORDS:
         await channel.send(
             peer_id,
-            f"Чтобы получать напоминания в личку, откройте ссылку и нажмите «Начать»: "
-            f"{channel.connect_link('chat')}",
+            f"Личка с ботом — напоминания об играх и ваши команды. Откройте ссылку "
+            f"(в первый раз нажмите «Начать»): {channel.connect_link('chat')}",
         )
     elif cmd in HELP_WORDS:
         await channel.send(peer_id, HELP_CHAT, CHAT_BUTTONS)
@@ -253,11 +269,35 @@ async def _command_button(
 ) -> None:
     """Кнопка-команда из подсказки: выполняем как текстовую команду, сообщение с подсказкой не трогаем."""
     command = str(press.payload.get("c", ""))
+    if in_chat and command in GO_WORDS:
+        await _go_to_bot(session, channel, tenant_id, press)
+        return
     await channel.answer_button(press, "")
     if in_chat:
         await _chat_reply(session, channel, tenant_id, press.peer_id, command)
     else:
         await _dm_command(session, channel, tenant_id, press.peer_id, press.user_id, command)
+
+
+async def _go_to_bot(session, channel: ChannelAdapter, tenant_id: int, press: ButtonPress) -> None:
+    """«Перейти к боту» в беседе: открываем личку, а подключённому сразу присылаем туда меню по роли.
+
+    Не подключённый увидит в личке кнопку «Начать» — меню придёт в ответ на неё (приветствие).
+    """
+    account = (
+        await session.execute(
+            select(MessengerAccount).filter_by(
+                tenant_id=tenant_id, channel=channel.channel, external_user_id=press.user_id
+            )
+        )
+    ).scalar_one_or_none()
+    if account is not None and account.dm_allowed:
+        is_leader = await leaders.is_leader(session, tenant_id, account.player_id)
+        try:
+            await channel.send(press.user_id, *await _help_dm(session, account.player_id, is_leader))
+        except ChannelError as e:  # запретил сообщения, а событие message_deny мы пропустили
+            log.warning("не удалось написать в личку %s: %s", press.user_id, e)
+    await channel.answer_button(press, "", link=channel.connect_link("chat"))
 
 
 async def _dm_button(session, channel: ChannelAdapter, tenant_id: int, press: ButtonPress) -> None:

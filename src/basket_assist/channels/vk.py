@@ -91,6 +91,28 @@ class VkChannel:
         self._api = client
         self._group_id = group_id
         self._mention = re.compile(rf"\[(club|public){group_id}\|[^\]]*\]\s*,?\s*")
+        self._set_plain_mention([])
+
+    def _set_plain_mention(self, names: list[str]) -> None:
+        """Обращение, набранное вручную, без выбора из подсказки: «@Basket Assist ?», «@club123 игры».
+
+        VK присылает такое как обычный текст, без [club…|…]. Считаем обращением, только если оно
+        стоит в начале сообщения: упоминание имени бота в середине фразы — не команда.
+        """
+        words = [rf"(club|public){self._group_id}"]
+        words += [r"[\s_]*".join(map(re.escape, n.split())) for n in names if n.strip()]
+        self._plain = re.compile(rf"^\s*@({'|'.join(words)})(?=$|[\s,.:;!?])[\s,.:;]*", re.IGNORECASE)
+
+    async def load_names(self) -> None:
+        """Имя и короткий адрес сообщества — для обращений, набранных вручную. Сбой не мешает работе."""
+        try:
+            resp = await self._api.call("groups.getById", group_id=self._group_id)
+        except (ChannelError, httpx.HTTPError) as e:
+            log.warning("не удалось получить имя сообщества (%s) — обращение только через подсказку VK", e)
+            return
+        groups = resp.get("groups", []) if isinstance(resp, dict) else resp
+        names = [v for g in groups[:1] for v in (g.get("name"), g.get("screen_name")) if v]
+        self._set_plain_mention(names)
 
     # ---------- входящие ----------
 
@@ -104,11 +126,13 @@ class VkChannel:
                 return None
             text = msg.get("text") or ""
             is_chat = peer_id > CHAT_PEER_BASE
-            mentioned = bool(self._mention.search(text))
+            # обращение: упоминание через подсказку VK, имя бота в начале или ответ на сообщение бота
+            reply_to_bot = (msg.get("reply_message") or {}).get("from_id") == -self._group_id
+            mentioned = bool(self._mention.search(text) or self._plain.match(text)) or reply_to_bot
             return IncomingMessage(
                 peer_id=str(peer_id),
                 user_id=str(from_id),
-                text=self._mention.sub("", text).strip(),
+                text=self._plain.sub("", self._mention.sub("", text), count=1).strip(),
                 is_chat=is_chat,
                 mentioned=mentioned,
                 ref=msg.get("ref"),
@@ -132,6 +156,7 @@ class VkChannel:
 
     async def events(self) -> AsyncIterator[Event]:
         """Bots Long Poll. Сетевые сбои — повтор с паузой; failed=1 — новый ts; 2/3 — новый сервер."""
+        await self.load_names()
         server = await self._api.call("groups.getLongPollServer", group_id=self._group_id)
         backoff = 1
         async with httpx.AsyncClient(timeout=35) as lp:
@@ -202,15 +227,19 @@ class VkChannel:
             return False
         return True
 
-    async def answer_button(self, press: ButtonPress, toast: str) -> None:
+    async def answer_button(self, press: ButtonPress, toast: str, link: str | None = None) -> None:
+        if link:
+            event_data = {"type": "open_link", "link": link}
+        elif toast:
+            event_data = {"type": "show_snackbar", "text": toast[:90]}
+        else:
+            event_data = None  # просто подтвердить нажатие
         await self._api.call(
             "messages.sendMessageEventAnswer",
             event_id=press.event_id,
             user_id=press.user_id,
             peer_id=press.peer_id,
-            event_data={"type": "show_snackbar", "text": toast[:90]}
-            if toast
-            else None,  # пусто — просто подтвердить
+            event_data=event_data,
         )
 
     async def chat_members(self, peer_id: str) -> list[str]:

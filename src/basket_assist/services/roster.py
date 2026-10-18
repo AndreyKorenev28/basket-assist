@@ -247,6 +247,28 @@ async def roster_entry_for(
     return await session.get(SeasonRosterEntry, link.season_roster_entry_id)
 
 
+async def roster_fio(session: AsyncSession, tenant_id: int, player_id: int) -> tuple[str, str] | None:
+    """(фамилия, имя) из заявки на сезон первой лиги, где игрок сопоставлен; None — нигде не сопоставлен."""
+    entries = await session.scalars(
+        select(TeamEntry.id).filter_by(tenant_id=tenant_id).order_by(TeamEntry.id)
+    )
+    for entry_id in entries.all():
+        r = await roster_entry_for(session, tenant_id, player_id, entry_id)
+        if r is not None:
+            return r.last_name, r.first_name
+    return None
+
+
+async def team_name(session: AsyncSession, tenant_id: int, player: Player) -> tuple[tuple, str]:
+    """Имя игрока для руководителей: ФИО из заявки на сезон, если сопоставлен, иначе имя из VK.
+
+    Возвращает (ключ сортировки, имя): сортировка по фамилии, без регистра, ё = е.
+    """
+    fio = await roster_fio(session, tenant_id, player.id)
+    name = f"{fio[0]} {fio[1]}" if fio else player.display_name
+    return (name.lower().replace("ё", "е"), player.id), name
+
+
 async def import_chat_members(
     session: AsyncSession,
     tenant_id: int,

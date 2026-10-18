@@ -9,6 +9,7 @@ from sqlalchemy import select
 from basket_assist.bot import leader
 from basket_assist.bot.handlers import (
     CHAT_BUTTONS,
+    GO_WORDS,
     HELP_BUTTONS_HINT,
     HELP_CHAT,
     HELP_DM,
@@ -19,7 +20,7 @@ from basket_assist.bot.handlers import (
     WELCOME_DM,
     handle,
 )
-from basket_assist.channels.base import ButtonPress, IncomingMessage, MessageRef
+from basket_assist.channels.base import ButtonPress, ChannelError, IncomingMessage, MessageRef
 from basket_assist.domain.matching import Candidate, Confidence
 from basket_assist.domain.models import RosterLinkStatus
 from basket_assist.services import leaders, polls, roster
@@ -91,11 +92,15 @@ async def test_grant_flow_g1_g2_g3_and_revoke(session, tenant_cfg):
     assert {b.payload["p"] for row in menu for b in row if b.payload["a"] == "g1"} >= {petrov.id}
 
     await handle(session, ch, _press(CAPTAIN, {"a": "g1", "p": petrov.id}))
+    # ФИО из заявки на сезон («Петров Александр»), а не имя VK («Саша Петров»)
+    assert ch.messages[(CAPTAIN, "500")] == "Передать права капитана: Петров Александр. На какой срок?"
     rows = ch.buttons[(CAPTAIN, "500")]
-    assert sorted(b.payload["d"] for row in rows for b in row) == [0, 3, 7, 14]
+    assert sorted(b.payload["d"] for row in rows for b in row if b.payload["a"] == "g2") == [0, 3, 7, 14]
+    assert rows[-1] == [leader.RIGHTS_CANCEL]
     await handle(session, ch, _press(CAPTAIN, {"a": "g2", "p": petrov.id, "d": 7}))
     rows = ch.buttons[(CAPTAIN, "500")]
-    assert {b.payload["s"] for row in rows for b in row} == {0, 1}
+    assert {b.payload["s"] for row in rows for b in row if b.payload["a"] == "g3"} == {0, 1}
+    assert rows[-1] == [leader.RIGHTS_CANCEL]
     await handle(session, ch, _press(CAPTAIN, {"a": "g3", "p": petrov.id, "d": 7, "s": 1}))
     assert ch.toasts[-1] == "Права переданы"
 
@@ -106,10 +111,13 @@ async def test_grant_flow_g1_g2_g3_and_revoke(session, tenant_cfg):
     assert captain.id not in {p.id for p in await leaders.digest_recipients(session, tenant.id)}
     assert any("переданы права капитана" in t for t in _dms(ch, PETROV))
     chat_msgs = _dms(ch, CHAT)
-    assert len(chat_msgs) == 1 and "обязанности капитана исполняет Саша Петров" in chat_msgs[0]
-    # в меню появилась кнопка «Отозвать»
+    assert chat_msgs == [f"До {grant.valid_until:%d.%m} обязанности капитана исполняет Петров Александр."]
+    assert "Саша" not in chat_msgs[0]
+    # в меню появилась кнопка «Отозвать» — тоже с ФИО из заявки на сезон
+    menu_text = ch.messages[(CAPTAIN, "500")]
+    assert f"• Сейчас и. о.: Петров Александр, до {grant.valid_until:%d.%m}" in menu_text
     revoke = [b for row in ch.buttons[(CAPTAIN, "500")] for b in row if b.payload["a"] == "gr"]
-    assert [b.payload["g"] for b in revoke] == [grant.id]
+    assert [(b.label, b.payload["g"]) for b in revoke] == [("Отозвать: Петров Александр", grant.id)]
 
     # и. о. не может ни передать права дальше, ни отозвать
     for payload in (
@@ -191,6 +199,125 @@ async def test_rights_menu_with_grants_keeps_paging(session, tenant_cfg):
     assert matched_ids <= seen, "часть сопоставленных игроков недоступна в меню «права»"
     assert not ({p.id for p in matched[:2]} & seen), "действующие и. о. не должны предлагаться повторно"
     assert seen <= all_matched
+
+
+async def _rights_pages(session, tenant_id) -> list[tuple[str, int]]:
+    """Все кнопки кандидатов меню «права» по страницам, в порядке показа: (надпись, player_id)."""
+    out, page = [], 0
+    while True:
+        _, rows = await leader.rights_menu(session, tenant_id, page)
+        _assert_vk_keyboard(rows)
+        payloads = [(b.label, b.payload) for row in rows for b in row]
+        out += [(label, pl["p"]) for label, pl in payloads if pl["a"] == "g1"]
+        nxt = [pl for _, pl in payloads if pl["a"] == "gm"]
+        if not nxt:
+            return out
+        assert nxt[0]["pg"] == page + 1
+        page = nxt[0]["pg"]
+
+
+async def test_rights_menu_fio_sorted_by_last_name_across_pages(session, tenant_cfg):
+    """Кандидаты — ФИО из заявки на сезон, по фамилии (без регистра, ё = е), пагинация — по этому порядку;
+    порядок по имени VK заведомо другой."""
+    tenant, entries = await _setup(session, tenant_cfg)
+    first, second = sorted(entries.values(), key=lambda e: e.id)
+    data = [  # имя VK (по алфавиту) → ФИО в обратном порядке фамилий
+        ("Антон", "Яковлев", "Антон"),
+        ("Борис", "Шубин", "Борис"),
+        ("Вадим", "Ёлкин", "Вадим"),
+        ("Глеб", "есаулов", "Глеб"),
+        ("Денис", "Дронов", "Денис"),
+        ("Егор", "Бочкин", "Егор"),
+        ("Жора", "Бочкин", "Алексей"),  # однофамилец — по имени
+    ]
+    players = {}
+    for i, (vk, last, fio_first) in enumerate(data):
+        players[vk] = p = Player(tenant_id=tenant.id, display_name=vk)
+        session.add(p)
+        await session.flush()
+        await _link_fio(session, tenant, first, p, f"r{i}", last, fio_first)
+    only_second = Player(tenant_id=tenant.id, display_name="Аарон")  # сопоставлен только во второй лиге
+    session.add(only_second)
+    await session.flush()
+    await _link_fio(session, tenant, second, only_second, "r2-1", "Гусев", "Пётр")
+    await session.commit()
+
+    labels = await _rights_pages(session, tenant.id)
+    assert [label for label, _ in labels] == [
+        "Бочкин Алексей",
+        "Бочкин Егор",
+        "Гусев Пётр",
+        "Дронов Денис",
+        "Ёлкин Вадим",
+        "есаулов Глеб",
+        "Шубин Борис",
+        "Яковлев Антон",
+    ]
+    assert [pid for _, pid in labels][:2] == [players["Жора"].id, players["Егор"].id]
+    assert len({pid for _, pid in labels}) == len(labels)  # без повторов между страницами
+
+    # действующий и. о. — в тексте и на «Отозвать» с ФИО, из кандидатов пропадает, порядок остальных тот же
+    captain = await _player(session, tenant, CAPTAIN)
+    await leaders.grant_acting(session, tenant.id, captain.id, players["Денис"].id, None)
+    await session.commit()
+    text, rows = await leader.rights_menu(session, tenant.id)
+    assert "• Сейчас и. о.: Дронов Денис, до отмены" in text
+    assert [b.label for row in rows for b in row if b.payload["a"] == "gr"] == ["Отозвать: Дронов Денис"]
+    labels = await _rights_pages(session, tenant.id)
+    assert [label for label, _ in labels] == [
+        "Бочкин Алексей",
+        "Бочкин Егор",
+        "Гусев Пётр",
+        "Ёлкин Вадим",
+        "есаулов Глеб",
+        "Шубин Борис",
+        "Яковлев Антон",
+    ]
+
+
+async def test_roster_fio_and_team_name(session, tenant_cfg):
+    """roster_fio: только подтверждённая связь, первая лига по TeamEntry.id; team_name: иначе имя VK."""
+    tenant, entries = await _setup(session, tenant_cfg)
+    first, second = sorted(entries.values(), key=lambda e: e.id)
+    p = Player(tenant_id=tenant.id, display_name="Ваня Иванов")
+    session.add(p)
+    await session.flush()
+    assert await roster.roster_fio(session, tenant.id, p.id) is None
+    assert await roster.team_name(session, tenant.id, p) == (("ваня иванов", p.id), "Ваня Иванов")
+
+    # предложенная (не подтверждённая) связь — ещё не ФИО
+    row = SeasonRosterEntry(
+        league_team_id=first.league_team_id,
+        tournament_id=first.tournament_id,
+        external_person_id="q1",
+        last_name="Иванов",
+        first_name="Иван",
+    )
+    session.add(row)
+    await session.flush()
+    link = RosterLink(
+        tenant_id=tenant.id,
+        team_entry_id=first.id,
+        player_id=p.id,
+        season_roster_entry_id=row.id,
+        status=RosterLinkStatus.SUGGESTED,
+    )
+    session.add(link)
+    await _link_fio(session, tenant, second, p, "q2", "Ёжиков", "Иван")
+    await session.flush()
+    assert await roster.roster_fio(session, tenant.id, p.id) == ("Ёжиков", "Иван")  # вторая лига
+    assert await roster.team_name(session, tenant.id, p) == (("ежиков иван", p.id), "Ёжиков Иван")
+
+    link.status = RosterLinkStatus.CONFIRMED  # теперь подтверждена и в первой лиге — она важнее
+    await session.flush()
+    assert await roster.roster_fio(session, tenant.id, p.id) == ("Иванов", "Иван")
+    assert (await roster.team_name(session, tenant.id, p))[1] == "Иванов Иван"
+
+    # другая команда сервиса не видит связей этой
+    other = Tenant(key="other_team", name="Другая команда")
+    session.add(other)
+    await session.flush()
+    assert await roster.roster_fio(session, other.id, p.id) is None
 
 
 # ---------- «исправить» и «Вернуть в команду» ----------
@@ -1091,10 +1218,9 @@ async def test_chat_help(session, tenant_cfg, cmd):
     ch = FakeChannel()
     await handle(session, ch, IncomingMessage(CHAT, SIDOROV, cmd, is_chat=True, mentioned=True))
     assert ch.sent == [(CHAT, HELP_CHAT, CHAT_BUTTONS)]
-    assert _commands(CHAT_BUTTONS) == [
-        [("Игры", "игры", "primary"), ("Подключиться", "подключиться", "primary")]
-    ]
+    assert _commands(CHAT_BUTTONS) == [[("Игры", "игры", "primary"), ("Перейти к боту", "бот", "primary")]]
     assert "в личке" in HELP_CHAT and HELP_LEADER not in HELP_CHAT
+    assert "• бот — перейти в личку" in HELP_CHAT and "подключиться" not in HELP_CHAT
 
 
 def _cmd_press(peer: str, user: str, command: str) -> ButtonPress:
@@ -1165,7 +1291,7 @@ async def test_forged_command_button_from_player_is_unknown(session, tenant_cfg,
     assert ch.toasts == [""]
 
 
-@pytest.mark.parametrize("command", ["игры", "подключиться", "помощь", "мои данные", "игроки", "состав"])
+@pytest.mark.parametrize("command", ["игры", "помощь", "мои данные", "игроки", "состав"])
 async def test_chat_command_buttons_reply_in_chat_like_text(session, tenant_cfg, command):
     """Кнопки из подсказки беседы (и «Помощь» под «Не понял») отвечают в беседу, как обращение к боту."""
     await _ready(session, tenant_cfg)
@@ -1184,8 +1310,6 @@ async def test_chat_command_buttons_reply_in_chat_like_text(session, tenant_cfg,
         assert by_button == [(CHAT, UNKNOWN, UNKNOWN_BUTTONS)]
     if command == "помощь":
         assert by_button == [(CHAT, HELP_CHAT, CHAT_BUTTONS)]
-    if command == "подключиться":
-        assert "ref=chat" in by_button[0][1]
 
 
 async def test_vote_and_leader_buttons_not_treated_as_commands(session, tenant_cfg):
@@ -1470,3 +1594,165 @@ async def test_lineup_not_in_chat_even_for_captain(session, tenant_cfg):
     for cmd in ("состав", "кто идёт"):
         sent, _ = await _replies(session, IncomingMessage(CHAT, CAPTAIN, cmd, is_chat=True, mentioned=True))
         assert sent == [(CHAT, UNKNOWN, UNKNOWN_BUTTONS)]
+
+
+# ---------- «Перейти к боту» из беседы ----------
+
+LINK = "https://vk.me/club1?ref=chat"
+
+
+@pytest.mark.parametrize("cmd", GO_WORDS)
+async def test_chat_go_words_text_reply_with_link(session, tenant_cfg, cmd):
+    """Текстовая команда в беседе — ответ в беседу со ссылкой на личку (ref=chat)."""
+    await _ready(session, tenant_cfg)
+    sent, ch = await _replies(session, IncomingMessage(CHAT, SIDOROV, cmd, is_chat=True, mentioned=True))
+    [(peer, text, _)] = sent
+    assert peer == CHAT and LINK in text
+    assert ch.toasts == []
+
+
+@pytest.mark.parametrize(
+    ("who", "commands"), [(SIDOROV, PLAYER_COMMANDS), (CAPTAIN, CAPTAIN_COMMANDS), (VICE, CAPTAIN_COMMANDS)]
+)
+async def test_chat_go_button_sends_menu_to_dm_by_role(session, tenant_cfg, who, commands):
+    await _ready(session, tenant_cfg)
+    sent, ch = await _replies(session, _cmd_press(CHAT, who, "бот"))
+    [(peer, _, buttons)] = sent
+    assert peer == who, "меню — в личку, в беседу ничего"
+    assert _commands(buttons) == commands
+    assert ch.toasts == [""] and ch.links == [LINK] and ch.edits == []
+
+
+async def test_chat_go_button_acting_captain_menu_without_rights(session, tenant_cfg):
+    tenant, _ = await _ready(session, tenant_cfg)
+    captain = await _player(session, tenant, CAPTAIN)
+    petrov = await _player(session, tenant, PETROV)
+    await leaders.grant_acting(session, tenant.id, captain.id, petrov.id, None)
+    sent, ch = await _replies(session, _cmd_press(CHAT, PETROV, "бот"))
+    [(peer, text, buttons)] = sent
+    assert peer == PETROV and _commands(buttons) == ACTING_COMMANDS and "• права" not in text
+    assert ch.links == [LINK]
+
+
+@pytest.mark.parametrize("cmd", GO_WORDS)
+async def test_chat_go_button_every_go_word(session, tenant_cfg, cmd):
+    await _ready(session, tenant_cfg)
+    sent, ch = await _replies(session, _cmd_press(CHAT, SIDOROV, cmd))
+    assert [peer for peer, _, _ in sent] == [SIDOROV]
+    assert ch.links == [LINK]
+
+
+async def test_chat_go_button_dm_closed_or_no_account(session, tenant_cfg):
+    """Личка не открыта или аккаунта нет — в личку ничего, только ответ со ссылкой."""
+    await _ready(session, tenant_cfg)
+    acc = (await session.execute(select(MessengerAccount).filter_by(external_user_id=SIDOROV))).scalar_one()
+    acc.dm_allowed = False
+    await session.commit()
+    for who in (SIDOROV, "999"):
+        sent, ch = await _replies(session, _cmd_press(CHAT, who, "бот"))
+        assert sent == [] and ch.toasts == [""] and ch.links == [LINK]
+    stranger = await session.execute(select(MessengerAccount).filter_by(external_user_id="999"))
+    assert stranger.scalar_one_or_none() is None, "нажатие «Перейти к боту» не заводит аккаунт"
+
+
+class _DmDenied(FakeChannel):
+    async def send(self, peer_id, text, buttons=None):
+        if peer_id != CHAT:
+            raise ChannelError(901, "Can't send messages for users without permission")
+        return await super().send(peer_id, text, buttons)
+
+
+async def test_chat_go_button_dm_error_is_logged_not_fatal(session, tenant_cfg, caplog):
+    await _ready(session, tenant_cfg)
+    ch = _DmDenied()
+    await handle(session, ch, _cmd_press(CHAT, SIDOROV, "бот"))
+    assert ch.sent == [] and ch.links == [LINK]
+    assert "901" in caplog.text
+
+
+# ---------- «Отмена» в передаче прав ----------
+
+
+async def _many_matched(session, tenant, entry, n: int) -> list[Player]:
+    captain = await _player(session, tenant, CAPTAIN)
+    out = []
+    for i in range(n):
+        p = Player(tenant_id=tenant.id, display_name=f"Запасной{i}")
+        r = SeasonRosterEntry(
+            league_team_id=entry.league_team_id,
+            tournament_id=entry.tournament_id,
+            external_person_id=f"c{i}",
+            last_name="Запасной",
+            first_name=f"Игрок{i}",
+        )
+        session.add_all([p, r])
+        await session.flush()
+        await roster.confirm(session, tenant.id, p.id, entry.id, r.id, captain.id)
+        out.append(p)
+    await session.commit()
+    return out
+
+
+async def test_rights_menu_last_row_is_cancel(session, tenant_cfg):
+    tenant, _ = await _ready(session, tenant_cfg)
+    _, rows = await leader.rights_menu(session, tenant.id)
+    _assert_vk_keyboard(rows)
+    assert rows[-1] == [leader.RIGHTS_CANCEL]
+    assert leader.RIGHTS_CANCEL.payload == {"a": "gx"} and leader.RIGHTS_CANCEL.label == "Отмена"
+
+
+@pytest.mark.parametrize("grants", [0, 1, 2])
+async def test_rights_menu_cancel_and_next_share_last_row(session, tenant_cfg, grants):
+    """Много кандидатов: последний ряд [Отмена, Далее →], кандидатов на странице 6 − «Отозвать» − 1;
+    на последней странице — одна «Отмена»."""
+    tenant, entries = await _ready(session, tenant_cfg)
+    extra = await _many_matched(session, tenant, entries["abl"], 10)
+    captain = await _player(session, tenant, CAPTAIN)
+    for p in extra[:grants]:
+        await leaders.grant_acting(session, tenant.id, captain.id, p.id, None)
+    await session.commit()
+    _, rows = await leader.rights_menu(session, tenant.id)
+    _assert_vk_keyboard(rows)
+    assert [b.payload["a"] for b in rows[-1]] == ["gx", "gm"]
+    assert sum(b.payload["a"] == "g1" for row in rows for b in row) == 6 - grants - 1
+    page = 0
+    while True:
+        _, rows = await leader.rights_menu(session, tenant.id, page)
+        _assert_vk_keyboard(rows)
+        nxt = [b.payload for b in rows[-1] if b.payload["a"] == "gm"]
+        if not nxt:
+            break
+        page = nxt[0]["pg"]
+    assert rows[-1] == [leader.RIGHTS_CANCEL]
+
+
+@pytest.mark.parametrize("who", [CAPTAIN, VICE])
+async def test_rights_cancel_changes_nothing(session, tenant_cfg, who):
+    tenant, _ = await _ready(session, tenant_cfg)
+    petrov = await _player(session, tenant, PETROV)
+    ch = FakeChannel()
+    await handle(session, ch, _press(who, {"a": "g1", "p": petrov.id}))
+    await handle(session, ch, _press(who, {"a": "g2", "p": petrov.id, "d": 7}))
+    await handle(session, ch, _press(who, {"a": "gx"}))
+    assert ch.toasts[-1] == "Отменено"
+    assert ch.messages[(who, "500")] == "Передача прав отменена, ничего не изменилось."
+    rows = ch.buttons[(who, "500")]
+    assert [[(b.label, b.payload) for b in row] for row in rows] == [[("Открыть снова", {"a": "gm"})]]
+    assert (await session.scalars(select(PermissionGrant))).all() == []
+    assert not await leaders.is_leader(session, tenant.id, petrov.id)
+    assert _dms(ch, CHAT) == [] and _dms(ch, PETROV) == []
+    await handle(session, ch, _press(who, {"a": "gm"}))  # «Открыть снова» — снова меню прав
+    assert "Кому передать?" in ch.messages[(who, "500")]
+
+
+async def test_rights_cancel_denied_for_acting_and_player(session, tenant_cfg):
+    tenant, _ = await _ready(session, tenant_cfg)
+    captain = await _player(session, tenant, CAPTAIN)
+    petrov = await _player(session, tenant, PETROV)
+    await leaders.grant_acting(session, tenant.id, captain.id, petrov.id, None)
+    ch = FakeChannel()
+    await handle(session, ch, _press(PETROV, {"a": "gx"}))
+    assert ch.toasts[-1] == "Передавать права может только капитан или заместитель"
+    await handle(session, ch, _press(SIDOROV, {"a": "gx"}))
+    assert ch.toasts[-1] == "Это доступно только руководителям команды"
+    assert ch.edits == []

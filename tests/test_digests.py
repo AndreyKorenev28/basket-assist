@@ -98,7 +98,7 @@ async def test_no_time_and_no_poll(session, tenant_cfg):
         f"📅 {digests.format_when(m, await _league(session, entries['abl']))}",
         "Время не назначено — опрос не запускается, свяжитесь с лигой.",
     ]
-    assert "время не назначено" in abl.split("\n")[1]
+    assert "время пока не назначено" in abl.split("\n")[1]
     assert mlbl.split("\n")[0] == "МЛБЛ: МИРЭА — Соперник g2"
     assert mlbl.split("\n")[2:] == ["Опрос ещё не запущен."]
     assert "Буду" not in abl + mlbl

@@ -13,6 +13,7 @@ class FakeChannel:
         self.edits: list[tuple[MessageRef, str]] = []
         self.pins: list[MessageRef] = []
         self.toasts: list[str] = []
+        self.links: list[str | None] = []  # ссылка в ответе на нажатие (open_link), параллельно toasts
         self.messages: dict[tuple[str, str], str] = {}
         self.buttons: dict[tuple[str, str], list | None] = {}  # клавиатура сообщения (последняя)
         self._next = 100
@@ -42,8 +43,9 @@ class FakeChannel:
         self.pins.append(msg)
         return True
 
-    async def answer_button(self, press: ButtonPress, toast: str) -> None:
+    async def answer_button(self, press: ButtonPress, toast: str, link: str | None = None) -> None:
         self.toasts.append(toast)
+        self.links.append(link)
 
     async def chat_members(self, peer_id: str) -> list[str]:
         return list(self.names)
