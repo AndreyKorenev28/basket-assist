@@ -1,0 +1,38 @@
+# Пример конфигурации команды для MVP. Скопируйте в config/tenant.toml (он в .gitignore)
+# и подставьте реальные значения. Реальные имена и VK ID в репозиторий не попадают.
+
+key = "our_team"
+name = "Наша команда"
+# peer_id беседы команды так, как его видит бот (2000000000 + номер беседы у сообщества)
+vk_chat_peer_id = 2000000001
+
+[captain]
+vk_user_id = 1
+display_name = "Капитан"
+
+[[vice_captains]]
+vk_user_id = 2
+display_name = "Заместитель"
+
+[[leagues]]
+key = "abl"
+name = "АБЛ"
+platform = "mtgame"
+base_url = "https://ablforpeople.com"
+team_name = "Westchester"
+team_url = "https://ablforpeople.com/team/279"
+team_external_id = "279"            # team_id в MTGame
+tournament_external_id = "4145"     # турнир «Шелепиха»
+season_external_id = "231"
+
+[[leagues]]
+key = "mlbl"
+name = "МЛБЛ"
+platform = "infobasket"
+base_url = "https://moscow.ilovebasket.ru"
+team_name = "МИРЭА"
+team_url = "https://moscow.ilovebasket.ru/teams/9056"
+team_external_id = "9056"           # TeamID в Infobasket
+tournament_external_id = "150011"   # этап «Круговой турнир» дивизиона «Лига развития (3)»
+season_external_id = "150000"
+default_venue_address = ""          # все залы МЛБЛ команды — в одном здании; адрес можно указать здесь

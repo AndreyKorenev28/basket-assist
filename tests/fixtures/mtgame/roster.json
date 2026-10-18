@@ -1,0 +1,2954 @@
+[
+ {
+  "id": 575891,
+  "tournament_team": {
+   "id": 31988,
+   "name": "Westchester",
+   "logo": {
+    "id": 12059659,
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "mime_type": "image/png",
+    "size": 59222,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-08T12:45:38.842477Z"
+   },
+   "team_photo": null,
+   "team_uniform": null,
+   "team": {
+    "id": 279,
+    "name": "Whestchester",
+    "logo": {
+     "id": 8775780,
+     "name": "828x620.webp",
+     "original_name": "828x620.webp",
+     "path": "https://fs.mtgame.ru/828x620.webp",
+     "mime_type": "",
+     "size": 4238,
+     "engine": "yandex_s3",
+     "created_at": "2025-06-14T13:57:33.246458Z"
+    },
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "sport": {
+     "id": 3,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1,
+     "is_hidden": false
+    },
+    "unique_code": "3D0M"
+   },
+   "points": 9,
+   "mt_points": 0,
+   "final_standing": null,
+   "team_id": 279,
+   "tournament_id": 4145,
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   }
+  },
+  "team_user": {
+   "id": 184857,
+   "user": {
+    "id": 23312,
+    "first_name": "first1",
+    "last_name": "last2",
+    "middle_name": null,
+    "photo": null,
+    "gender": "male",
+    "birth_date": "2000-01-01",
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "profile": {
+     "user_id": 23312,
+     "height": 197,
+     "weight": 100
+    },
+    "basketball_profile": null,
+    "volleyball_profile": null,
+    "hockey_profile": null,
+    "football_profile": null,
+    "handball_profile": null,
+    "rugby_profile": null,
+    "waterpolo_profile": null,
+    "wrestball_profile": null,
+    "is_active": true,
+    "unique_code": "PSZA",
+    "rsv_account_id": null,
+    "teams": []
+   },
+   "role": "member",
+   "permission_role": "member",
+   "number": "14",
+   "team_id": 279,
+   "created_at": "2025-06-11T09:50:08.421358Z",
+   "updated_at": "2026-10-11T14:27:11.387132Z"
+  },
+  "disqualified": false,
+  "league_player": {
+   "id": 147150,
+   "user_id": 23312,
+   "league_id": 2,
+   "rating": null,
+   "first_name": "first3",
+   "last_name": "last4",
+   "middle_name": null,
+   "photo": null,
+   "gender": "male",
+   "birth_date": "2000-01-01",
+   "has_changes": false,
+   "license_number": null,
+   "additional_data": null,
+   "qualification": null,
+   "achievements": [],
+   "field_values": [
+    {
+     "id": 159269,
+     "league_player_id": 147150,
+     "league_player_field_id": 31,
+     "league_player_field": {
+      "id": 31,
+      "league_id": 2,
+      "name": "Мед. справка",
+      "type": "select",
+      "is_multiple": false,
+      "variants": [
+       {
+        "uuid": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+        "name": "сдал"
+       },
+       {
+        "uuid": "2ee12565-bc4e-478e-8ac0-c38b102bc800",
+        "name": "не сдал"
+       }
+      ],
+      "show_in_application_file": false,
+      "sort": null
+     },
+     "file": null,
+     "value": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+     "value_text": "сдал"
+    }
+   ]
+  },
+  "active": true,
+  "disqualification": null,
+  "conditional_disqualification": null,
+  "last_name": null,
+  "first_name": null,
+  "middle_name": null,
+  "photo": null,
+  "playoff_admission": null,
+  "field_values": [],
+  "created_at": "2026-08-31T20:07:51.164824Z"
+ },
+ {
+  "id": 575892,
+  "tournament_team": {
+   "id": 31988,
+   "name": "Westchester",
+   "logo": {
+    "id": 12059659,
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "mime_type": "image/png",
+    "size": 59222,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-08T12:45:38.842477Z"
+   },
+   "team_photo": null,
+   "team_uniform": null,
+   "team": {
+    "id": 279,
+    "name": "Whestchester",
+    "logo": {
+     "id": 8775780,
+     "name": "828x620.webp",
+     "original_name": "828x620.webp",
+     "path": "https://fs.mtgame.ru/828x620.webp",
+     "mime_type": "",
+     "size": 4238,
+     "engine": "yandex_s3",
+     "created_at": "2025-06-14T13:57:33.246458Z"
+    },
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "sport": {
+     "id": 3,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1,
+     "is_hidden": false
+    },
+    "unique_code": "3D0M"
+   },
+   "points": 9,
+   "mt_points": 0,
+   "final_standing": null,
+   "team_id": 279,
+   "tournament_id": 4145,
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   }
+  },
+  "team_user": {
+   "id": 5798,
+   "user": {
+    "id": 5425,
+    "first_name": "first5",
+    "last_name": "last6",
+    "middle_name": null,
+    "photo": null,
+    "gender": "male",
+    "birth_date": "2000-01-01",
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "profile": {
+     "user_id": 5425,
+     "height": 190,
+     "weight": 77
+    },
+    "basketball_profile": null,
+    "volleyball_profile": null,
+    "hockey_profile": null,
+    "football_profile": null,
+    "handball_profile": null,
+    "rugby_profile": null,
+    "waterpolo_profile": null,
+    "wrestball_profile": null,
+    "is_active": true,
+    "unique_code": "EZUV",
+    "rsv_account_id": null,
+    "teams": []
+   },
+   "role": "member",
+   "permission_role": "member",
+   "number": "8",
+   "team_id": 279,
+   "created_at": "2020-09-20T10:15:05.368821Z",
+   "updated_at": "2026-10-17T18:00:20.969406Z"
+  },
+  "disqualified": false,
+  "league_player": {
+   "id": 20331,
+   "user_id": 5425,
+   "league_id": 2,
+   "rating": null,
+   "first_name": "first7",
+   "last_name": "last8",
+   "middle_name": null,
+   "photo": null,
+   "gender": "male",
+   "birth_date": "2000-01-01",
+   "has_changes": false,
+   "license_number": null,
+   "additional_data": null,
+   "qualification": null,
+   "achievements": [],
+   "field_values": [
+    {
+     "id": 160562,
+     "league_player_id": 20331,
+     "league_player_field_id": 31,
+     "league_player_field": {
+      "id": 31,
+      "league_id": 2,
+      "name": "Мед. справка",
+      "type": "select",
+      "is_multiple": false,
+      "variants": [
+       {
+        "uuid": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+        "name": "сдал"
+       },
+       {
+        "uuid": "2ee12565-bc4e-478e-8ac0-c38b102bc800",
+        "name": "не сдал"
+       }
+      ],
+      "show_in_application_file": false,
+      "sort": null
+     },
+     "file": null,
+     "value": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+     "value_text": "сдал"
+    }
+   ]
+  },
+  "active": true,
+  "disqualification": null,
+  "conditional_disqualification": null,
+  "last_name": null,
+  "first_name": null,
+  "middle_name": null,
+  "photo": null,
+  "playoff_admission": null,
+  "field_values": [],
+  "created_at": "2026-08-31T20:07:51.186871Z"
+ },
+ {
+  "id": 575893,
+  "tournament_team": {
+   "id": 31988,
+   "name": "Westchester",
+   "logo": {
+    "id": 12059659,
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "mime_type": "image/png",
+    "size": 59222,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-08T12:45:38.842477Z"
+   },
+   "team_photo": null,
+   "team_uniform": null,
+   "team": {
+    "id": 279,
+    "name": "Whestchester",
+    "logo": {
+     "id": 8775780,
+     "name": "828x620.webp",
+     "original_name": "828x620.webp",
+     "path": "https://fs.mtgame.ru/828x620.webp",
+     "mime_type": "",
+     "size": 4238,
+     "engine": "yandex_s3",
+     "created_at": "2025-06-14T13:57:33.246458Z"
+    },
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "sport": {
+     "id": 3,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1,
+     "is_hidden": false
+    },
+    "unique_code": "3D0M"
+   },
+   "points": 9,
+   "mt_points": 0,
+   "final_standing": null,
+   "team_id": 279,
+   "tournament_id": 4145,
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   }
+  },
+  "team_user": {
+   "id": 2412,
+   "user": {
+    "id": 450,
+    "first_name": "first9",
+    "last_name": "last10",
+    "middle_name": null,
+    "photo": null,
+    "gender": "male",
+    "birth_date": "2000-01-01",
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "profile": {
+     "user_id": 450,
+     "height": 204,
+     "weight": 100
+    },
+    "basketball_profile": {
+     "user_id": 450,
+     "position": "center",
+     "work_hand": null
+    },
+    "volleyball_profile": null,
+    "hockey_profile": null,
+    "football_profile": null,
+    "handball_profile": null,
+    "rugby_profile": null,
+    "waterpolo_profile": null,
+    "wrestball_profile": null,
+    "is_active": true,
+    "unique_code": "EK2K",
+    "rsv_account_id": null,
+    "teams": []
+   },
+   "role": "admin",
+   "permission_role": "admin",
+   "number": "0",
+   "team_id": 279,
+   "created_at": "2020-06-19T06:40:44.662881Z",
+   "updated_at": "2023-10-29T10:38:07.803410Z"
+  },
+  "disqualified": false,
+  "league_player": {
+   "id": 17125,
+   "user_id": 450,
+   "league_id": 2,
+   "rating": null,
+   "first_name": "first11",
+   "last_name": "last12",
+   "middle_name": null,
+   "photo": null,
+   "gender": "male",
+   "birth_date": "2000-01-01",
+   "has_changes": false,
+   "license_number": null,
+   "additional_data": null,
+   "qualification": null,
+   "achievements": [],
+   "field_values": [
+    {
+     "id": 50866,
+     "league_player_id": 17125,
+     "league_player_field_id": 31,
+     "league_player_field": {
+      "id": 31,
+      "league_id": 2,
+      "name": "Мед. справка",
+      "type": "select",
+      "is_multiple": false,
+      "variants": [
+       {
+        "uuid": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+        "name": "сдал"
+       },
+       {
+        "uuid": "2ee12565-bc4e-478e-8ac0-c38b102bc800",
+        "name": "не сдал"
+       }
+      ],
+      "show_in_application_file": false,
+      "sort": null
+     },
+     "file": null,
+     "value": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+     "value_text": "сдал"
+    }
+   ]
+  },
+  "active": true,
+  "disqualification": null,
+  "conditional_disqualification": null,
+  "last_name": null,
+  "first_name": null,
+  "middle_name": null,
+  "photo": null,
+  "playoff_admission": null,
+  "field_values": [],
+  "created_at": "2026-08-31T20:07:51.204501Z"
+ },
+ {
+  "id": 575894,
+  "tournament_team": {
+   "id": 31988,
+   "name": "Westchester",
+   "logo": {
+    "id": 12059659,
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "mime_type": "image/png",
+    "size": 59222,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-08T12:45:38.842477Z"
+   },
+   "team_photo": null,
+   "team_uniform": null,
+   "team": {
+    "id": 279,
+    "name": "Whestchester",
+    "logo": {
+     "id": 8775780,
+     "name": "828x620.webp",
+     "original_name": "828x620.webp",
+     "path": "https://fs.mtgame.ru/828x620.webp",
+     "mime_type": "",
+     "size": 4238,
+     "engine": "yandex_s3",
+     "created_at": "2025-06-14T13:57:33.246458Z"
+    },
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "sport": {
+     "id": 3,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1,
+     "is_hidden": false
+    },
+    "unique_code": "3D0M"
+   },
+   "points": 9,
+   "mt_points": 0,
+   "final_standing": null,
+   "team_id": 279,
+   "tournament_id": 4145,
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   }
+  },
+  "team_user": {
+   "id": 2415,
+   "user": {
+    "id": 2327,
+    "first_name": "first13",
+    "last_name": "last14",
+    "middle_name": null,
+    "photo": null,
+    "gender": null,
+    "birth_date": "2000-01-01",
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "profile": {
+     "user_id": 2327,
+     "height": 180,
+     "weight": 100
+    },
+    "basketball_profile": {
+     "user_id": 2327,
+     "position": "small_forward",
+     "work_hand": null
+    },
+    "volleyball_profile": null,
+    "hockey_profile": null,
+    "football_profile": null,
+    "handball_profile": null,
+    "rugby_profile": null,
+    "waterpolo_profile": null,
+    "wrestball_profile": null,
+    "is_active": true,
+    "unique_code": "8ES9",
+    "rsv_account_id": null,
+    "teams": []
+   },
+   "role": "member",
+   "permission_role": "member",
+   "number": "91",
+   "team_id": 279,
+   "created_at": "2020-06-20T15:52:37.797907Z",
+   "updated_at": "2022-06-11T13:40:39.459137Z"
+  },
+  "disqualified": false,
+  "league_player": {
+   "id": 36794,
+   "user_id": 2327,
+   "league_id": 2,
+   "rating": null,
+   "first_name": "first15",
+   "last_name": "last16",
+   "middle_name": null,
+   "photo": null,
+   "gender": null,
+   "birth_date": "2000-01-01",
+   "has_changes": false,
+   "license_number": null,
+   "additional_data": null,
+   "qualification": null,
+   "achievements": [],
+   "field_values": [
+    {
+     "id": 145682,
+     "league_player_id": 36794,
+     "league_player_field_id": 31,
+     "league_player_field": {
+      "id": 31,
+      "league_id": 2,
+      "name": "Мед. справка",
+      "type": "select",
+      "is_multiple": false,
+      "variants": [
+       {
+        "uuid": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+        "name": "сдал"
+       },
+       {
+        "uuid": "2ee12565-bc4e-478e-8ac0-c38b102bc800",
+        "name": "не сдал"
+       }
+      ],
+      "show_in_application_file": false,
+      "sort": null
+     },
+     "file": null,
+     "value": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+     "value_text": "сдал"
+    }
+   ]
+  },
+  "active": true,
+  "disqualification": null,
+  "conditional_disqualification": null,
+  "last_name": null,
+  "first_name": null,
+  "middle_name": null,
+  "photo": null,
+  "playoff_admission": null,
+  "field_values": [],
+  "created_at": "2026-08-31T20:07:51.221738Z"
+ },
+ {
+  "id": 575895,
+  "tournament_team": {
+   "id": 31988,
+   "name": "Westchester",
+   "logo": {
+    "id": 12059659,
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "mime_type": "image/png",
+    "size": 59222,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-08T12:45:38.842477Z"
+   },
+   "team_photo": null,
+   "team_uniform": null,
+   "team": {
+    "id": 279,
+    "name": "Whestchester",
+    "logo": {
+     "id": 8775780,
+     "name": "828x620.webp",
+     "original_name": "828x620.webp",
+     "path": "https://fs.mtgame.ru/828x620.webp",
+     "mime_type": "",
+     "size": 4238,
+     "engine": "yandex_s3",
+     "created_at": "2025-06-14T13:57:33.246458Z"
+    },
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "sport": {
+     "id": 3,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1,
+     "is_hidden": false
+    },
+    "unique_code": "3D0M"
+   },
+   "points": 9,
+   "mt_points": 0,
+   "final_standing": null,
+   "team_id": 279,
+   "tournament_id": 4145,
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   }
+  },
+  "team_user": {
+   "id": 29484,
+   "user": {
+    "id": 9195,
+    "first_name": "first17",
+    "last_name": "last18",
+    "middle_name": null,
+    "photo": null,
+    "gender": null,
+    "birth_date": "2000-01-01",
+    "city": null,
+    "profile": {
+     "user_id": 9195,
+     "height": null,
+     "weight": null
+    },
+    "basketball_profile": null,
+    "volleyball_profile": null,
+    "hockey_profile": null,
+    "football_profile": null,
+    "handball_profile": null,
+    "rugby_profile": null,
+    "waterpolo_profile": null,
+    "wrestball_profile": null,
+    "is_active": true,
+    "unique_code": "UPJ8",
+    "rsv_account_id": null,
+    "teams": []
+   },
+   "role": "member",
+   "permission_role": "member",
+   "number": "77",
+   "team_id": 279,
+   "created_at": "2022-03-07T09:23:15.165351Z",
+   "updated_at": "2026-06-27T14:41:52.546151Z"
+  },
+  "disqualified": false,
+  "league_player": {
+   "id": 26588,
+   "user_id": 9195,
+   "league_id": 2,
+   "rating": null,
+   "first_name": "first19",
+   "last_name": "last20",
+   "middle_name": null,
+   "photo": null,
+   "gender": null,
+   "birth_date": "2000-01-01",
+   "has_changes": false,
+   "license_number": null,
+   "additional_data": null,
+   "qualification": null,
+   "achievements": [],
+   "field_values": [
+    {
+     "id": 50865,
+     "league_player_id": 26588,
+     "league_player_field_id": 31,
+     "league_player_field": {
+      "id": 31,
+      "league_id": 2,
+      "name": "Мед. справка",
+      "type": "select",
+      "is_multiple": false,
+      "variants": [
+       {
+        "uuid": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+        "name": "сдал"
+       },
+       {
+        "uuid": "2ee12565-bc4e-478e-8ac0-c38b102bc800",
+        "name": "не сдал"
+       }
+      ],
+      "show_in_application_file": false,
+      "sort": null
+     },
+     "file": null,
+     "value": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+     "value_text": "сдал"
+    }
+   ]
+  },
+  "active": true,
+  "disqualification": null,
+  "conditional_disqualification": null,
+  "last_name": null,
+  "first_name": null,
+  "middle_name": null,
+  "photo": null,
+  "playoff_admission": null,
+  "field_values": [],
+  "created_at": "2026-08-31T20:07:51.261242Z"
+ },
+ {
+  "id": 575896,
+  "tournament_team": {
+   "id": 31988,
+   "name": "Westchester",
+   "logo": {
+    "id": 12059659,
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "mime_type": "image/png",
+    "size": 59222,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-08T12:45:38.842477Z"
+   },
+   "team_photo": null,
+   "team_uniform": null,
+   "team": {
+    "id": 279,
+    "name": "Whestchester",
+    "logo": {
+     "id": 8775780,
+     "name": "828x620.webp",
+     "original_name": "828x620.webp",
+     "path": "https://fs.mtgame.ru/828x620.webp",
+     "mime_type": "",
+     "size": 4238,
+     "engine": "yandex_s3",
+     "created_at": "2025-06-14T13:57:33.246458Z"
+    },
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "sport": {
+     "id": 3,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1,
+     "is_hidden": false
+    },
+    "unique_code": "3D0M"
+   },
+   "points": 9,
+   "mt_points": 0,
+   "final_standing": null,
+   "team_id": 279,
+   "tournament_id": 4145,
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   }
+  },
+  "team_user": {
+   "id": 234395,
+   "user": {
+    "id": 176237,
+    "first_name": "first21",
+    "last_name": "last22",
+    "middle_name": null,
+    "photo": null,
+    "gender": "male",
+    "birth_date": "2000-01-01",
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "profile": {
+     "user_id": 176237,
+     "height": 191,
+     "weight": 68
+    },
+    "basketball_profile": {
+     "user_id": 176237,
+     "position": "shooting_guard",
+     "work_hand": "right"
+    },
+    "volleyball_profile": null,
+    "hockey_profile": null,
+    "football_profile": null,
+    "handball_profile": null,
+    "rugby_profile": null,
+    "waterpolo_profile": null,
+    "wrestball_profile": null,
+    "is_active": true,
+    "unique_code": "65HU",
+    "rsv_account_id": null,
+    "teams": []
+   },
+   "role": "member",
+   "permission_role": "member",
+   "number": "71",
+   "team_id": 279,
+   "created_at": "2026-01-09T11:38:04.218995Z",
+   "updated_at": "2026-04-04T17:14:39.811405Z"
+  },
+  "disqualified": false,
+  "league_player": {
+   "id": 180281,
+   "user_id": 176237,
+   "league_id": 2,
+   "rating": null,
+   "first_name": "first23",
+   "last_name": "last24",
+   "middle_name": null,
+   "photo": null,
+   "gender": "male",
+   "birth_date": "2000-01-01",
+   "has_changes": false,
+   "license_number": null,
+   "additional_data": null,
+   "qualification": null,
+   "achievements": [],
+   "field_values": [
+    {
+     "id": 152619,
+     "league_player_id": 180281,
+     "league_player_field_id": 31,
+     "league_player_field": {
+      "id": 31,
+      "league_id": 2,
+      "name": "Мед. справка",
+      "type": "select",
+      "is_multiple": false,
+      "variants": [
+       {
+        "uuid": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+        "name": "сдал"
+       },
+       {
+        "uuid": "2ee12565-bc4e-478e-8ac0-c38b102bc800",
+        "name": "не сдал"
+       }
+      ],
+      "show_in_application_file": false,
+      "sort": null
+     },
+     "file": null,
+     "value": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+     "value_text": "сдал"
+    }
+   ]
+  },
+  "active": true,
+  "disqualification": null,
+  "conditional_disqualification": null,
+  "last_name": null,
+  "first_name": null,
+  "middle_name": null,
+  "photo": null,
+  "playoff_admission": null,
+  "field_values": [],
+  "created_at": "2026-08-31T20:07:51.294384Z"
+ },
+ {
+  "id": 575897,
+  "tournament_team": {
+   "id": 31988,
+   "name": "Westchester",
+   "logo": {
+    "id": 12059659,
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "mime_type": "image/png",
+    "size": 59222,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-08T12:45:38.842477Z"
+   },
+   "team_photo": null,
+   "team_uniform": null,
+   "team": {
+    "id": 279,
+    "name": "Whestchester",
+    "logo": {
+     "id": 8775780,
+     "name": "828x620.webp",
+     "original_name": "828x620.webp",
+     "path": "https://fs.mtgame.ru/828x620.webp",
+     "mime_type": "",
+     "size": 4238,
+     "engine": "yandex_s3",
+     "created_at": "2025-06-14T13:57:33.246458Z"
+    },
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "sport": {
+     "id": 3,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1,
+     "is_hidden": false
+    },
+    "unique_code": "3D0M"
+   },
+   "points": 9,
+   "mt_points": 0,
+   "final_standing": null,
+   "team_id": 279,
+   "tournament_id": 4145,
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   }
+  },
+  "team_user": {
+   "id": 33502,
+   "user": {
+    "id": 25740,
+    "first_name": "first25",
+    "last_name": "last26",
+    "middle_name": null,
+    "photo": null,
+    "gender": "male",
+    "birth_date": "2000-01-01",
+    "city": null,
+    "profile": {
+     "user_id": 25740,
+     "height": 184,
+     "weight": 80
+    },
+    "basketball_profile": {
+     "user_id": 25740,
+     "position": "small_forward",
+     "work_hand": "right"
+    },
+    "volleyball_profile": null,
+    "hockey_profile": null,
+    "football_profile": null,
+    "handball_profile": null,
+    "rugby_profile": null,
+    "waterpolo_profile": null,
+    "wrestball_profile": null,
+    "is_active": true,
+    "unique_code": "8WAW",
+    "rsv_account_id": null,
+    "teams": []
+   },
+   "role": "member",
+   "permission_role": "member",
+   "number": "55",
+   "team_id": 279,
+   "created_at": "2022-06-11T12:27:33.661392Z",
+   "updated_at": "2025-01-18T16:08:07.112006Z"
+  },
+  "disqualified": false,
+  "league_player": {
+   "id": 44713,
+   "user_id": 25740,
+   "league_id": 2,
+   "rating": null,
+   "first_name": "first27",
+   "last_name": "last28",
+   "middle_name": null,
+   "photo": null,
+   "gender": "male",
+   "birth_date": "2000-01-01",
+   "has_changes": false,
+   "license_number": null,
+   "additional_data": null,
+   "qualification": null,
+   "achievements": [],
+   "field_values": [
+    {
+     "id": 50869,
+     "league_player_id": 44713,
+     "league_player_field_id": 31,
+     "league_player_field": {
+      "id": 31,
+      "league_id": 2,
+      "name": "Мед. справка",
+      "type": "select",
+      "is_multiple": false,
+      "variants": [
+       {
+        "uuid": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+        "name": "сдал"
+       },
+       {
+        "uuid": "2ee12565-bc4e-478e-8ac0-c38b102bc800",
+        "name": "не сдал"
+       }
+      ],
+      "show_in_application_file": false,
+      "sort": null
+     },
+     "file": null,
+     "value": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+     "value_text": "сдал"
+    }
+   ]
+  },
+  "active": true,
+  "disqualification": null,
+  "conditional_disqualification": null,
+  "last_name": null,
+  "first_name": null,
+  "middle_name": null,
+  "photo": null,
+  "playoff_admission": null,
+  "field_values": [],
+  "created_at": "2026-08-31T20:07:51.319251Z"
+ },
+ {
+  "id": 575898,
+  "tournament_team": {
+   "id": 31988,
+   "name": "Westchester",
+   "logo": {
+    "id": 12059659,
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "mime_type": "image/png",
+    "size": 59222,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-08T12:45:38.842477Z"
+   },
+   "team_photo": null,
+   "team_uniform": null,
+   "team": {
+    "id": 279,
+    "name": "Whestchester",
+    "logo": {
+     "id": 8775780,
+     "name": "828x620.webp",
+     "original_name": "828x620.webp",
+     "path": "https://fs.mtgame.ru/828x620.webp",
+     "mime_type": "",
+     "size": 4238,
+     "engine": "yandex_s3",
+     "created_at": "2025-06-14T13:57:33.246458Z"
+    },
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "sport": {
+     "id": 3,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1,
+     "is_hidden": false
+    },
+    "unique_code": "3D0M"
+   },
+   "points": 9,
+   "mt_points": 0,
+   "final_standing": null,
+   "team_id": 279,
+   "tournament_id": 4145,
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   }
+  },
+  "team_user": {
+   "id": 184850,
+   "user": {
+    "id": 139298,
+    "first_name": "first29",
+    "last_name": "last30",
+    "middle_name": null,
+    "photo": null,
+    "gender": "male",
+    "birth_date": "2000-01-01",
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "profile": {
+     "user_id": 139298,
+     "height": 189,
+     "weight": 87
+    },
+    "basketball_profile": null,
+    "volleyball_profile": null,
+    "hockey_profile": null,
+    "football_profile": null,
+    "handball_profile": null,
+    "rugby_profile": null,
+    "waterpolo_profile": null,
+    "wrestball_profile": null,
+    "is_active": true,
+    "unique_code": "TW3L",
+    "rsv_account_id": null,
+    "teams": []
+   },
+   "role": "member",
+   "permission_role": "member",
+   "number": "33",
+   "team_id": 279,
+   "created_at": "2025-06-11T08:02:32.083400Z",
+   "updated_at": "2025-09-14T07:13:51.785044Z"
+  },
+  "disqualified": false,
+  "league_player": {
+   "id": 147149,
+   "user_id": 139298,
+   "league_id": 2,
+   "rating": null,
+   "first_name": "first31",
+   "last_name": "last32",
+   "middle_name": null,
+   "photo": null,
+   "gender": "male",
+   "birth_date": "2000-01-01",
+   "has_changes": false,
+   "license_number": null,
+   "additional_data": null,
+   "qualification": null,
+   "achievements": [],
+   "field_values": [
+    {
+     "id": 145683,
+     "league_player_id": 147149,
+     "league_player_field_id": 31,
+     "league_player_field": {
+      "id": 31,
+      "league_id": 2,
+      "name": "Мед. справка",
+      "type": "select",
+      "is_multiple": false,
+      "variants": [
+       {
+        "uuid": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+        "name": "сдал"
+       },
+       {
+        "uuid": "2ee12565-bc4e-478e-8ac0-c38b102bc800",
+        "name": "не сдал"
+       }
+      ],
+      "show_in_application_file": false,
+      "sort": null
+     },
+     "file": null,
+     "value": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+     "value_text": "сдал"
+    }
+   ]
+  },
+  "active": true,
+  "disqualification": null,
+  "conditional_disqualification": null,
+  "last_name": null,
+  "first_name": null,
+  "middle_name": null,
+  "photo": null,
+  "playoff_admission": null,
+  "field_values": [],
+  "created_at": "2026-08-31T20:07:51.344841Z"
+ },
+ {
+  "id": 575899,
+  "tournament_team": {
+   "id": 31988,
+   "name": "Westchester",
+   "logo": {
+    "id": 12059659,
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "mime_type": "image/png",
+    "size": 59222,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-08T12:45:38.842477Z"
+   },
+   "team_photo": null,
+   "team_uniform": null,
+   "team": {
+    "id": 279,
+    "name": "Whestchester",
+    "logo": {
+     "id": 8775780,
+     "name": "828x620.webp",
+     "original_name": "828x620.webp",
+     "path": "https://fs.mtgame.ru/828x620.webp",
+     "mime_type": "",
+     "size": 4238,
+     "engine": "yandex_s3",
+     "created_at": "2025-06-14T13:57:33.246458Z"
+    },
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "sport": {
+     "id": 3,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1,
+     "is_hidden": false
+    },
+    "unique_code": "3D0M"
+   },
+   "points": 9,
+   "mt_points": 0,
+   "final_standing": null,
+   "team_id": 279,
+   "tournament_id": 4145,
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   }
+  },
+  "team_user": {
+   "id": 2417,
+   "user": {
+    "id": 452,
+    "first_name": "first33",
+    "last_name": "last34",
+    "middle_name": "middle35",
+    "photo": null,
+    "gender": "male",
+    "birth_date": "2000-01-01",
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "profile": {
+     "user_id": 452,
+     "height": 194,
+     "weight": 85
+    },
+    "basketball_profile": {
+     "user_id": 452,
+     "position": "power_forward",
+     "work_hand": "right"
+    },
+    "volleyball_profile": null,
+    "hockey_profile": null,
+    "football_profile": null,
+    "handball_profile": null,
+    "rugby_profile": null,
+    "waterpolo_profile": null,
+    "wrestball_profile": null,
+    "is_active": true,
+    "unique_code": "63X0",
+    "rsv_account_id": null,
+    "teams": []
+   },
+   "role": "member",
+   "permission_role": "member",
+   "number": "28",
+   "team_id": 279,
+   "created_at": "2020-06-21T06:46:43.023442Z",
+   "updated_at": "2021-12-25T11:49:53.736580Z"
+  },
+  "disqualified": false,
+  "league_player": {
+   "id": 17124,
+   "user_id": 452,
+   "league_id": 2,
+   "rating": null,
+   "first_name": "first36",
+   "last_name": "last37",
+   "middle_name": "middle38",
+   "photo": null,
+   "gender": "male",
+   "birth_date": "2000-01-01",
+   "has_changes": false,
+   "license_number": null,
+   "additional_data": null,
+   "qualification": null,
+   "achievements": [],
+   "field_values": [
+    {
+     "id": 145679,
+     "league_player_id": 17124,
+     "league_player_field_id": 31,
+     "league_player_field": {
+      "id": 31,
+      "league_id": 2,
+      "name": "Мед. справка",
+      "type": "select",
+      "is_multiple": false,
+      "variants": [
+       {
+        "uuid": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+        "name": "сдал"
+       },
+       {
+        "uuid": "2ee12565-bc4e-478e-8ac0-c38b102bc800",
+        "name": "не сдал"
+       }
+      ],
+      "show_in_application_file": false,
+      "sort": null
+     },
+     "file": null,
+     "value": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+     "value_text": "сдал"
+    }
+   ]
+  },
+  "active": true,
+  "disqualification": null,
+  "conditional_disqualification": null,
+  "last_name": null,
+  "first_name": null,
+  "middle_name": null,
+  "photo": null,
+  "playoff_admission": null,
+  "field_values": [],
+  "created_at": "2026-08-31T20:07:51.369427Z"
+ },
+ {
+  "id": 575900,
+  "tournament_team": {
+   "id": 31988,
+   "name": "Westchester",
+   "logo": {
+    "id": 12059659,
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "mime_type": "image/png",
+    "size": 59222,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-08T12:45:38.842477Z"
+   },
+   "team_photo": null,
+   "team_uniform": null,
+   "team": {
+    "id": 279,
+    "name": "Whestchester",
+    "logo": {
+     "id": 8775780,
+     "name": "828x620.webp",
+     "original_name": "828x620.webp",
+     "path": "https://fs.mtgame.ru/828x620.webp",
+     "mime_type": "",
+     "size": 4238,
+     "engine": "yandex_s3",
+     "created_at": "2025-06-14T13:57:33.246458Z"
+    },
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "sport": {
+     "id": 3,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1,
+     "is_hidden": false
+    },
+    "unique_code": "3D0M"
+   },
+   "points": 9,
+   "mt_points": 0,
+   "final_standing": null,
+   "team_id": 279,
+   "tournament_id": 4145,
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   }
+  },
+  "team_user": {
+   "id": 224924,
+   "user": {
+    "id": 9499,
+    "first_name": "first39",
+    "last_name": "last40",
+    "middle_name": null,
+    "photo": null,
+    "gender": "male",
+    "birth_date": "2000-01-01",
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "profile": {
+     "user_id": 9499,
+     "height": 189,
+     "weight": 76
+    },
+    "basketball_profile": {
+     "user_id": 9499,
+     "position": "shooting_guard",
+     "work_hand": "right"
+    },
+    "volleyball_profile": null,
+    "hockey_profile": null,
+    "football_profile": null,
+    "handball_profile": null,
+    "rugby_profile": null,
+    "waterpolo_profile": null,
+    "wrestball_profile": null,
+    "is_active": true,
+    "unique_code": "GLYB",
+    "rsv_account_id": null,
+    "teams": []
+   },
+   "role": "member",
+   "permission_role": "member",
+   "number": "27",
+   "team_id": 279,
+   "created_at": "2025-11-13T18:16:43.424145Z",
+   "updated_at": "2026-02-22T08:17:18.968452Z"
+  },
+  "disqualified": false,
+  "league_player": {
+   "id": 84524,
+   "user_id": 9499,
+   "league_id": 2,
+   "rating": null,
+   "first_name": "first41",
+   "last_name": "last42",
+   "middle_name": null,
+   "photo": null,
+   "gender": "male",
+   "birth_date": "2000-01-01",
+   "has_changes": false,
+   "license_number": null,
+   "additional_data": null,
+   "qualification": null,
+   "achievements": [],
+   "field_values": [
+    {
+     "id": 53444,
+     "league_player_id": 84524,
+     "league_player_field_id": 31,
+     "league_player_field": {
+      "id": 31,
+      "league_id": 2,
+      "name": "Мед. справка",
+      "type": "select",
+      "is_multiple": false,
+      "variants": [
+       {
+        "uuid": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+        "name": "сдал"
+       },
+       {
+        "uuid": "2ee12565-bc4e-478e-8ac0-c38b102bc800",
+        "name": "не сдал"
+       }
+      ],
+      "show_in_application_file": false,
+      "sort": null
+     },
+     "file": null,
+     "value": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+     "value_text": "сдал"
+    }
+   ]
+  },
+  "active": true,
+  "disqualification": null,
+  "conditional_disqualification": null,
+  "last_name": null,
+  "first_name": null,
+  "middle_name": null,
+  "photo": null,
+  "playoff_admission": null,
+  "field_values": [],
+  "created_at": "2026-08-31T20:07:51.393454Z"
+ },
+ {
+  "id": 575901,
+  "tournament_team": {
+   "id": 31988,
+   "name": "Westchester",
+   "logo": {
+    "id": 12059659,
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "mime_type": "image/png",
+    "size": 59222,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-08T12:45:38.842477Z"
+   },
+   "team_photo": null,
+   "team_uniform": null,
+   "team": {
+    "id": 279,
+    "name": "Whestchester",
+    "logo": {
+     "id": 8775780,
+     "name": "828x620.webp",
+     "original_name": "828x620.webp",
+     "path": "https://fs.mtgame.ru/828x620.webp",
+     "mime_type": "",
+     "size": 4238,
+     "engine": "yandex_s3",
+     "created_at": "2025-06-14T13:57:33.246458Z"
+    },
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "sport": {
+     "id": 3,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1,
+     "is_hidden": false
+    },
+    "unique_code": "3D0M"
+   },
+   "points": 9,
+   "mt_points": 0,
+   "final_standing": null,
+   "team_id": 279,
+   "tournament_id": 4145,
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   }
+  },
+  "team_user": {
+   "id": 33499,
+   "user": {
+    "id": 12951,
+    "first_name": "first43",
+    "last_name": "last44",
+    "middle_name": null,
+    "photo": null,
+    "gender": "male",
+    "birth_date": "2000-01-01",
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "profile": {
+     "user_id": 12951,
+     "height": 177,
+     "weight": 76
+    },
+    "basketball_profile": {
+     "user_id": 12951,
+     "position": "point_guard",
+     "work_hand": "right"
+    },
+    "volleyball_profile": null,
+    "hockey_profile": null,
+    "football_profile": null,
+    "handball_profile": null,
+    "rugby_profile": null,
+    "waterpolo_profile": null,
+    "wrestball_profile": null,
+    "is_active": true,
+    "unique_code": "X686",
+    "rsv_account_id": null,
+    "teams": []
+   },
+   "role": "member",
+   "permission_role": "member",
+   "number": "17",
+   "team_id": 279,
+   "created_at": "2022-06-11T11:57:27.301840Z",
+   "updated_at": "2025-01-18T16:08:23.691599Z"
+  },
+  "disqualified": false,
+  "league_player": {
+   "id": 33032,
+   "user_id": 12951,
+   "league_id": 2,
+   "rating": null,
+   "first_name": "first45",
+   "last_name": "last46",
+   "middle_name": null,
+   "photo": null,
+   "gender": "male",
+   "birth_date": "2000-01-01",
+   "has_changes": false,
+   "license_number": null,
+   "additional_data": null,
+   "qualification": null,
+   "achievements": [],
+   "field_values": [
+    {
+     "id": 145681,
+     "league_player_id": 33032,
+     "league_player_field_id": 31,
+     "league_player_field": {
+      "id": 31,
+      "league_id": 2,
+      "name": "Мед. справка",
+      "type": "select",
+      "is_multiple": false,
+      "variants": [
+       {
+        "uuid": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+        "name": "сдал"
+       },
+       {
+        "uuid": "2ee12565-bc4e-478e-8ac0-c38b102bc800",
+        "name": "не сдал"
+       }
+      ],
+      "show_in_application_file": false,
+      "sort": null
+     },
+     "file": null,
+     "value": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+     "value_text": "сдал"
+    }
+   ]
+  },
+  "active": true,
+  "disqualification": null,
+  "conditional_disqualification": null,
+  "last_name": null,
+  "first_name": null,
+  "middle_name": null,
+  "photo": null,
+  "playoff_admission": null,
+  "field_values": [],
+  "created_at": "2026-08-31T20:07:51.418246Z"
+ },
+ {
+  "id": 575902,
+  "tournament_team": {
+   "id": 31988,
+   "name": "Westchester",
+   "logo": {
+    "id": 12059659,
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "mime_type": "image/png",
+    "size": 59222,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-08T12:45:38.842477Z"
+   },
+   "team_photo": null,
+   "team_uniform": null,
+   "team": {
+    "id": 279,
+    "name": "Whestchester",
+    "logo": {
+     "id": 8775780,
+     "name": "828x620.webp",
+     "original_name": "828x620.webp",
+     "path": "https://fs.mtgame.ru/828x620.webp",
+     "mime_type": "",
+     "size": 4238,
+     "engine": "yandex_s3",
+     "created_at": "2025-06-14T13:57:33.246458Z"
+    },
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "sport": {
+     "id": 3,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1,
+     "is_hidden": false
+    },
+    "unique_code": "3D0M"
+   },
+   "points": 9,
+   "mt_points": 0,
+   "final_standing": null,
+   "team_id": 279,
+   "tournament_id": 4145,
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   }
+  },
+  "team_user": {
+   "id": 258811,
+   "user": {
+    "id": 20203,
+    "first_name": "first47",
+    "last_name": "last48",
+    "middle_name": null,
+    "photo": null,
+    "gender": "male",
+    "birth_date": "2000-01-01",
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "profile": {
+     "user_id": 20203,
+     "height": 195,
+     "weight": 100
+    },
+    "basketball_profile": {
+     "user_id": 20203,
+     "position": "small_forward",
+     "work_hand": "right"
+    },
+    "volleyball_profile": null,
+    "hockey_profile": null,
+    "football_profile": null,
+    "handball_profile": null,
+    "rugby_profile": null,
+    "waterpolo_profile": null,
+    "wrestball_profile": null,
+    "is_active": true,
+    "unique_code": "UQA4",
+    "rsv_account_id": null,
+    "teams": []
+   },
+   "role": "member",
+   "permission_role": "member",
+   "number": "10",
+   "team_id": 279,
+   "created_at": "2026-07-23T10:48:53.715145Z",
+   "updated_at": "2026-07-25T17:18:41.423365Z"
+  },
+  "disqualified": false,
+  "league_player": {
+   "id": 40416,
+   "user_id": 20203,
+   "league_id": 2,
+   "rating": null,
+   "first_name": "first49",
+   "last_name": "last50",
+   "middle_name": null,
+   "photo": null,
+   "gender": "male",
+   "birth_date": "2000-01-01",
+   "has_changes": false,
+   "license_number": null,
+   "additional_data": null,
+   "qualification": null,
+   "achievements": [],
+   "field_values": [
+    {
+     "id": 160561,
+     "league_player_id": 40416,
+     "league_player_field_id": 31,
+     "league_player_field": {
+      "id": 31,
+      "league_id": 2,
+      "name": "Мед. справка",
+      "type": "select",
+      "is_multiple": false,
+      "variants": [
+       {
+        "uuid": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+        "name": "сдал"
+       },
+       {
+        "uuid": "2ee12565-bc4e-478e-8ac0-c38b102bc800",
+        "name": "не сдал"
+       }
+      ],
+      "show_in_application_file": false,
+      "sort": null
+     },
+     "file": null,
+     "value": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+     "value_text": "сдал"
+    }
+   ]
+  },
+  "active": true,
+  "disqualification": null,
+  "conditional_disqualification": null,
+  "last_name": null,
+  "first_name": null,
+  "middle_name": null,
+  "photo": null,
+  "playoff_admission": null,
+  "field_values": [],
+  "created_at": "2026-08-31T20:07:51.443766Z"
+ },
+ {
+  "id": 575903,
+  "tournament_team": {
+   "id": 31988,
+   "name": "Westchester",
+   "logo": {
+    "id": 12059659,
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "mime_type": "image/png",
+    "size": 59222,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-08T12:45:38.842477Z"
+   },
+   "team_photo": null,
+   "team_uniform": null,
+   "team": {
+    "id": 279,
+    "name": "Whestchester",
+    "logo": {
+     "id": 8775780,
+     "name": "828x620.webp",
+     "original_name": "828x620.webp",
+     "path": "https://fs.mtgame.ru/828x620.webp",
+     "mime_type": "",
+     "size": 4238,
+     "engine": "yandex_s3",
+     "created_at": "2025-06-14T13:57:33.246458Z"
+    },
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "sport": {
+     "id": 3,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1,
+     "is_hidden": false
+    },
+    "unique_code": "3D0M"
+   },
+   "points": 9,
+   "mt_points": 0,
+   "final_standing": null,
+   "team_id": 279,
+   "tournament_id": 4145,
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   }
+  },
+  "team_user": {
+   "id": 149651,
+   "user": {
+    "id": 20200,
+    "first_name": "first51",
+    "last_name": "last52",
+    "middle_name": null,
+    "photo": null,
+    "gender": "male",
+    "birth_date": "2000-01-01",
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "profile": {
+     "user_id": 20200,
+     "height": 183,
+     "weight": 77
+    },
+    "basketball_profile": {
+     "user_id": 20200,
+     "position": "point_guard",
+     "work_hand": "left"
+    },
+    "volleyball_profile": null,
+    "hockey_profile": null,
+    "football_profile": null,
+    "handball_profile": null,
+    "rugby_profile": null,
+    "waterpolo_profile": null,
+    "wrestball_profile": null,
+    "is_active": true,
+    "unique_code": "UL6W",
+    "rsv_account_id": null,
+    "teams": []
+   },
+   "role": "member",
+   "permission_role": "member",
+   "number": "10",
+   "team_id": 279,
+   "created_at": "2024-11-07T07:27:47.934900Z",
+   "updated_at": "2025-01-18T16:08:15.893392Z"
+  },
+  "disqualified": false,
+  "league_player": {
+   "id": 39972,
+   "user_id": 20200,
+   "league_id": 2,
+   "rating": null,
+   "first_name": "first53",
+   "last_name": "last54",
+   "middle_name": null,
+   "photo": null,
+   "gender": "male",
+   "birth_date": "2000-01-01",
+   "has_changes": false,
+   "license_number": null,
+   "additional_data": null,
+   "qualification": null,
+   "achievements": [],
+   "field_values": [
+    {
+     "id": 145680,
+     "league_player_id": 39972,
+     "league_player_field_id": 31,
+     "league_player_field": {
+      "id": 31,
+      "league_id": 2,
+      "name": "Мед. справка",
+      "type": "select",
+      "is_multiple": false,
+      "variants": [
+       {
+        "uuid": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+        "name": "сдал"
+       },
+       {
+        "uuid": "2ee12565-bc4e-478e-8ac0-c38b102bc800",
+        "name": "не сдал"
+       }
+      ],
+      "show_in_application_file": false,
+      "sort": null
+     },
+     "file": null,
+     "value": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+     "value_text": "сдал"
+    }
+   ]
+  },
+  "active": true,
+  "disqualification": null,
+  "conditional_disqualification": null,
+  "last_name": null,
+  "first_name": null,
+  "middle_name": null,
+  "photo": null,
+  "playoff_admission": null,
+  "field_values": [],
+  "created_at": "2026-08-31T20:07:51.469433Z"
+ },
+ {
+  "id": 575904,
+  "tournament_team": {
+   "id": 31988,
+   "name": "Westchester",
+   "logo": {
+    "id": 12059659,
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "mime_type": "image/png",
+    "size": 59222,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-08T12:45:38.842477Z"
+   },
+   "team_photo": null,
+   "team_uniform": null,
+   "team": {
+    "id": 279,
+    "name": "Whestchester",
+    "logo": {
+     "id": 8775780,
+     "name": "828x620.webp",
+     "original_name": "828x620.webp",
+     "path": "https://fs.mtgame.ru/828x620.webp",
+     "mime_type": "",
+     "size": 4238,
+     "engine": "yandex_s3",
+     "created_at": "2025-06-14T13:57:33.246458Z"
+    },
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "sport": {
+     "id": 3,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1,
+     "is_hidden": false
+    },
+    "unique_code": "3D0M"
+   },
+   "points": 9,
+   "mt_points": 0,
+   "final_standing": null,
+   "team_id": 279,
+   "tournament_id": 4145,
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   }
+  },
+  "team_user": {
+   "id": 132238,
+   "user": {
+    "id": 19567,
+    "first_name": "first55",
+    "last_name": "last56",
+    "middle_name": null,
+    "photo": null,
+    "gender": "male",
+    "birth_date": "2000-01-01",
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "profile": {
+     "user_id": 19567,
+     "height": 182,
+     "weight": 82
+    },
+    "basketball_profile": {
+     "user_id": 19567,
+     "position": "shooting_guard",
+     "work_hand": "right"
+    },
+    "volleyball_profile": {
+     "user_id": 19567,
+     "position": "setter",
+     "work_hand": "right"
+    },
+    "hockey_profile": null,
+    "football_profile": null,
+    "handball_profile": null,
+    "rugby_profile": null,
+    "waterpolo_profile": null,
+    "wrestball_profile": null,
+    "is_active": true,
+    "unique_code": "3PB7",
+    "rsv_account_id": null,
+    "teams": []
+   },
+   "role": "member",
+   "permission_role": "member",
+   "number": "9",
+   "team_id": 279,
+   "created_at": "2024-08-25T17:30:37.090822Z",
+   "updated_at": "2024-09-01T16:46:06.893850Z"
+  },
+  "disqualified": false,
+  "league_player": {
+   "id": 39376,
+   "user_id": 19567,
+   "league_id": 2,
+   "rating": null,
+   "first_name": "first57",
+   "last_name": "last58",
+   "middle_name": null,
+   "photo": null,
+   "gender": "male",
+   "birth_date": "2000-01-01",
+   "has_changes": false,
+   "license_number": null,
+   "additional_data": null,
+   "qualification": null,
+   "achievements": [],
+   "field_values": [
+    {
+     "id": 51022,
+     "league_player_id": 39376,
+     "league_player_field_id": 31,
+     "league_player_field": {
+      "id": 31,
+      "league_id": 2,
+      "name": "Мед. справка",
+      "type": "select",
+      "is_multiple": false,
+      "variants": [
+       {
+        "uuid": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+        "name": "сдал"
+       },
+       {
+        "uuid": "2ee12565-bc4e-478e-8ac0-c38b102bc800",
+        "name": "не сдал"
+       }
+      ],
+      "show_in_application_file": false,
+      "sort": null
+     },
+     "file": null,
+     "value": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+     "value_text": "сдал"
+    }
+   ]
+  },
+  "active": true,
+  "disqualification": null,
+  "conditional_disqualification": null,
+  "last_name": null,
+  "first_name": null,
+  "middle_name": null,
+  "photo": null,
+  "playoff_admission": null,
+  "field_values": [],
+  "created_at": "2026-08-31T20:07:51.508640Z"
+ },
+ {
+  "id": 575905,
+  "tournament_team": {
+   "id": 31988,
+   "name": "Westchester",
+   "logo": {
+    "id": 12059659,
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "mime_type": "image/png",
+    "size": 59222,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-08T12:45:38.842477Z"
+   },
+   "team_photo": null,
+   "team_uniform": null,
+   "team": {
+    "id": 279,
+    "name": "Whestchester",
+    "logo": {
+     "id": 8775780,
+     "name": "828x620.webp",
+     "original_name": "828x620.webp",
+     "path": "https://fs.mtgame.ru/828x620.webp",
+     "mime_type": "",
+     "size": 4238,
+     "engine": "yandex_s3",
+     "created_at": "2025-06-14T13:57:33.246458Z"
+    },
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "sport": {
+     "id": 3,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1,
+     "is_hidden": false
+    },
+    "unique_code": "3D0M"
+   },
+   "points": 9,
+   "mt_points": 0,
+   "final_standing": null,
+   "team_id": 279,
+   "tournament_id": 4145,
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   }
+  },
+  "team_user": {
+   "id": 56640,
+   "user": {
+    "id": 121,
+    "first_name": "first59",
+    "last_name": "last60",
+    "middle_name": "middle61",
+    "photo": null,
+    "gender": "male",
+    "birth_date": "2000-01-01",
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "profile": {
+     "user_id": 121,
+     "height": 184,
+     "weight": 67
+    },
+    "basketball_profile": {
+     "user_id": 121,
+     "position": "shooting_guard",
+     "work_hand": null
+    },
+    "volleyball_profile": null,
+    "hockey_profile": null,
+    "football_profile": null,
+    "handball_profile": null,
+    "rugby_profile": null,
+    "waterpolo_profile": null,
+    "wrestball_profile": null,
+    "is_active": true,
+    "unique_code": "2HV0",
+    "rsv_account_id": null,
+    "teams": []
+   },
+   "role": "member",
+   "permission_role": "member",
+   "number": "7",
+   "team_id": 279,
+   "created_at": "2023-01-08T15:15:24.586067Z",
+   "updated_at": "2026-01-25T17:29:52.136819Z"
+  },
+  "disqualified": false,
+  "league_player": {
+   "id": 17540,
+   "user_id": 121,
+   "league_id": 2,
+   "rating": null,
+   "first_name": "first62",
+   "last_name": "last63",
+   "middle_name": "middle64",
+   "photo": null,
+   "gender": "male",
+   "birth_date": "2000-01-01",
+   "has_changes": false,
+   "license_number": null,
+   "additional_data": null,
+   "qualification": null,
+   "achievements": [],
+   "field_values": [
+    {
+     "id": 50868,
+     "league_player_id": 17540,
+     "league_player_field_id": 31,
+     "league_player_field": {
+      "id": 31,
+      "league_id": 2,
+      "name": "Мед. справка",
+      "type": "select",
+      "is_multiple": false,
+      "variants": [
+       {
+        "uuid": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+        "name": "сдал"
+       },
+       {
+        "uuid": "2ee12565-bc4e-478e-8ac0-c38b102bc800",
+        "name": "не сдал"
+       }
+      ],
+      "show_in_application_file": false,
+      "sort": null
+     },
+     "file": null,
+     "value": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+     "value_text": "сдал"
+    }
+   ]
+  },
+  "active": true,
+  "disqualification": null,
+  "conditional_disqualification": null,
+  "last_name": null,
+  "first_name": null,
+  "middle_name": null,
+  "photo": null,
+  "playoff_admission": null,
+  "field_values": [],
+  "created_at": "2026-08-31T20:07:51.536435Z"
+ },
+ {
+  "id": 575906,
+  "tournament_team": {
+   "id": 31988,
+   "name": "Westchester",
+   "logo": {
+    "id": 12059659,
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "mime_type": "image/png",
+    "size": 59222,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-08T12:45:38.842477Z"
+   },
+   "team_photo": null,
+   "team_uniform": null,
+   "team": {
+    "id": 279,
+    "name": "Whestchester",
+    "logo": {
+     "id": 8775780,
+     "name": "828x620.webp",
+     "original_name": "828x620.webp",
+     "path": "https://fs.mtgame.ru/828x620.webp",
+     "mime_type": "",
+     "size": 4238,
+     "engine": "yandex_s3",
+     "created_at": "2025-06-14T13:57:33.246458Z"
+    },
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "sport": {
+     "id": 3,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1,
+     "is_hidden": false
+    },
+    "unique_code": "3D0M"
+   },
+   "points": 9,
+   "mt_points": 0,
+   "final_standing": null,
+   "team_id": 279,
+   "tournament_id": 4145,
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   }
+  },
+  "team_user": {
+   "id": 184846,
+   "user": {
+    "id": 19744,
+    "first_name": "first65",
+    "last_name": "last66",
+    "middle_name": null,
+    "photo": null,
+    "gender": "male",
+    "birth_date": "2000-01-01",
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "profile": {
+     "user_id": 19744,
+     "height": 186,
+     "weight": 84
+    },
+    "basketball_profile": {
+     "user_id": 19744,
+     "position": "shooting_guard",
+     "work_hand": null
+    },
+    "volleyball_profile": null,
+    "hockey_profile": null,
+    "football_profile": null,
+    "handball_profile": null,
+    "rugby_profile": null,
+    "waterpolo_profile": null,
+    "wrestball_profile": null,
+    "is_active": true,
+    "unique_code": "0E16",
+    "rsv_account_id": null,
+    "teams": []
+   },
+   "role": "member",
+   "permission_role": "member",
+   "number": "6",
+   "team_id": 279,
+   "created_at": "2025-06-11T05:05:48.315686Z",
+   "updated_at": "2025-06-14T13:55:25.524339Z"
+  },
+  "disqualified": false,
+  "league_player": {
+   "id": 39717,
+   "user_id": 19744,
+   "league_id": 2,
+   "rating": null,
+   "first_name": "first67",
+   "last_name": "last68",
+   "middle_name": null,
+   "photo": null,
+   "gender": "male",
+   "birth_date": "2000-01-01",
+   "has_changes": false,
+   "license_number": null,
+   "additional_data": null,
+   "qualification": null,
+   "achievements": [],
+   "field_values": []
+  },
+  "active": true,
+  "disqualification": null,
+  "conditional_disqualification": null,
+  "last_name": null,
+  "first_name": null,
+  "middle_name": null,
+  "photo": null,
+  "playoff_admission": null,
+  "field_values": [],
+  "created_at": "2026-08-31T20:07:51.563717Z"
+ },
+ {
+  "id": 575907,
+  "tournament_team": {
+   "id": 31988,
+   "name": "Westchester",
+   "logo": {
+    "id": 12059659,
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "mime_type": "image/png",
+    "size": 59222,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-08T12:45:38.842477Z"
+   },
+   "team_photo": null,
+   "team_uniform": null,
+   "team": {
+    "id": 279,
+    "name": "Whestchester",
+    "logo": {
+     "id": 8775780,
+     "name": "828x620.webp",
+     "original_name": "828x620.webp",
+     "path": "https://fs.mtgame.ru/828x620.webp",
+     "mime_type": "",
+     "size": 4238,
+     "engine": "yandex_s3",
+     "created_at": "2025-06-14T13:57:33.246458Z"
+    },
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "sport": {
+     "id": 3,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1,
+     "is_hidden": false
+    },
+    "unique_code": "3D0M"
+   },
+   "points": 9,
+   "mt_points": 0,
+   "final_standing": null,
+   "team_id": 279,
+   "tournament_id": 4145,
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   }
+  },
+  "team_user": {
+   "id": 2421,
+   "user": {
+    "id": 2332,
+    "first_name": "first69",
+    "last_name": "last70",
+    "middle_name": null,
+    "photo": null,
+    "gender": "male",
+    "birth_date": "2000-01-01",
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "profile": {
+     "user_id": 2332,
+     "height": 189,
+     "weight": 106
+    },
+    "basketball_profile": {
+     "user_id": 2332,
+     "position": "power_forward",
+     "work_hand": "right"
+    },
+    "volleyball_profile": null,
+    "hockey_profile": null,
+    "football_profile": null,
+    "handball_profile": null,
+    "rugby_profile": null,
+    "waterpolo_profile": null,
+    "wrestball_profile": null,
+    "is_active": true,
+    "unique_code": "BEG8",
+    "rsv_account_id": null,
+    "teams": []
+   },
+   "role": "member",
+   "permission_role": "member",
+   "number": "5",
+   "team_id": 279,
+   "created_at": "2020-06-22T10:06:41.997669Z",
+   "updated_at": "2025-04-05T17:26:07.699917Z"
+  },
+  "disqualified": false,
+  "league_player": {
+   "id": 18082,
+   "user_id": 2332,
+   "league_id": 2,
+   "rating": null,
+   "first_name": "first71",
+   "last_name": "last72",
+   "middle_name": null,
+   "photo": null,
+   "gender": "male",
+   "birth_date": "2000-01-01",
+   "has_changes": false,
+   "license_number": null,
+   "additional_data": null,
+   "qualification": null,
+   "achievements": [],
+   "field_values": [
+    {
+     "id": 50871,
+     "league_player_id": 18082,
+     "league_player_field_id": 31,
+     "league_player_field": {
+      "id": 31,
+      "league_id": 2,
+      "name": "Мед. справка",
+      "type": "select",
+      "is_multiple": false,
+      "variants": [
+       {
+        "uuid": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+        "name": "сдал"
+       },
+       {
+        "uuid": "2ee12565-bc4e-478e-8ac0-c38b102bc800",
+        "name": "не сдал"
+       }
+      ],
+      "show_in_application_file": false,
+      "sort": null
+     },
+     "file": null,
+     "value": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+     "value_text": "сдал"
+    }
+   ]
+  },
+  "active": true,
+  "disqualification": null,
+  "conditional_disqualification": null,
+  "last_name": null,
+  "first_name": null,
+  "middle_name": null,
+  "photo": null,
+  "playoff_admission": null,
+  "field_values": [],
+  "created_at": "2026-08-31T20:07:51.590213Z"
+ },
+ {
+  "id": 575908,
+  "tournament_team": {
+   "id": 31988,
+   "name": "Westchester",
+   "logo": {
+    "id": 12059659,
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "mime_type": "image/png",
+    "size": 59222,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-08T12:45:38.842477Z"
+   },
+   "team_photo": null,
+   "team_uniform": null,
+   "team": {
+    "id": 279,
+    "name": "Whestchester",
+    "logo": {
+     "id": 8775780,
+     "name": "828x620.webp",
+     "original_name": "828x620.webp",
+     "path": "https://fs.mtgame.ru/828x620.webp",
+     "mime_type": "",
+     "size": 4238,
+     "engine": "yandex_s3",
+     "created_at": "2025-06-14T13:57:33.246458Z"
+    },
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "sport": {
+     "id": 3,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1,
+     "is_hidden": false
+    },
+    "unique_code": "3D0M"
+   },
+   "points": 9,
+   "mt_points": 0,
+   "final_standing": null,
+   "team_id": 279,
+   "tournament_id": 4145,
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   }
+  },
+  "team_user": {
+   "id": 5483,
+   "user": {
+    "id": 1436,
+    "first_name": "first73",
+    "last_name": "last74",
+    "middle_name": null,
+    "photo": null,
+    "gender": "male",
+    "birth_date": "2000-01-01",
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "profile": {
+     "user_id": 1436,
+     "height": 185,
+     "weight": 87
+    },
+    "basketball_profile": {
+     "user_id": 1436,
+     "position": "shooting_guard",
+     "work_hand": "left"
+    },
+    "volleyball_profile": null,
+    "hockey_profile": null,
+    "football_profile": null,
+    "handball_profile": null,
+    "rugby_profile": null,
+    "waterpolo_profile": null,
+    "wrestball_profile": null,
+    "is_active": true,
+    "unique_code": "9ILU",
+    "rsv_account_id": null,
+    "teams": []
+   },
+   "role": "member",
+   "permission_role": "member",
+   "number": "1",
+   "team_id": 279,
+   "created_at": "2020-09-16T10:12:04.701478Z",
+   "updated_at": "2021-01-16T08:10:42.562344Z"
+  },
+  "disqualified": false,
+  "league_player": {
+   "id": 17118,
+   "user_id": 1436,
+   "league_id": 2,
+   "rating": null,
+   "first_name": "first75",
+   "last_name": "last76",
+   "middle_name": null,
+   "photo": null,
+   "gender": "male",
+   "birth_date": "2000-01-01",
+   "has_changes": false,
+   "license_number": null,
+   "additional_data": null,
+   "qualification": null,
+   "achievements": [],
+   "field_values": [
+    {
+     "id": 50864,
+     "league_player_id": 17118,
+     "league_player_field_id": 31,
+     "league_player_field": {
+      "id": 31,
+      "league_id": 2,
+      "name": "Мед. справка",
+      "type": "select",
+      "is_multiple": false,
+      "variants": [
+       {
+        "uuid": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+        "name": "сдал"
+       },
+       {
+        "uuid": "2ee12565-bc4e-478e-8ac0-c38b102bc800",
+        "name": "не сдал"
+       }
+      ],
+      "show_in_application_file": false,
+      "sort": null
+     },
+     "file": null,
+     "value": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+     "value_text": "сдал"
+    }
+   ]
+  },
+  "active": true,
+  "disqualification": null,
+  "conditional_disqualification": null,
+  "last_name": null,
+  "first_name": null,
+  "middle_name": null,
+  "photo": null,
+  "playoff_admission": null,
+  "field_values": [],
+  "created_at": "2026-08-31T20:07:51.617135Z"
+ },
+ {
+  "id": 582585,
+  "tournament_team": {
+   "id": 31988,
+   "name": "Westchester",
+   "logo": {
+    "id": 12059659,
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "mime_type": "image/png",
+    "size": 59222,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-08T12:45:38.842477Z"
+   },
+   "team_photo": null,
+   "team_uniform": null,
+   "team": {
+    "id": 279,
+    "name": "Whestchester",
+    "logo": {
+     "id": 8775780,
+     "name": "828x620.webp",
+     "original_name": "828x620.webp",
+     "path": "https://fs.mtgame.ru/828x620.webp",
+     "mime_type": "",
+     "size": 4238,
+     "engine": "yandex_s3",
+     "created_at": "2025-06-14T13:57:33.246458Z"
+    },
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "sport": {
+     "id": 3,
+     "name": "Баскетбол",
+     "name_en": null,
+     "parent_id": 1,
+     "is_hidden": false
+    },
+    "unique_code": "3D0M"
+   },
+   "points": 9,
+   "mt_points": 0,
+   "final_standing": null,
+   "team_id": 279,
+   "tournament_id": 4145,
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   }
+  },
+  "team_user": {
+   "id": 105606,
+   "user": {
+    "id": 2201,
+    "first_name": "first77",
+    "last_name": "last78",
+    "middle_name": null,
+    "photo": null,
+    "gender": "male",
+    "birth_date": "2000-01-01",
+    "city": {
+     "id": 1,
+     "name": "Москва",
+     "name_en": "Moscow",
+     "country": "RU"
+    },
+    "profile": {
+     "user_id": 2201,
+     "height": 193,
+     "weight": 85
+    },
+    "basketball_profile": {
+     "user_id": 2201,
+     "position": "shooting_guard",
+     "work_hand": null
+    },
+    "volleyball_profile": null,
+    "hockey_profile": null,
+    "football_profile": null,
+    "handball_profile": null,
+    "rugby_profile": null,
+    "waterpolo_profile": null,
+    "wrestball_profile": null,
+    "is_active": true,
+    "unique_code": "PMHJ",
+    "rsv_account_id": null,
+    "teams": []
+   },
+   "role": "member",
+   "permission_role": "member",
+   "number": "1",
+   "team_id": 279,
+   "created_at": "2023-12-15T18:01:47.502495Z",
+   "updated_at": "2026-09-05T12:58:56.737191Z"
+  },
+  "disqualified": false,
+  "league_player": {
+   "id": 17453,
+   "user_id": 2201,
+   "league_id": 2,
+   "rating": null,
+   "first_name": "first79",
+   "last_name": "last80",
+   "middle_name": null,
+   "photo": null,
+   "gender": "male",
+   "birth_date": "2000-01-01",
+   "has_changes": false,
+   "license_number": null,
+   "additional_data": null,
+   "qualification": null,
+   "achievements": [],
+   "field_values": [
+    {
+     "id": 50895,
+     "league_player_id": 17453,
+     "league_player_field_id": 31,
+     "league_player_field": {
+      "id": 31,
+      "league_id": 2,
+      "name": "Мед. справка",
+      "type": "select",
+      "is_multiple": false,
+      "variants": [
+       {
+        "uuid": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+        "name": "сдал"
+       },
+       {
+        "uuid": "2ee12565-bc4e-478e-8ac0-c38b102bc800",
+        "name": "не сдал"
+       }
+      ],
+      "show_in_application_file": false,
+      "sort": null
+     },
+     "file": null,
+     "value": "7afe8081-4530-4748-b5ca-efe52ea08a1b",
+     "value_text": "сдал"
+    }
+   ]
+  },
+  "active": true,
+  "disqualification": null,
+  "conditional_disqualification": null,
+  "last_name": null,
+  "first_name": null,
+  "middle_name": null,
+  "photo": null,
+  "playoff_admission": null,
+  "field_values": [],
+  "created_at": "2026-09-04T15:48:36.996492Z"
+ }
+]

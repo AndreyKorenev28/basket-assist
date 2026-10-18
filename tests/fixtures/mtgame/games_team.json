@@ -1,0 +1,1296 @@
+[
+ {
+  "additional_data": {},
+  "competitor_team": {
+   "city": {
+    "country": "RU",
+    "id": 1,
+    "name": "Москва"
+   },
+   "id": 2301,
+   "logo": {
+    "created_at": "2026-06-09T09:41:23.311515",
+    "engine": "yandex_s3",
+    "id": 11702091,
+    "mime_type": "image/png",
+    "name": "IMG_7198.png",
+    "original_name": "IMG_7198.png",
+    "path": "https://fs.mtgame.ru/IMG_7198.png",
+    "size": 147961
+   },
+   "name": "Pokrasote",
+   "sport": {
+    "id": 3,
+    "is_hidden": false,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1
+   },
+   "unique_code": "6MFX"
+  },
+  "competitor_team_id": 2301,
+  "competitor_team_name": null,
+  "competitor_team_score": 76,
+  "competitor_tournament_team": {
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   },
+   "field_values": [],
+   "id": 31989,
+   "logo": {
+    "created_at": "2026-09-08T12:43:54.330766",
+    "engine": "yandex_s3",
+    "id": 12059649,
+    "mime_type": "image/png",
+    "name": "Pokrasote.png",
+    "original_name": "Pokrasote.png",
+    "path": "https://fs.mtgame.ru/Pokrasote.png",
+    "size": 64172
+   },
+   "name": "Pokrasote"
+  },
+  "competitor_tournament_team_id": 31989,
+  "datetime": "2026-10-17T17:40:00.000000Z",
+  "division_id": null,
+  "game_config": {
+   "timer_type": 1,
+   "period_time": 12,
+   "timeout_time": 60,
+   "overtime_time": 4,
+   "overtime_type": null,
+   "periods_count": 4,
+   "timeout_count": 2,
+   "game_time_type": 2,
+   "overtime_score": null,
+   "statistic_type": 2,
+   "game_up_to_score": null,
+   "max_game_players": 5,
+   "shot_clock_enabled": false,
+   "overtime_timeout_count": 1,
+   "basketball_rules_version": 2
+  },
+  "id": 163719,
+  "location": "Россия, Москва, 2-я Магистральная улица, 16А",
+  "media_count": null,
+  "media_live_count": null,
+  "mhl_carousel": null,
+  "playoff_number": null,
+  "playoff_round": null,
+  "playoff_stage": "",
+  "result_type": "competitor_team_won",
+  "score_by_period": {
+   "1": [
+    24,
+    13
+   ],
+   "2": [
+    6,
+    24
+   ],
+   "3": [
+    11,
+    24
+   ],
+   "4": [
+    16,
+    15
+   ]
+  },
+  "status": "closed",
+  "team": {
+   "city": {
+    "country": "RU",
+    "id": 1,
+    "name": "Москва"
+   },
+   "id": 279,
+   "logo": {
+    "created_at": "2025-06-14T13:57:33.246458",
+    "engine": "yandex_s3",
+    "id": 8775780,
+    "mime_type": "",
+    "name": "828x620.webp",
+    "original_name": "828x620.webp",
+    "path": "https://fs.mtgame.ru/828x620.webp",
+    "size": 4238
+   },
+   "name": "Whestchester",
+   "sport": {
+    "id": 3,
+    "is_hidden": false,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1
+   },
+   "unique_code": "3D0M"
+  },
+  "team_id": 279,
+  "team_score": 57,
+  "tournament": {
+   "alias": "shelepiha27",
+   "id": 4145,
+   "league_id": 2,
+   "logo": {
+    "created_at": "2026-09-01T10:12:43.813972",
+    "engine": "yandex_s3",
+    "id": 11992204,
+    "mime_type": "image/png",
+    "name": "q_shelepiha_line_black_JuIhN.png",
+    "original_name": "q_shelepiha_line_black.png",
+    "path": "https://fs.mtgame.ru/q_shelepiha_line_black_JuIhN.png",
+    "size": 9944
+   },
+   "name": "Шелепиха",
+   "preview_image": null
+  },
+  "tournament_court": {
+   "address": "Россия, Москва, 2-я Магистральная улица, 16А",
+   "id": 2,
+   "league_id": 2,
+   "name": "Шелепиха"
+  },
+  "tournament_group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "tournament_id": 4145,
+  "tournament_playoff": null,
+  "tournament_playoff_id": null,
+  "tournament_round_id": null,
+  "tournament_stage": null,
+  "tournament_stage_id": null,
+  "tournament_team": {
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   },
+   "field_values": [],
+   "id": 31988,
+   "logo": {
+    "created_at": "2026-09-08T12:45:38.842477",
+    "engine": "yandex_s3",
+    "id": 12059659,
+    "mime_type": "image/png",
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "size": 59222
+   },
+   "name": "Westchester"
+  },
+  "tournament_team_id": 31988,
+  "tournament_tour": 7
+ },
+ {
+  "additional_data": {},
+  "competitor_team": {
+   "city": {
+    "country": "RU",
+    "id": 1,
+    "name": "Москва"
+   },
+   "id": 695,
+   "logo": {
+    "created_at": "2024-01-21T11:14:39.972343",
+    "engine": "yandex_s3",
+    "id": 5557869,
+    "mime_type": "image/png",
+    "name": "novyilogoKASKAD.png",
+    "original_name": "новый лого КАСКАД.png",
+    "path": "https://fs.mtgame.ru/novyilogoKASKAD.png",
+    "size": 184945
+   },
+   "name": "Каскад",
+   "sport": {
+    "id": 3,
+    "is_hidden": false,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1
+   },
+   "unique_code": "OCTS"
+  },
+  "competitor_team_id": 695,
+  "competitor_team_name": null,
+  "competitor_team_score": 50,
+  "competitor_tournament_team": {
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   },
+   "field_values": [],
+   "id": 32115,
+   "logo": {
+    "created_at": "2026-09-08T12:46:14.331334",
+    "engine": "yandex_s3",
+    "id": 12059665,
+    "mime_type": "image/png",
+    "name": "Kaskad.png",
+    "original_name": "Каскад.png",
+    "path": "https://fs.mtgame.ru/Kaskad.png",
+    "size": 91765
+   },
+   "name": "Каскад"
+  },
+  "competitor_tournament_team_id": 32115,
+  "datetime": "2026-10-11T14:00:00.000000Z",
+  "division_id": null,
+  "game_config": {
+   "timer_type": 1,
+   "period_time": 12,
+   "timeout_time": 60,
+   "overtime_time": 4,
+   "overtime_type": null,
+   "periods_count": 4,
+   "timeout_count": 2,
+   "game_time_type": 2,
+   "overtime_score": null,
+   "statistic_type": 2,
+   "game_up_to_score": null,
+   "max_game_players": 5,
+   "shot_clock_enabled": false,
+   "overtime_timeout_count": 1,
+   "basketball_rules_version": 2
+  },
+  "id": 161135,
+  "location": "Россия, Москва, 2-я Магистральная улица, 16А",
+  "media_count": null,
+  "media_live_count": null,
+  "mhl_carousel": null,
+  "playoff_number": null,
+  "playoff_round": null,
+  "playoff_stage": "",
+  "result_type": "competitor_team_won",
+  "score_by_period": {
+   "1": [
+    9,
+    15
+   ],
+   "2": [
+    8,
+    15
+   ],
+   "3": [
+    16,
+    2
+   ],
+   "4": [
+    8,
+    18
+   ]
+  },
+  "status": "closed",
+  "team": {
+   "city": {
+    "country": "RU",
+    "id": 1,
+    "name": "Москва"
+   },
+   "id": 279,
+   "logo": {
+    "created_at": "2025-06-14T13:57:33.246458",
+    "engine": "yandex_s3",
+    "id": 8775780,
+    "mime_type": "",
+    "name": "828x620.webp",
+    "original_name": "828x620.webp",
+    "path": "https://fs.mtgame.ru/828x620.webp",
+    "size": 4238
+   },
+   "name": "Whestchester",
+   "sport": {
+    "id": 3,
+    "is_hidden": false,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1
+   },
+   "unique_code": "3D0M"
+  },
+  "team_id": 279,
+  "team_score": 41,
+  "tournament": {
+   "alias": "shelepiha27",
+   "id": 4145,
+   "league_id": 2,
+   "logo": {
+    "created_at": "2026-09-01T10:12:43.813972",
+    "engine": "yandex_s3",
+    "id": 11992204,
+    "mime_type": "image/png",
+    "name": "q_shelepiha_line_black_JuIhN.png",
+    "original_name": "q_shelepiha_line_black.png",
+    "path": "https://fs.mtgame.ru/q_shelepiha_line_black_JuIhN.png",
+    "size": 9944
+   },
+   "name": "Шелепиха",
+   "preview_image": null
+  },
+  "tournament_court": {
+   "address": "Россия, Москва, 2-я Магистральная улица, 16А",
+   "id": 2,
+   "league_id": 2,
+   "name": "Шелепиха"
+  },
+  "tournament_group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "tournament_id": 4145,
+  "tournament_playoff": null,
+  "tournament_playoff_id": null,
+  "tournament_round_id": null,
+  "tournament_stage": null,
+  "tournament_stage_id": null,
+  "tournament_team": {
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   },
+   "field_values": [],
+   "id": 31988,
+   "logo": {
+    "created_at": "2026-09-08T12:45:38.842477",
+    "engine": "yandex_s3",
+    "id": 12059659,
+    "mime_type": "image/png",
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "size": 59222
+   },
+   "name": "Westchester"
+  },
+  "tournament_team_id": 31988,
+  "tournament_tour": 6
+ },
+ {
+  "additional_data": {},
+  "competitor_team": {
+   "city": {
+    "country": "RU",
+    "id": 1,
+    "name": "Москва"
+   },
+   "id": 279,
+   "logo": {
+    "created_at": "2025-06-14T13:57:33.246458",
+    "engine": "yandex_s3",
+    "id": 8775780,
+    "mime_type": "",
+    "name": "828x620.webp",
+    "original_name": "828x620.webp",
+    "path": "https://fs.mtgame.ru/828x620.webp",
+    "size": 4238
+   },
+   "name": "Whestchester",
+   "sport": {
+    "id": 3,
+    "is_hidden": false,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1
+   },
+   "unique_code": "3D0M"
+  },
+  "competitor_team_id": 279,
+  "competitor_team_name": null,
+  "competitor_team_score": 80,
+  "competitor_tournament_team": {
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   },
+   "field_values": [],
+   "id": 31988,
+   "logo": {
+    "created_at": "2026-09-08T12:45:38.842477",
+    "engine": "yandex_s3",
+    "id": 12059659,
+    "mime_type": "image/png",
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "size": 59222
+   },
+   "name": "Westchester"
+  },
+  "competitor_tournament_team_id": 31988,
+  "datetime": "2026-10-04T14:00:00.000000Z",
+  "division_id": null,
+  "game_config": {
+   "timer_type": 1,
+   "period_time": 12,
+   "timeout_time": 60,
+   "overtime_time": 4,
+   "overtime_type": null,
+   "periods_count": 4,
+   "timeout_count": 2,
+   "game_time_type": 2,
+   "overtime_score": null,
+   "statistic_type": 2,
+   "game_up_to_score": null,
+   "max_game_players": 5,
+   "shot_clock_enabled": false,
+   "overtime_timeout_count": 1,
+   "basketball_rules_version": 2
+  },
+  "id": 160469,
+  "location": "Россия, Москва, 2-я Магистральная улица, 16А",
+  "media_count": null,
+  "media_live_count": null,
+  "mhl_carousel": null,
+  "playoff_number": null,
+  "playoff_round": null,
+  "playoff_stage": "",
+  "result_type": "team_won",
+  "score_by_period": {
+   "1": [
+    23,
+    17
+   ],
+   "2": [
+    18,
+    19
+   ],
+   "3": [
+    26,
+    13
+   ],
+   "4": [
+    33,
+    31
+   ]
+  },
+  "status": "closed",
+  "team": {
+   "city": {
+    "country": "RU",
+    "id": 1,
+    "name": "Москва"
+   },
+   "id": 19596,
+   "logo": {
+    "created_at": "2026-10-03T14:04:33.247714",
+    "engine": "yandex_s3",
+    "id": 12320532,
+    "mime_type": "image/png",
+    "name": "IMG_9139_Ac47s.png",
+    "original_name": "IMG_9139.png",
+    "path": "https://fs.mtgame.ru/IMG_9139_Ac47s.png",
+    "size": 154908
+   },
+   "name": "Rent Motors Team",
+   "sport": {
+    "id": 3,
+    "is_hidden": false,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1
+   },
+   "unique_code": "LKZT"
+  },
+  "team_id": 19596,
+  "team_score": 100,
+  "tournament": {
+   "alias": "shelepiha27",
+   "id": 4145,
+   "league_id": 2,
+   "logo": {
+    "created_at": "2026-09-01T10:12:43.813972",
+    "engine": "yandex_s3",
+    "id": 11992204,
+    "mime_type": "image/png",
+    "name": "q_shelepiha_line_black_JuIhN.png",
+    "original_name": "q_shelepiha_line_black.png",
+    "path": "https://fs.mtgame.ru/q_shelepiha_line_black_JuIhN.png",
+    "size": 9944
+   },
+   "name": "Шелепиха",
+   "preview_image": null
+  },
+  "tournament_court": {
+   "address": "Россия, Москва, 2-я Магистральная улица, 16А",
+   "id": 2,
+   "league_id": 2,
+   "name": "Шелепиха"
+  },
+  "tournament_group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "tournament_id": 4145,
+  "tournament_playoff": null,
+  "tournament_playoff_id": null,
+  "tournament_round_id": null,
+  "tournament_stage": null,
+  "tournament_stage_id": null,
+  "tournament_team": {
+   "additional_data": null,
+   "field_values": [],
+   "id": 32652,
+   "logo": {
+    "created_at": "2026-10-03T14:04:33.247714",
+    "engine": "yandex_s3",
+    "id": 12320532,
+    "mime_type": "image/png",
+    "name": "IMG_9139_Ac47s.png",
+    "original_name": "IMG_9139.png",
+    "path": "https://fs.mtgame.ru/IMG_9139_Ac47s.png",
+    "size": 154908
+   },
+   "name": "Rent Motors Team"
+  },
+  "tournament_team_id": 32652,
+  "tournament_tour": 5
+ },
+ {
+  "additional_data": {},
+  "competitor_team": {
+   "city": {
+    "country": "RU",
+    "id": 1,
+    "name": "Москва"
+   },
+   "id": 279,
+   "logo": {
+    "created_at": "2025-06-14T13:57:33.246458",
+    "engine": "yandex_s3",
+    "id": 8775780,
+    "mime_type": "",
+    "name": "828x620.webp",
+    "original_name": "828x620.webp",
+    "path": "https://fs.mtgame.ru/828x620.webp",
+    "size": 4238
+   },
+   "name": "Whestchester",
+   "sport": {
+    "id": 3,
+    "is_hidden": false,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1
+   },
+   "unique_code": "3D0M"
+  },
+  "competitor_team_id": 279,
+  "competitor_team_name": null,
+  "competitor_team_score": 60,
+  "competitor_tournament_team": {
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   },
+   "field_values": [],
+   "id": 31988,
+   "logo": {
+    "created_at": "2026-09-08T12:45:38.842477",
+    "engine": "yandex_s3",
+    "id": 12059659,
+    "mime_type": "image/png",
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "size": 59222
+   },
+   "name": "Westchester"
+  },
+  "competitor_tournament_team_id": 31988,
+  "datetime": "2026-09-26T17:40:00.000000Z",
+  "division_id": null,
+  "game_config": {
+   "timer_type": 1,
+   "period_time": 12,
+   "timeout_time": 60,
+   "overtime_time": 4,
+   "overtime_type": null,
+   "periods_count": 4,
+   "timeout_count": 2,
+   "game_time_type": 2,
+   "overtime_score": null,
+   "statistic_type": 2,
+   "game_up_to_score": null,
+   "max_game_players": 5,
+   "shot_clock_enabled": false,
+   "overtime_timeout_count": 1,
+   "basketball_rules_version": 1
+  },
+  "id": 159847,
+  "location": "Россия, Москва, 2-я Магистральная улица, 16А",
+  "media_count": null,
+  "media_live_count": null,
+  "mhl_carousel": null,
+  "playoff_number": null,
+  "playoff_round": null,
+  "playoff_stage": "",
+  "result_type": "team_won",
+  "score_by_period": {
+   "1": [
+    17,
+    16
+   ],
+   "2": [
+    9,
+    14
+   ],
+   "3": [
+    15,
+    13
+   ],
+   "4": [
+    27,
+    17
+   ]
+  },
+  "status": "closed",
+  "team": {
+   "city": {
+    "country": "RU",
+    "id": 1,
+    "name": "Москва"
+   },
+   "id": 19510,
+   "logo": {
+    "created_at": "2026-08-31T17:28:45.711619",
+    "engine": "yandex_s3",
+    "id": 11986798,
+    "mime_type": "image/png",
+    "name": "1000040868.png",
+    "original_name": "1000040868.png",
+    "path": "https://fs.mtgame.ru/1000040868.png",
+    "size": 195785
+   },
+   "name": "VSP BUZY",
+   "sport": {
+    "id": 3,
+    "is_hidden": false,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1
+   },
+   "unique_code": "MAU9"
+  },
+  "team_id": 19510,
+  "team_score": 68,
+  "tournament": {
+   "alias": "shelepiha27",
+   "id": 4145,
+   "league_id": 2,
+   "logo": {
+    "created_at": "2026-09-01T10:12:43.813972",
+    "engine": "yandex_s3",
+    "id": 11992204,
+    "mime_type": "image/png",
+    "name": "q_shelepiha_line_black_JuIhN.png",
+    "original_name": "q_shelepiha_line_black.png",
+    "path": "https://fs.mtgame.ru/q_shelepiha_line_black_JuIhN.png",
+    "size": 9944
+   },
+   "name": "Шелепиха",
+   "preview_image": null
+  },
+  "tournament_court": {
+   "address": "Россия, Москва, 2-я Магистральная улица, 16А",
+   "id": 2,
+   "league_id": 2,
+   "name": "Шелепиха"
+  },
+  "tournament_group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "tournament_id": 4145,
+  "tournament_playoff": null,
+  "tournament_playoff_id": null,
+  "tournament_round_id": null,
+  "tournament_stage": null,
+  "tournament_stage_id": null,
+  "tournament_team": {
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   },
+   "field_values": [],
+   "id": 31998,
+   "logo": {
+    "created_at": "2026-09-08T12:44:40.504589",
+    "engine": "yandex_s3",
+    "id": 12059655,
+    "mime_type": "image/png",
+    "name": "VSPBuzy.png",
+    "original_name": "VSP Buzy.png",
+    "path": "https://fs.mtgame.ru/VSPBuzy.png",
+    "size": 70168
+   },
+   "name": "VSP Buzy"
+  },
+  "tournament_team_id": 31998,
+  "tournament_tour": 4
+ },
+ {
+  "additional_data": {},
+  "competitor_team": {
+   "city": {
+    "country": "RU",
+    "id": 1,
+    "name": "Москва"
+   },
+   "id": 279,
+   "logo": {
+    "created_at": "2025-06-14T13:57:33.246458",
+    "engine": "yandex_s3",
+    "id": 8775780,
+    "mime_type": "",
+    "name": "828x620.webp",
+    "original_name": "828x620.webp",
+    "path": "https://fs.mtgame.ru/828x620.webp",
+    "size": 4238
+   },
+   "name": "Whestchester",
+   "sport": {
+    "id": 3,
+    "is_hidden": false,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1
+   },
+   "unique_code": "3D0M"
+  },
+  "competitor_team_id": 279,
+  "competitor_team_name": null,
+  "competitor_team_score": 69,
+  "competitor_tournament_team": {
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   },
+   "field_values": [],
+   "id": 31988,
+   "logo": {
+    "created_at": "2026-09-08T12:45:38.842477",
+    "engine": "yandex_s3",
+    "id": 12059659,
+    "mime_type": "image/png",
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "size": 59222
+   },
+   "name": "Westchester"
+  },
+  "competitor_tournament_team_id": 31988,
+  "datetime": "2026-09-20T07:00:00.000000Z",
+  "division_id": null,
+  "game_config": {
+   "timer_type": 1,
+   "period_time": 12,
+   "timeout_time": 60,
+   "overtime_time": 4,
+   "overtime_type": null,
+   "periods_count": 4,
+   "timeout_count": 2,
+   "game_time_type": 2,
+   "overtime_score": null,
+   "statistic_type": 2,
+   "game_up_to_score": null,
+   "max_game_players": 5,
+   "shot_clock_enabled": false,
+   "overtime_timeout_count": 1
+  },
+  "id": 159014,
+  "location": "Россия, Москва, 2-я Магистральная улица, 16А",
+  "media_count": null,
+  "media_live_count": null,
+  "mhl_carousel": null,
+  "playoff_number": null,
+  "playoff_round": null,
+  "playoff_stage": "",
+  "result_type": "competitor_team_won",
+  "score_by_period": {
+   "1": [
+    17,
+    18
+   ],
+   "2": [
+    17,
+    10
+   ],
+   "3": [
+    13,
+    19
+   ],
+   "4": [
+    17,
+    22
+   ]
+  },
+  "status": "closed",
+  "team": {
+   "city": {
+    "country": "RU",
+    "id": 1,
+    "name": "Москва"
+   },
+   "id": 19519,
+   "logo": {
+    "created_at": "2026-09-09T07:19:59.136081",
+    "engine": "yandex_s3",
+    "id": 12061638,
+    "mime_type": "image/png",
+    "name": "1000023522.png",
+    "original_name": "1000023522.png",
+    "path": "https://fs.mtgame.ru/1000023522.png",
+    "size": 498225
+   },
+   "name": "Sparrows",
+   "sport": {
+    "id": 3,
+    "is_hidden": false,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1
+   },
+   "unique_code": "2SL6"
+  },
+  "team_id": 19519,
+  "team_score": 64,
+  "tournament": {
+   "alias": "shelepiha27",
+   "id": 4145,
+   "league_id": 2,
+   "logo": {
+    "created_at": "2026-09-01T10:12:43.813972",
+    "engine": "yandex_s3",
+    "id": 11992204,
+    "mime_type": "image/png",
+    "name": "q_shelepiha_line_black_JuIhN.png",
+    "original_name": "q_shelepiha_line_black.png",
+    "path": "https://fs.mtgame.ru/q_shelepiha_line_black_JuIhN.png",
+    "size": 9944
+   },
+   "name": "Шелепиха",
+   "preview_image": null
+  },
+  "tournament_court": {
+   "address": "Россия, Москва, 2-я Магистральная улица, 16А",
+   "id": 2,
+   "league_id": 2,
+   "name": "Шелепиха"
+  },
+  "tournament_group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "tournament_id": 4145,
+  "tournament_playoff": null,
+  "tournament_playoff_id": null,
+  "tournament_round_id": null,
+  "tournament_stage": null,
+  "tournament_stage_id": null,
+  "tournament_team": {
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   },
+   "field_values": [],
+   "id": 32005,
+   "logo": {
+    "created_at": "2026-09-09T07:19:59.136081",
+    "engine": "yandex_s3",
+    "id": 12061638,
+    "mime_type": "image/png",
+    "name": "1000023522.png",
+    "original_name": "1000023522.png",
+    "path": "https://fs.mtgame.ru/1000023522.png",
+    "size": 498225
+   },
+   "name": "Sparrows"
+  },
+  "tournament_team_id": 32005,
+  "tournament_tour": 3
+ },
+ {
+  "additional_data": {},
+  "competitor_team": {
+   "city": {
+    "country": "RU",
+    "id": 238,
+    "name": "Зеленоград"
+   },
+   "id": 19514,
+   "logo": null,
+   "name": "G-Town 2",
+   "sport": {
+    "id": 3,
+    "is_hidden": false,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1
+   },
+   "unique_code": "QZAS"
+  },
+  "competitor_team_id": 19514,
+  "competitor_team_name": null,
+  "competitor_team_score": 49,
+  "competitor_tournament_team": {
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   },
+   "field_values": [],
+   "id": 32002,
+   "logo": {
+    "created_at": "2026-09-08T12:40:02.096502",
+    "engine": "yandex_s3",
+    "id": 12059625,
+    "mime_type": "image/png",
+    "name": "G-Town_6PxVa.png",
+    "original_name": "G-Town.png",
+    "path": "https://fs.mtgame.ru/G-Town_6PxVa.png",
+    "size": 27975
+   },
+   "name": "G-Town 2"
+  },
+  "competitor_tournament_team_id": 32002,
+  "datetime": "2026-09-13T14:00:00.000000Z",
+  "division_id": null,
+  "game_config": {
+   "timer_type": 1,
+   "period_time": 12,
+   "timeout_time": 60,
+   "overtime_time": 4,
+   "overtime_type": null,
+   "periods_count": 4,
+   "timeout_count": 2,
+   "game_time_type": 2,
+   "overtime_score": null,
+   "statistic_type": 2,
+   "game_up_to_score": null,
+   "max_game_players": 5,
+   "shot_clock_enabled": false,
+   "overtime_timeout_count": 1
+  },
+  "id": 158265,
+  "location": "Россия, Москва, 2-я Магистральная улица, 16А",
+  "media_count": null,
+  "media_live_count": null,
+  "mhl_carousel": null,
+  "playoff_number": null,
+  "playoff_round": null,
+  "playoff_stage": "",
+  "result_type": "team_won",
+  "score_by_period": {
+   "1": [
+    22,
+    8
+   ],
+   "2": [
+    16,
+    11
+   ],
+   "3": [
+    13,
+    12
+   ],
+   "4": [
+    16,
+    18
+   ]
+  },
+  "status": "closed",
+  "team": {
+   "city": {
+    "country": "RU",
+    "id": 1,
+    "name": "Москва"
+   },
+   "id": 279,
+   "logo": {
+    "created_at": "2025-06-14T13:57:33.246458",
+    "engine": "yandex_s3",
+    "id": 8775780,
+    "mime_type": "",
+    "name": "828x620.webp",
+    "original_name": "828x620.webp",
+    "path": "https://fs.mtgame.ru/828x620.webp",
+    "size": 4238
+   },
+   "name": "Whestchester",
+   "sport": {
+    "id": 3,
+    "is_hidden": false,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1
+   },
+   "unique_code": "3D0M"
+  },
+  "team_id": 279,
+  "team_score": 67,
+  "tournament": {
+   "alias": "shelepiha27",
+   "id": 4145,
+   "league_id": 2,
+   "logo": {
+    "created_at": "2026-09-01T10:12:43.813972",
+    "engine": "yandex_s3",
+    "id": 11992204,
+    "mime_type": "image/png",
+    "name": "q_shelepiha_line_black_JuIhN.png",
+    "original_name": "q_shelepiha_line_black.png",
+    "path": "https://fs.mtgame.ru/q_shelepiha_line_black_JuIhN.png",
+    "size": 9944
+   },
+   "name": "Шелепиха",
+   "preview_image": null
+  },
+  "tournament_court": {
+   "address": "Россия, Москва, 2-я Магистральная улица, 16А",
+   "id": 2,
+   "league_id": 2,
+   "name": "Шелепиха"
+  },
+  "tournament_group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "tournament_id": 4145,
+  "tournament_playoff": null,
+  "tournament_playoff_id": null,
+  "tournament_round_id": null,
+  "tournament_stage": null,
+  "tournament_stage_id": null,
+  "tournament_team": {
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   },
+   "field_values": [],
+   "id": 31988,
+   "logo": {
+    "created_at": "2026-09-08T12:45:38.842477",
+    "engine": "yandex_s3",
+    "id": 12059659,
+    "mime_type": "image/png",
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "size": 59222
+   },
+   "name": "Westchester"
+  },
+  "tournament_team_id": 31988,
+  "tournament_tour": 2
+ },
+ {
+  "additional_data": {},
+  "competitor_team": {
+   "city": {
+    "country": "RU",
+    "id": 1,
+    "name": "Москва"
+   },
+   "id": 946,
+   "logo": {
+    "created_at": "2021-02-10T14:05:40.573151",
+    "engine": "yandex_s3",
+    "id": 393969,
+    "mime_type": "image/png",
+    "name": "magic-min.png",
+    "original_name": "magic-min.png",
+    "path": "https://fs.mtgame.ru/magic-min.png",
+    "size": 70591
+   },
+   "name": "KB Magic",
+   "sport": {
+    "id": 3,
+    "is_hidden": false,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1
+   },
+   "unique_code": "T5AB"
+  },
+  "competitor_team_id": 946,
+  "competitor_team_name": null,
+  "competitor_team_score": 118,
+  "competitor_tournament_team": {
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   },
+   "field_values": [],
+   "id": 31984,
+   "logo": {
+    "created_at": "2026-09-08T12:42:11.433539",
+    "engine": "yandex_s3",
+    "id": 12059640,
+    "mime_type": "image/png",
+    "name": "KBMagic_qyZvk.png",
+    "original_name": "KB Magic.png",
+    "path": "https://fs.mtgame.ru/KBMagic_qyZvk.png",
+    "size": 83890
+   },
+   "name": "KB Magic"
+  },
+  "competitor_tournament_team_id": 31984,
+  "datetime": "2026-09-05T12:40:00.000000Z",
+  "division_id": null,
+  "game_config": {
+   "timer_type": 1,
+   "period_time": 12,
+   "timeout_time": 60,
+   "overtime_time": 4,
+   "overtime_type": null,
+   "periods_count": 4,
+   "timeout_count": 2,
+   "game_time_type": 2,
+   "overtime_score": null,
+   "statistic_type": 2,
+   "game_up_to_score": null,
+   "max_game_players": 5,
+   "shot_clock_enabled": false,
+   "overtime_timeout_count": 1
+  },
+  "id": 157917,
+  "location": "Россия, Москва, 2-я Магистральная улица, 16А",
+  "media_count": null,
+  "media_live_count": null,
+  "mhl_carousel": null,
+  "playoff_number": null,
+  "playoff_round": null,
+  "playoff_stage": "",
+  "result_type": "competitor_team_won",
+  "score_by_period": {
+   "1": [
+    14,
+    31
+   ],
+   "2": [
+    21,
+    21
+   ],
+   "3": [
+    16,
+    32
+   ],
+   "4": [
+    38,
+    34
+   ]
+  },
+  "status": "closed",
+  "team": {
+   "city": {
+    "country": "RU",
+    "id": 1,
+    "name": "Москва"
+   },
+   "id": 279,
+   "logo": {
+    "created_at": "2025-06-14T13:57:33.246458",
+    "engine": "yandex_s3",
+    "id": 8775780,
+    "mime_type": "",
+    "name": "828x620.webp",
+    "original_name": "828x620.webp",
+    "path": "https://fs.mtgame.ru/828x620.webp",
+    "size": 4238
+   },
+   "name": "Whestchester",
+   "sport": {
+    "id": 3,
+    "is_hidden": false,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1
+   },
+   "unique_code": "3D0M"
+  },
+  "team_id": 279,
+  "team_score": 89,
+  "tournament": {
+   "alias": "shelepiha27",
+   "id": 4145,
+   "league_id": 2,
+   "logo": {
+    "created_at": "2026-09-01T10:12:43.813972",
+    "engine": "yandex_s3",
+    "id": 11992204,
+    "mime_type": "image/png",
+    "name": "q_shelepiha_line_black_JuIhN.png",
+    "original_name": "q_shelepiha_line_black.png",
+    "path": "https://fs.mtgame.ru/q_shelepiha_line_black_JuIhN.png",
+    "size": 9944
+   },
+   "name": "Шелепиха",
+   "preview_image": null
+  },
+  "tournament_court": {
+   "address": "Россия, Москва, 2-я Магистральная улица, 16А",
+   "id": 2,
+   "league_id": 2,
+   "name": "Шелепиха"
+  },
+  "tournament_group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "tournament_id": 4145,
+  "tournament_playoff": null,
+  "tournament_playoff_id": null,
+  "tournament_round_id": null,
+  "tournament_stage": null,
+  "tournament_stage_id": null,
+  "tournament_team": {
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   },
+   "field_values": [],
+   "id": 31988,
+   "logo": {
+    "created_at": "2026-09-08T12:45:38.842477",
+    "engine": "yandex_s3",
+    "id": 12059659,
+    "mime_type": "image/png",
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "size": 59222
+   },
+   "name": "Westchester"
+  },
+  "tournament_team_id": 31988,
+  "tournament_tour": 1
+ }
+]

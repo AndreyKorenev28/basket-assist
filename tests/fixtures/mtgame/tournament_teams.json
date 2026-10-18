@@ -1,0 +1,7405 @@
+[
+ {
+  "id": 31984,
+  "team": {
+   "id": 946,
+   "name": "KB Magic",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 393969,
+    "name": "magic-min.png",
+    "original_name": "magic-min.png",
+    "path": "https://fs.mtgame.ru/magic-min.png",
+    "mime_type": "image/png",
+    "size": 70591,
+    "engine": "yandex_s3",
+    "created_at": "2021-02-10T14:05:40.573151Z"
+   },
+   "created_at": "2021-02-09T18:29:55.789356Z",
+   "created_by_league_id": null,
+   "unique_code": "T5AB"
+  },
+  "name": "KB Magic",
+  "logo": {
+   "id": 12059640,
+   "name": "KBMagic_qyZvk.png",
+   "original_name": "KB Magic.png",
+   "path": "https://fs.mtgame.ru/KBMagic_qyZvk.png",
+   "mime_type": "image/png",
+   "size": 83890,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:42:11.433539Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 7,
+  "won_games_count": 6,
+  "lose_games_count": 1,
+  "won_games_percent": 85.7,
+  "score_sum": 669,
+  "missed_sum": 576,
+  "score_points_sum": 669,
+  "missed_points_sum": 576,
+  "best_score_diff": 29,
+  "best_score_points_diff": 29,
+  "buchholz_score": 75,
+  "plus_minus": "+93",
+  "points": 13,
+  "mt_points": 0,
+  "last_games_count": 7,
+  "last_games_won": 6,
+  "final_standing": null,
+  "division": null,
+  "team_id": 946,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 163707,
+    "team_id": 946,
+    "competitor_team_id": 2297,
+    "status": "closed",
+    "team_score": 106,
+    "competitor_team_score": 93,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      25,
+      17
+     ],
+     "2": [
+      25,
+      16
+     ],
+     "3": [
+      25,
+      30
+     ],
+     "4": [
+      31,
+      30
+     ]
+    },
+    "tournament_tour": 7,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 161123,
+    "team_id": 18982,
+    "competitor_team_id": 946,
+    "status": "closed",
+    "team_score": 89,
+    "competitor_team_score": 83,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      28,
+      24
+     ],
+     "2": [
+      14,
+      29
+     ],
+     "3": [
+      26,
+      14
+     ],
+     "4": [
+      21,
+      16
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160460,
+    "team_id": 946,
+    "competitor_team_id": 1474,
+    "status": "closed",
+    "team_score": 100,
+    "competitor_team_score": 78,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      19,
+      25
+     ],
+     "2": [
+      33,
+      12
+     ],
+     "3": [
+      23,
+      22
+     ],
+     "4": [
+      25,
+      19
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159840,
+    "team_id": 946,
+    "competitor_team_id": 11806,
+    "status": "closed",
+    "team_score": 87,
+    "competitor_team_score": 85,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      18,
+      25
+     ],
+     "2": [
+      20,
+      22
+     ],
+     "3": [
+      28,
+      20
+     ],
+     "4": [
+      21,
+      18
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159005,
+    "team_id": 946,
+    "competitor_team_id": 5025,
+    "status": "closed",
+    "team_score": 91,
+    "competitor_team_score": 76,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      27,
+      24
+     ],
+     "2": [
+      23,
+      12
+     ],
+     "3": [
+      21,
+      21
+     ],
+     "4": [
+      20,
+      19
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 31983,
+  "team": {
+   "id": 11806,
+   "name": "HUSTLE TEAM",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 9074956,
+    "name": "IMG_5041.png",
+    "original_name": "IMG_5041.png",
+    "path": "https://fs.mtgame.ru/IMG_5041.png",
+    "mime_type": "image/png",
+    "size": 96913,
+    "engine": "yandex_s3",
+    "created_at": "2025-09-15T07:54:00.689893Z"
+   },
+   "created_at": "2025-06-15T10:23:52.935394Z",
+   "created_by_league_id": null,
+   "unique_code": "WXCK"
+  },
+  "name": "Hustle Team",
+  "logo": {
+   "id": 12059630,
+   "name": "HustleTeam.png",
+   "original_name": "Hustle Team.png",
+   "path": "https://fs.mtgame.ru/HustleTeam.png",
+   "mime_type": "image/png",
+   "size": 27437,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:40:31.346168Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 7,
+  "won_games_count": 6,
+  "lose_games_count": 1,
+  "won_games_percent": 85.7,
+  "score_sum": 581,
+  "missed_sum": 491,
+  "score_points_sum": 581,
+  "missed_points_sum": 491,
+  "best_score_diff": 33,
+  "best_score_points_diff": 33,
+  "buchholz_score": 73,
+  "plus_minus": "+90",
+  "points": 13,
+  "mt_points": 0,
+  "last_games_count": 7,
+  "last_games_won": 6,
+  "final_standing": null,
+  "division": null,
+  "team_id": 11806,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 163706,
+    "team_id": 18982,
+    "competitor_team_id": 11806,
+    "status": "closed",
+    "team_score": 80,
+    "competitor_team_score": 90,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      17,
+      18
+     ],
+     "2": [
+      27,
+      20
+     ],
+     "3": [
+      15,
+      29
+     ],
+     "4": [
+      21,
+      23
+     ]
+    },
+    "tournament_tour": 7,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 161124,
+    "team_id": 5398,
+    "competitor_team_id": 11806,
+    "status": "closed",
+    "team_score": 78,
+    "competitor_team_score": 111,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      18,
+      25
+     ],
+     "2": [
+      16,
+      18
+     ],
+     "3": [
+      22,
+      36
+     ],
+     "4": [
+      22,
+      32
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160463,
+    "team_id": 11806,
+    "competitor_team_id": 5443,
+    "status": "closed",
+    "team_score": 81,
+    "competitor_team_score": 71,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      27,
+      16
+     ],
+     "2": [
+      12,
+      18
+     ],
+     "3": [
+      19,
+      15
+     ],
+     "4": [
+      23,
+      22
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159840,
+    "team_id": 946,
+    "competitor_team_id": 11806,
+    "status": "closed",
+    "team_score": 87,
+    "competitor_team_score": 85,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      18,
+      25
+     ],
+     "2": [
+      20,
+      22
+     ],
+     "3": [
+      28,
+      20
+     ],
+     "4": [
+      21,
+      18
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159008,
+    "team_id": 11806,
+    "competitor_team_id": 19510,
+    "status": "closed",
+    "team_score": 83,
+    "competitor_team_score": 68,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      19,
+      13
+     ],
+     "2": [
+      21,
+      16
+     ],
+     "3": [
+      21,
+      16
+     ],
+     "4": [
+      22,
+      23
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 32113,
+  "team": {
+   "id": 1474,
+   "name": "Beerzavrs",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 6659473,
+    "name": "replicate-prediction-nrtpatjb27osqpywcgqmwyfls4_t5eX4.png",
+    "original_name": "replicate-prediction-nrtpatjb27osqpywcgqmwyfls4.png",
+    "path": "https://fs.mtgame.ru/replicate-prediction-nrtpatjb27osqpywcgqmwyfls4_t5eX4.png",
+    "mime_type": "image/png",
+    "size": 251154,
+    "engine": "yandex_s3",
+    "created_at": "2024-08-28T11:55:10.474263Z"
+   },
+   "created_at": "2021-09-30T19:35:47.180078Z",
+   "created_by_league_id": null,
+   "unique_code": "CAMW"
+  },
+  "name": "Beerzavrs",
+  "logo": {
+   "id": 12059618,
+   "name": "Beerzavrs.png",
+   "original_name": "Beerzavrs.png",
+   "path": "https://fs.mtgame.ru/Beerzavrs.png",
+   "mime_type": "image/png",
+   "size": 70289,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:39:14.106697Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 7,
+  "won_games_count": 6,
+  "lose_games_count": 1,
+  "won_games_percent": 85.7,
+  "score_sum": 495,
+  "missed_sum": 459,
+  "score_points_sum": 495,
+  "missed_points_sum": 459,
+  "best_score_diff": 27,
+  "best_score_points_diff": 27,
+  "buchholz_score": 73,
+  "plus_minus": "+36",
+  "points": 13,
+  "mt_points": 0,
+  "last_games_count": 7,
+  "last_games_won": 6,
+  "final_standing": null,
+  "division": null,
+  "team_id": 1474,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 163708,
+    "team_id": 1474,
+    "competitor_team_id": 19494,
+    "status": "closed",
+    "team_score": 67,
+    "competitor_team_score": 55,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      9,
+      16
+     ],
+     "2": [
+      17,
+      18
+     ],
+     "3": [
+      22,
+      8
+     ],
+     "4": [
+      19,
+      13
+     ]
+    },
+    "tournament_tour": 7,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 161125,
+    "team_id": 1474,
+    "competitor_team_id": 19510,
+    "status": "closed",
+    "team_score": 87,
+    "competitor_team_score": 79,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      31,
+      22
+     ],
+     "2": [
+      22,
+      22
+     ],
+     "3": [
+      19,
+      22
+     ],
+     "4": [
+      15,
+      13
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160460,
+    "team_id": 946,
+    "competitor_team_id": 1474,
+    "status": "closed",
+    "team_score": 100,
+    "competitor_team_score": 78,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      19,
+      25
+     ],
+     "2": [
+      33,
+      12
+     ],
+     "3": [
+      23,
+      22
+     ],
+     "4": [
+      25,
+      19
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159841,
+    "team_id": 11745,
+    "competitor_team_id": 1474,
+    "status": "closed",
+    "team_score": 70,
+    "competitor_team_score": 77,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      20,
+      22
+     ],
+     "2": [
+      12,
+      8
+     ],
+     "3": [
+      20,
+      24
+     ],
+     "4": [
+      18,
+      23
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159007,
+    "team_id": 5443,
+    "competitor_team_id": 1474,
+    "status": "closed",
+    "team_score": 53,
+    "competitor_team_score": 56,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      15,
+      3
+     ],
+     "2": [
+      9,
+      25
+     ],
+     "3": [
+      17,
+      12
+     ],
+     "4": [
+      12,
+      16
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 32129,
+  "team": {
+   "id": 18982,
+   "name": "VSP X REAL GORILLAS",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 11701852,
+    "name": "copy_847FC9B3-9E7E-417D-AC63-FC9132D5EEA9.png",
+    "original_name": "copy_847FC9B3-9E7E-417D-AC63-FC9132D5EEA9.png",
+    "path": "https://fs.mtgame.ru/copy_847FC9B3-9E7E-417D-AC63-FC9132D5EEA9.png",
+    "mime_type": "image/png",
+    "size": 487676,
+    "engine": "yandex_s3",
+    "created_at": "2026-06-09T08:12:28.680331Z"
+   },
+   "created_at": "2026-06-09T07:31:50.649705Z",
+   "created_by_league_id": null,
+   "unique_code": "IG7W"
+  },
+  "name": "VSP X Real Gorillas",
+  "logo": {
+   "id": 12059657,
+   "name": "VSPRG.png",
+   "original_name": "VSP RG.png",
+   "path": "https://fs.mtgame.ru/VSPRG.png",
+   "mime_type": "image/png",
+   "size": 127023,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:45:29.153454Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 7,
+  "won_games_count": 5,
+  "lose_games_count": 2,
+  "won_games_percent": 71.4,
+  "score_sum": 601,
+  "missed_sum": 480,
+  "score_points_sum": 601,
+  "missed_points_sum": 480,
+  "best_score_diff": 44,
+  "best_score_points_diff": 44,
+  "buchholz_score": 72,
+  "plus_minus": "+121",
+  "points": 12,
+  "mt_points": 0,
+  "last_games_count": 7,
+  "last_games_won": 5,
+  "final_standing": null,
+  "division": null,
+  "team_id": 18982,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 163706,
+    "team_id": 18982,
+    "competitor_team_id": 11806,
+    "status": "closed",
+    "team_score": 80,
+    "competitor_team_score": 90,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      17,
+      18
+     ],
+     "2": [
+      27,
+      20
+     ],
+     "3": [
+      15,
+      29
+     ],
+     "4": [
+      21,
+      23
+     ]
+    },
+    "tournament_tour": 7,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 161123,
+    "team_id": 18982,
+    "competitor_team_id": 946,
+    "status": "closed",
+    "team_score": 89,
+    "competitor_team_score": 83,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      28,
+      24
+     ],
+     "2": [
+      14,
+      29
+     ],
+     "3": [
+      26,
+      14
+     ],
+     "4": [
+      21,
+      16
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160461,
+    "team_id": 18982,
+    "competitor_team_id": 11633,
+    "status": "closed",
+    "team_score": 81,
+    "competitor_team_score": 48,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      17,
+      9
+     ],
+     "2": [
+      19,
+      15
+     ],
+     "3": [
+      18,
+      7
+     ],
+     "4": [
+      27,
+      17
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159842,
+    "team_id": 19596,
+    "competitor_team_id": 18982,
+    "status": "closed",
+    "team_score": 90,
+    "competitor_team_score": 101,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      28,
+      26
+     ],
+     "2": [
+      27,
+      18
+     ],
+     "3": [
+      16,
+      32
+     ],
+     "4": [
+      19,
+      25
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159009,
+    "team_id": 32,
+    "competitor_team_id": 18982,
+    "status": "closed",
+    "team_score": 56,
+    "competitor_team_score": 94,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      14,
+      22
+     ],
+     "2": [
+      14,
+      17
+     ],
+     "3": [
+      12,
+      28
+     ],
+     "4": [
+      16,
+      27
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 31982,
+  "team": {
+   "id": 11633,
+   "name": "DrЁamTeam",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 8669043,
+    "name": "IMG_20250521_215426_393.png",
+    "original_name": "IMG_20250521_215426_393.png",
+    "path": "https://fs.mtgame.ru/IMG_20250521_215426_393.png",
+    "mime_type": "image/png",
+    "size": 306027,
+    "engine": "yandex_s3",
+    "created_at": "2025-05-21T18:55:03.270862Z"
+   },
+   "created_at": "2025-05-21T15:25:08.870736Z",
+   "created_by_league_id": null,
+   "unique_code": "GC63"
+  },
+  "name": "DrЁamTeam",
+  "logo": {
+   "id": 12059621,
+   "name": "DreamTeam.png",
+   "original_name": "DreamTeam.png",
+   "path": "https://fs.mtgame.ru/DreamTeam.png",
+   "mime_type": "image/png",
+   "size": 88131,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:39:42.683409Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 6,
+  "won_games_count": 4,
+  "lose_games_count": 2,
+  "won_games_percent": 66.6,
+  "score_sum": 441,
+  "missed_sum": 399,
+  "score_points_sum": 441,
+  "missed_points_sum": 399,
+  "best_score_diff": 42,
+  "best_score_points_diff": 42,
+  "buchholz_score": 43,
+  "plus_minus": "+42",
+  "points": 10,
+  "mt_points": 0,
+  "last_games_count": 6,
+  "last_games_won": 4,
+  "final_standing": null,
+  "division": null,
+  "team_id": 11633,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 161127,
+    "team_id": 8339,
+    "competitor_team_id": 11633,
+    "status": "closed",
+    "team_score": 63,
+    "competitor_team_score": 70,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      19,
+      20
+     ],
+     "2": [
+      16,
+      14
+     ],
+     "3": [
+      14,
+      17
+     ],
+     "4": [
+      14,
+      19
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160461,
+    "team_id": 18982,
+    "competitor_team_id": 11633,
+    "status": "closed",
+    "team_score": 81,
+    "competitor_team_score": 48,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      17,
+      9
+     ],
+     "2": [
+      19,
+      15
+     ],
+     "3": [
+      18,
+      7
+     ],
+     "4": [
+      27,
+      17
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159843,
+    "team_id": 5025,
+    "competitor_team_id": 11633,
+    "status": "closed",
+    "team_score": 62,
+    "competitor_team_score": 75,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      14,
+      16
+     ],
+     "2": [
+      9,
+      16
+     ],
+     "3": [
+      29,
+      21
+     ],
+     "4": [
+      10,
+      22
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159010,
+    "team_id": 11633,
+    "competitor_team_id": 14369,
+    "status": "closed",
+    "team_score": 71,
+    "competitor_team_score": 56,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      13,
+      14
+     ],
+     "2": [
+      19,
+      10
+     ],
+     "3": [
+      21,
+      12
+     ],
+     "4": [
+      18,
+      20
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 158260,
+    "team_id": 11633,
+    "competitor_team_id": 18998,
+    "status": "closed",
+    "team_score": 109,
+    "competitor_team_score": 67,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      27,
+      11
+     ],
+     "2": [
+      34,
+      17
+     ],
+     "3": [
+      18,
+      24
+     ],
+     "4": [
+      30,
+      15
+     ]
+    },
+    "tournament_tour": 2,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 31985,
+  "team": {
+   "id": 5398,
+   "name": "BEAVERS",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 4400878,
+    "name": "IMG_20230721_132411_582.PNG",
+    "original_name": "IMG_20230721_132411_582.PNG",
+    "path": "https://fs.mtgame.ru/IMG_20230721_132411_582.PNG",
+    "mime_type": "image/png",
+    "size": 122698,
+    "engine": "yandex_s3",
+    "created_at": "2023-08-08T15:22:31.843087Z"
+   },
+   "created_at": "2023-08-08T15:21:34.185922Z",
+   "created_by_league_id": null,
+   "unique_code": "JAHV"
+  },
+  "name": "Beavers",
+  "logo": {
+   "id": 12059617,
+   "name": "Beavers.png",
+   "original_name": "Beavers.png",
+   "path": "https://fs.mtgame.ru/Beavers.png",
+   "mime_type": "image/png",
+   "size": 43937,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:39:04.924590Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 6,
+  "won_games_count": 4,
+  "lose_games_count": 2,
+  "won_games_percent": 66.6,
+  "score_sum": 521,
+  "missed_sum": 487,
+  "score_points_sum": 521,
+  "missed_points_sum": 487,
+  "best_score_diff": 41,
+  "best_score_points_diff": 41,
+  "buchholz_score": 61,
+  "plus_minus": "+34",
+  "points": 10,
+  "mt_points": 0,
+  "last_games_count": 6,
+  "last_games_won": 4,
+  "final_standing": null,
+  "division": null,
+  "team_id": 5398,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 161124,
+    "team_id": 5398,
+    "competitor_team_id": 11806,
+    "status": "closed",
+    "team_score": 78,
+    "competitor_team_score": 111,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      18,
+      25
+     ],
+     "2": [
+      16,
+      18
+     ],
+     "3": [
+      22,
+      36
+     ],
+     "4": [
+      22,
+      32
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160462,
+    "team_id": 13921,
+    "competitor_team_id": 5398,
+    "status": "closed",
+    "team_score": 74,
+    "competitor_team_score": 87,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      18,
+      19
+     ],
+     "2": [
+      16,
+      24
+     ],
+     "3": [
+      25,
+      23
+     ],
+     "4": [
+      15,
+      21
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159846,
+    "team_id": 5398,
+    "competitor_team_id": 416,
+    "status": "closed",
+    "team_score": 123,
+    "competitor_team_score": 82,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      30,
+      18
+     ],
+     "2": [
+      26,
+      18
+     ],
+     "3": [
+      29,
+      18
+     ],
+     "4": [
+      38,
+      28
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159015,
+    "team_id": 5398,
+    "competitor_team_id": 695,
+    "status": "closed",
+    "team_score": 102,
+    "competitor_team_score": 69,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      34,
+      14
+     ],
+     "2": [
+      18,
+      20
+     ],
+     "3": [
+      23,
+      27
+     ],
+     "4": [
+      27,
+      8
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 158257,
+    "team_id": 5398,
+    "competitor_team_id": 5443,
+    "status": "closed",
+    "team_score": 53,
+    "competitor_team_score": 75,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      14,
+      19
+     ],
+     "2": [
+      7,
+      13
+     ],
+     "3": [
+      20,
+      18
+     ],
+     "4": [
+      12,
+      25
+     ]
+    },
+    "tournament_tour": 2,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 32092,
+  "team": {
+   "id": 11745,
+   "name": "Mosmade",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 8756931,
+    "name": "logo_black_3.png",
+    "original_name": "logo_black_3.png",
+    "path": "https://fs.mtgame.ru/logo_black_3.png",
+    "mime_type": "image/png",
+    "size": 4362,
+    "engine": "yandex_s3",
+    "created_at": "2025-06-09T15:10:40.179722Z"
+   },
+   "created_at": "2025-06-06T12:57:02.853530Z",
+   "created_by_league_id": null,
+   "unique_code": "CM37"
+  },
+  "name": "Mosmade",
+  "logo": {
+   "id": 12066151,
+   "name": "IMG_5624_ewpWO.png",
+   "original_name": "IMG_5624.png",
+   "path": "https://fs.mtgame.ru/IMG_5624_ewpWO.png",
+   "mime_type": "image/png",
+   "size": 10839,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-09T16:04:48.432520Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 6,
+  "won_games_count": 4,
+  "lose_games_count": 2,
+  "won_games_percent": 66.6,
+  "score_sum": 434,
+  "missed_sum": 403,
+  "score_points_sum": 434,
+  "missed_points_sum": 403,
+  "best_score_diff": 34,
+  "best_score_points_diff": 34,
+  "buchholz_score": 62,
+  "plus_minus": "+31",
+  "points": 10,
+  "mt_points": 0,
+  "last_games_count": 6,
+  "last_games_won": 4,
+  "final_standing": null,
+  "division": null,
+  "team_id": 11745,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 161128,
+    "team_id": 32,
+    "competitor_team_id": 11745,
+    "status": "closed",
+    "team_score": 63,
+    "competitor_team_score": 67,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      14,
+      15
+     ],
+     "2": [
+      17,
+      16
+     ],
+     "3": [
+      18,
+      18
+     ],
+     "4": [
+      14,
+      18
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160464,
+    "team_id": 11745,
+    "competitor_team_id": 19510,
+    "status": "closed",
+    "team_score": 62,
+    "competitor_team_score": 66,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      20,
+      13
+     ],
+     "2": [
+      8,
+      14
+     ],
+     "3": [
+      17,
+      16
+     ],
+     "4": [
+      17,
+      23
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159841,
+    "team_id": 11745,
+    "competitor_team_id": 1474,
+    "status": "closed",
+    "team_score": 70,
+    "competitor_team_score": 77,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      20,
+      22
+     ],
+     "2": [
+      12,
+      8
+     ],
+     "3": [
+      20,
+      24
+     ],
+     "4": [
+      18,
+      23
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159006,
+    "team_id": 2297,
+    "competitor_team_id": 11745,
+    "status": "closed",
+    "team_score": 75,
+    "competitor_team_score": 78,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      16,
+      8
+     ],
+     "2": [
+      21,
+      24
+     ],
+     "3": [
+      13,
+      19
+     ],
+     "4": [
+      25,
+      27
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 158258,
+    "team_id": 8713,
+    "competitor_team_id": 11745,
+    "status": "closed",
+    "team_score": 58,
+    "competitor_team_score": 92,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      9,
+      25
+     ],
+     "2": [
+      21,
+      16
+     ],
+     "3": [
+      15,
+      20
+     ],
+     "4": [
+      13,
+      31
+     ]
+    },
+    "tournament_tour": 2,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 31987,
+  "team": {
+   "id": 5443,
+   "name": "Восход Альфа",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 4414671,
+    "name": "921F075B-C830-4C40-8353-2D8A2CEA9E4B.jpeg",
+    "original_name": "921F075B-C830-4C40-8353-2D8A2CEA9E4B.jpeg",
+    "path": "https://fs.mtgame.ru/921F075B-C830-4C40-8353-2D8A2CEA9E4B.jpeg",
+    "mime_type": "image/jpeg",
+    "size": 15609,
+    "engine": "yandex_s3",
+    "created_at": "2023-08-19T13:08:35.092556Z"
+   },
+   "created_at": "2023-08-19T13:08:36.795005Z",
+   "created_by_league_id": null,
+   "unique_code": "Q737"
+  },
+  "name": "Восход Альфа",
+  "logo": {
+   "id": 12059664,
+   "name": "VoshodAl_fa.png",
+   "original_name": "Восход Альфа.png",
+   "path": "https://fs.mtgame.ru/VoshodAl_fa.png",
+   "mime_type": "image/png",
+   "size": 33335,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:46:04.118098Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 6,
+  "won_games_count": 4,
+  "lose_games_count": 2,
+  "won_games_percent": 66.6,
+  "score_sum": 405,
+  "missed_sum": 381,
+  "score_points_sum": 405,
+  "missed_points_sum": 381,
+  "best_score_diff": 22,
+  "best_score_points_diff": 22,
+  "buchholz_score": 54,
+  "plus_minus": "+24",
+  "points": 10,
+  "mt_points": 0,
+  "last_games_count": 6,
+  "last_games_won": 4,
+  "final_standing": null,
+  "division": null,
+  "team_id": 5443,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 161129,
+    "team_id": 13921,
+    "competitor_team_id": 5443,
+    "status": "closed",
+    "team_score": 66,
+    "competitor_team_score": 68,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      11,
+      15
+     ],
+     "2": [
+      12,
+      12
+     ],
+     "3": [
+      25,
+      18
+     ],
+     "4": [
+      12,
+      15
+     ],
+     "5": [
+      6,
+      8
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160463,
+    "team_id": 11806,
+    "competitor_team_id": 5443,
+    "status": "closed",
+    "team_score": 81,
+    "competitor_team_score": 71,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      27,
+      16
+     ],
+     "2": [
+      12,
+      18
+     ],
+     "3": [
+      19,
+      15
+     ],
+     "4": [
+      23,
+      22
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159845,
+    "team_id": 5443,
+    "competitor_team_id": 14336,
+    "status": "closed",
+    "team_score": 59,
+    "competitor_team_score": 52,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      22,
+      3
+     ],
+     "2": [
+      12,
+      18
+     ],
+     "3": [
+      16,
+      17
+     ],
+     "4": [
+      9,
+      14
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159007,
+    "team_id": 5443,
+    "competitor_team_id": 1474,
+    "status": "closed",
+    "team_score": 53,
+    "competitor_team_score": 56,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      15,
+      3
+     ],
+     "2": [
+      9,
+      25
+     ],
+     "3": [
+      17,
+      12
+     ],
+     "4": [
+      12,
+      16
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 158257,
+    "team_id": 5398,
+    "competitor_team_id": 5443,
+    "status": "closed",
+    "team_score": 53,
+    "competitor_team_score": 75,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      14,
+      19
+     ],
+     "2": [
+      7,
+      13
+     ],
+     "3": [
+      20,
+      18
+     ],
+     "4": [
+      12,
+      25
+     ]
+    },
+    "tournament_tour": 2,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 31998,
+  "team": {
+   "id": 19510,
+   "name": "VSP BUZY",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 11986798,
+    "name": "1000040868.png",
+    "original_name": "1000040868.png",
+    "path": "https://fs.mtgame.ru/1000040868.png",
+    "mime_type": "image/png",
+    "size": 195785,
+    "engine": "yandex_s3",
+    "created_at": "2026-08-31T17:28:45.711619Z"
+   },
+   "created_at": "2026-08-31T17:27:16.723883Z",
+   "created_by_league_id": null,
+   "unique_code": "MAU9"
+  },
+  "name": "VSP Buzy",
+  "logo": {
+   "id": 12059655,
+   "name": "VSPBuzy.png",
+   "original_name": "VSP Buzy.png",
+   "path": "https://fs.mtgame.ru/VSPBuzy.png",
+   "mime_type": "image/png",
+   "size": 70168,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:44:40.504589Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 6,
+  "won_games_count": 4,
+  "lose_games_count": 2,
+  "won_games_percent": 66.6,
+  "score_sum": 408,
+  "missed_sum": 408,
+  "score_points_sum": 408,
+  "missed_points_sum": 408,
+  "best_score_diff": 8,
+  "best_score_points_diff": 8,
+  "buchholz_score": 65,
+  "plus_minus": "0",
+  "points": 10,
+  "mt_points": 0,
+  "last_games_count": 6,
+  "last_games_won": 4,
+  "final_standing": null,
+  "division": null,
+  "team_id": 19510,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 161125,
+    "team_id": 1474,
+    "competitor_team_id": 19510,
+    "status": "closed",
+    "team_score": 87,
+    "competitor_team_score": 79,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      31,
+      22
+     ],
+     "2": [
+      22,
+      22
+     ],
+     "3": [
+      19,
+      22
+     ],
+     "4": [
+      15,
+      13
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160464,
+    "team_id": 11745,
+    "competitor_team_id": 19510,
+    "status": "closed",
+    "team_score": 62,
+    "competitor_team_score": 66,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      20,
+      13
+     ],
+     "2": [
+      8,
+      14
+     ],
+     "3": [
+      17,
+      16
+     ],
+     "4": [
+      17,
+      23
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159847,
+    "team_id": 19510,
+    "competitor_team_id": 279,
+    "status": "closed",
+    "team_score": 68,
+    "competitor_team_score": 60,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      17,
+      16
+     ],
+     "2": [
+      9,
+      14
+     ],
+     "3": [
+      15,
+      13
+     ],
+     "4": [
+      27,
+      17
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159008,
+    "team_id": 11806,
+    "competitor_team_id": 19510,
+    "status": "closed",
+    "team_score": 83,
+    "competitor_team_score": 68,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      19,
+      13
+     ],
+     "2": [
+      21,
+      16
+     ],
+     "3": [
+      21,
+      16
+     ],
+     "4": [
+      22,
+      23
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 158255,
+    "team_id": 19510,
+    "competitor_team_id": 416,
+    "status": "closed",
+    "team_score": 70,
+    "competitor_team_score": 67,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      13,
+      17
+     ],
+     "2": [
+      11,
+      19
+     ],
+     "3": [
+      29,
+      23
+     ],
+     "4": [
+      17,
+      8
+     ]
+    },
+    "tournament_tour": 2,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 32644,
+  "team": {
+   "id": 8339,
+   "name": "Ruina",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 8967587,
+    "name": "ruina.png",
+    "original_name": "ruina.png",
+    "path": "https://fs.mtgame.ru/ruina.png",
+    "mime_type": "image/png",
+    "size": 65090,
+    "engine": "yandex_s3",
+    "created_at": "2025-08-28T00:56:57.515879Z"
+   },
+   "created_at": "2024-08-13T12:24:26.496494Z",
+   "created_by_league_id": null,
+   "unique_code": "N5OP"
+  },
+  "name": "Ruina",
+  "logo": {
+   "id": 8967587,
+   "name": "ruina.png",
+   "original_name": "ruina.png",
+   "path": "https://fs.mtgame.ru/ruina.png",
+   "mime_type": "image/png",
+   "size": 65090,
+   "engine": "yandex_s3",
+   "created_at": "2025-08-28T00:56:57.515879Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 5,
+  "won_games_count": 3,
+  "lose_games_count": 2,
+  "won_games_percent": 60.0,
+  "score_sum": 369,
+  "missed_sum": 352,
+  "score_points_sum": 369,
+  "missed_points_sum": 352,
+  "best_score_diff": 20,
+  "best_score_points_diff": 20,
+  "buchholz_score": 45,
+  "plus_minus": "+17",
+  "points": 8,
+  "mt_points": 0,
+  "last_games_count": 5,
+  "last_games_won": 3,
+  "final_standing": null,
+  "division": null,
+  "team_id": 8339,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": null,
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 163715,
+    "team_id": 8339,
+    "competitor_team_id": 695,
+    "status": "closed",
+    "team_score": 87,
+    "competitor_team_score": 67,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      21,
+      15
+     ],
+     "2": [
+      13,
+      10
+     ],
+     "3": [
+      31,
+      24
+     ],
+     "4": [
+      22,
+      18
+     ]
+    },
+    "tournament_tour": 7,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 161127,
+    "team_id": 8339,
+    "competitor_team_id": 11633,
+    "status": "closed",
+    "team_score": 63,
+    "competitor_team_score": 70,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      19,
+      20
+     ],
+     "2": [
+      16,
+      14
+     ],
+     "3": [
+      14,
+      17
+     ],
+     "4": [
+      14,
+      19
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160468,
+    "team_id": 18986,
+    "competitor_team_id": 8339,
+    "status": "closed",
+    "team_score": 64,
+    "competitor_team_score": 69,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      15,
+      20
+     ],
+     "2": [
+      9,
+      11
+     ],
+     "3": [
+      21,
+      15
+     ],
+     "4": [
+      19,
+      23
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159854,
+    "team_id": 8339,
+    "competitor_team_id": 2254,
+    "status": "closed",
+    "team_score": 72,
+    "competitor_team_score": 64,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      18,
+      19
+     ],
+     "2": [
+      16,
+      11
+     ],
+     "3": [
+      15,
+      20
+     ],
+     "4": [
+      23,
+      14
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159017,
+    "team_id": 8339,
+    "competitor_team_id": 19596,
+    "status": "closed",
+    "team_score": 78,
+    "competitor_team_score": 87,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      20,
+      25
+     ],
+     "2": [
+      7,
+      13
+     ],
+     "3": [
+      24,
+      20
+     ],
+     "4": [
+      27,
+      29
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 32000,
+  "team": {
+   "id": 18986,
+   "name": "Hella MOB HARD",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 11713582,
+    "name": "IMG_7991_AuAA0.png",
+    "original_name": "IMG_7991.png",
+    "path": "https://fs.mtgame.ru/IMG_7991_AuAA0.png",
+    "mime_type": "image/png",
+    "size": 299397,
+    "engine": "yandex_s3",
+    "created_at": "2026-06-10T05:35:18.062669Z"
+   },
+   "created_at": "2026-06-09T08:36:54.400618Z",
+   "created_by_league_id": null,
+   "unique_code": "TG8E"
+  },
+  "name": "Hella Mob",
+  "logo": {
+   "id": 12059631,
+   "name": "HellaMob.png",
+   "original_name": "Hella Mob.png",
+   "path": "https://fs.mtgame.ru/HellaMob.png",
+   "mime_type": "image/png",
+   "size": 87844,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:40:43.068088Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 7,
+  "won_games_count": 4,
+  "lose_games_count": 3,
+  "won_games_percent": 57.1,
+  "score_sum": 504,
+  "missed_sum": 443,
+  "score_points_sum": 504,
+  "missed_points_sum": 443,
+  "best_score_diff": 44,
+  "best_score_points_diff": 44,
+  "buchholz_score": 62,
+  "plus_minus": "+61",
+  "points": 11,
+  "mt_points": 0,
+  "last_games_count": 7,
+  "last_games_won": 4,
+  "final_standing": null,
+  "division": null,
+  "team_id": 18986,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 163712,
+    "team_id": 18986,
+    "competitor_team_id": 32,
+    "status": "closed",
+    "team_score": 76,
+    "competitor_team_score": 63,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      20,
+      10
+     ],
+     "2": [
+      19,
+      9
+     ],
+     "3": [
+      18,
+      23
+     ],
+     "4": [
+      19,
+      21
+     ]
+    },
+    "tournament_tour": 7,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 161134,
+    "team_id": 18986,
+    "competitor_team_id": 14350,
+    "status": "closed",
+    "team_score": 107,
+    "competitor_team_score": 63,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      27,
+      12
+     ],
+     "2": [
+      29,
+      16
+     ],
+     "3": [
+      21,
+      18
+     ],
+     "4": [
+      30,
+      17
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160468,
+    "team_id": 18986,
+    "competitor_team_id": 8339,
+    "status": "closed",
+    "team_score": 64,
+    "competitor_team_score": 69,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      15,
+      20
+     ],
+     "2": [
+      9,
+      11
+     ],
+     "3": [
+      21,
+      15
+     ],
+     "4": [
+      19,
+      23
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159852,
+    "team_id": 18986,
+    "competitor_team_id": 15007,
+    "status": "closed",
+    "team_score": 73,
+    "competitor_team_score": 36,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      13,
+      7
+     ],
+     "2": [
+      18,
+      4
+     ],
+     "3": [
+      21,
+      10
+     ],
+     "4": [
+      21,
+      15
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159013,
+    "team_id": 14336,
+    "competitor_team_id": 18986,
+    "status": "closed",
+    "team_score": 93,
+    "competitor_team_score": 71,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      29,
+      15
+     ],
+     "2": [
+      19,
+      12
+     ],
+     "3": [
+      24,
+      19
+     ],
+     "4": [
+      21,
+      25
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 31996,
+  "team": {
+   "id": 2297,
+   "name": "ВОСТОК",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 2764341,
+    "name": "E8646E88-9416-42C7-A87B-5057EFB9F1A8.png",
+    "original_name": "E8646E88-9416-42C7-A87B-5057EFB9F1A8.png",
+    "path": "https://fs.mtgame.ru/E8646E88-9416-42C7-A87B-5057EFB9F1A8.png",
+    "mime_type": "image/png",
+    "size": 444945,
+    "engine": "yandex_s3",
+    "created_at": "2022-10-04T19:32:34.195952Z"
+   },
+   "created_at": "2022-06-07T10:11:47.034485Z",
+   "created_by_league_id": null,
+   "unique_code": "9KLM"
+  },
+  "name": "Восток",
+  "logo": {
+   "id": 12059662,
+   "name": "Vostok.png",
+   "original_name": "Восток.png",
+   "path": "https://fs.mtgame.ru/Vostok.png",
+   "mime_type": "image/png",
+   "size": 118586,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:45:55.445955Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 7,
+  "won_games_count": 4,
+  "lose_games_count": 3,
+  "won_games_percent": 57.1,
+  "score_sum": 503,
+  "missed_sum": 458,
+  "score_points_sum": 503,
+  "missed_points_sum": 458,
+  "best_score_diff": 36,
+  "best_score_points_diff": 36,
+  "buchholz_score": 64,
+  "plus_minus": "+45",
+  "points": 11,
+  "mt_points": 0,
+  "last_games_count": 7,
+  "last_games_won": 4,
+  "final_standing": null,
+  "division": null,
+  "team_id": 2297,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 163707,
+    "team_id": 946,
+    "competitor_team_id": 2297,
+    "status": "closed",
+    "team_score": 106,
+    "competitor_team_score": 93,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      25,
+      17
+     ],
+     "2": [
+      25,
+      16
+     ],
+     "3": [
+      25,
+      30
+     ],
+     "4": [
+      31,
+      30
+     ]
+    },
+    "tournament_tour": 7,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 161126,
+    "team_id": 19596,
+    "competitor_team_id": 2297,
+    "status": "closed",
+    "team_score": 60,
+    "competitor_team_score": 71,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      13,
+      19
+     ],
+     "2": [
+      14,
+      14
+     ],
+     "3": [
+      11,
+      14
+     ],
+     "4": [
+      22,
+      24
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160465,
+    "team_id": 2297,
+    "competitor_team_id": 5025,
+    "status": "closed",
+    "team_score": 61,
+    "competitor_team_score": 48,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      10,
+      9
+     ],
+     "2": [
+      12,
+      14
+     ],
+     "3": [
+      25,
+      11
+     ],
+     "4": [
+      14,
+      14
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159844,
+    "team_id": 2297,
+    "competitor_team_id": 13921,
+    "status": "closed",
+    "team_score": 59,
+    "competitor_team_score": 65,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      12,
+      16
+     ],
+     "2": [
+      11,
+      17
+     ],
+     "3": [
+      13,
+      19
+     ],
+     "4": [
+      23,
+      13
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159006,
+    "team_id": 2297,
+    "competitor_team_id": 11745,
+    "status": "closed",
+    "team_score": 75,
+    "competitor_team_score": 78,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      16,
+      8
+     ],
+     "2": [
+      21,
+      24
+     ],
+     "3": [
+      13,
+      19
+     ],
+     "4": [
+      25,
+      27
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 31990,
+  "team": {
+   "id": 19494,
+   "name": "BASKETPOINT RED",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 12103943,
+    "name": "bp_red.png",
+    "original_name": "bp_red.png",
+    "path": "https://fs.mtgame.ru/bp_red.png",
+    "mime_type": "image/png",
+    "size": 85197,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-14T13:03:51.291990Z"
+   },
+   "created_at": "2026-08-30T17:13:35.625694Z",
+   "created_by_league_id": null,
+   "unique_code": "B6LA"
+  },
+  "name": "Basketpoint",
+  "logo": {
+   "id": 12103943,
+   "name": "bp_red.png",
+   "original_name": "bp_red.png",
+   "path": "https://fs.mtgame.ru/bp_red.png",
+   "mime_type": "image/png",
+   "size": 85197,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-14T13:03:51.291990Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 7,
+  "won_games_count": 4,
+  "lose_games_count": 3,
+  "won_games_percent": 57.1,
+  "score_sum": 443,
+  "missed_sum": 412,
+  "score_points_sum": 443,
+  "missed_points_sum": 412,
+  "best_score_diff": 35,
+  "best_score_points_diff": 35,
+  "buchholz_score": 69,
+  "plus_minus": "+31",
+  "points": 11,
+  "mt_points": 0,
+  "last_games_count": 7,
+  "last_games_won": 4,
+  "final_standing": null,
+  "division": null,
+  "team_id": 19494,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 163708,
+    "team_id": 1474,
+    "competitor_team_id": 19494,
+    "status": "closed",
+    "team_score": 67,
+    "competitor_team_score": 55,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      9,
+      16
+     ],
+     "2": [
+      17,
+      18
+     ],
+     "3": [
+      22,
+      8
+     ],
+     "4": [
+      19,
+      13
+     ]
+    },
+    "tournament_tour": 7,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 161130,
+    "team_id": 19494,
+    "competitor_team_id": 231,
+    "status": "closed",
+    "team_score": 63,
+    "competitor_team_score": 28,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      22,
+      4
+     ],
+     "2": [
+      7,
+      8
+     ],
+     "3": [
+      14,
+      10
+     ],
+     "4": [
+      20,
+      6
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160467,
+    "team_id": 14336,
+    "competitor_team_id": 19494,
+    "status": "closed",
+    "team_score": 63,
+    "competitor_team_score": 64,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      17,
+      14
+     ],
+     "2": [
+      16,
+      15
+     ],
+     "3": [
+      14,
+      21
+     ],
+     "4": [
+      16,
+      14
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159850,
+    "team_id": 19494,
+    "competitor_team_id": 19519,
+    "status": "closed",
+    "team_score": 65,
+    "competitor_team_score": 55,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      19,
+      7
+     ],
+     "2": [
+      13,
+      15
+     ],
+     "3": [
+      18,
+      14
+     ],
+     "4": [
+      15,
+      19
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159012,
+    "team_id": 416,
+    "competitor_team_id": 19494,
+    "status": "closed",
+    "team_score": 76,
+    "competitor_team_score": 71,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      19,
+      17
+     ],
+     "2": [
+      18,
+      20
+     ],
+     "3": [
+      21,
+      13
+     ],
+     "4": [
+      18,
+      21
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 32001,
+  "team": {
+   "id": 8227,
+   "name": "G-Town 1",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 238,
+    "name": "Зеленоград",
+    "name_en": "Zelenograd",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 6816596,
+    "name": "IMG_20240925_102949_721.png",
+    "original_name": "IMG_20240925_102949_721.png",
+    "path": "https://fs.mtgame.ru/IMG_20240925_102949_721.png",
+    "mime_type": "image/png",
+    "size": 86665,
+    "engine": "yandex_s3",
+    "created_at": "2024-09-25T07:32:08.816919Z"
+   },
+   "created_at": "2024-07-10T11:51:44.664879Z",
+   "created_by_league_id": null,
+   "unique_code": "0ZQ4"
+  },
+  "name": "G-Town",
+  "logo": {
+   "id": 12059623,
+   "name": "G-Town.png",
+   "original_name": "G-Town.png",
+   "path": "https://fs.mtgame.ru/G-Town.png",
+   "mime_type": "image/png",
+   "size": 27975,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:39:52.224930Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 6,
+  "won_games_count": 3,
+  "lose_games_count": 3,
+  "won_games_percent": 50.0,
+  "score_sum": 456,
+  "missed_sum": 385,
+  "score_points_sum": 456,
+  "missed_points_sum": 385,
+  "best_score_diff": 48,
+  "best_score_points_diff": 48,
+  "buchholz_score": 57,
+  "plus_minus": "+71",
+  "points": 9,
+  "mt_points": 0,
+  "last_games_count": 6,
+  "last_games_won": 3,
+  "final_standing": null,
+  "division": null,
+  "team_id": 8227,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 161131,
+    "team_id": 416,
+    "competitor_team_id": 8227,
+    "status": "closed",
+    "team_score": 69,
+    "competitor_team_score": 106,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      16,
+      25
+     ],
+     "2": [
+      10,
+      25
+     ],
+     "3": [
+      18,
+      19
+     ],
+     "4": [
+      25,
+      37
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160472,
+    "team_id": 8227,
+    "competitor_team_id": 8088,
+    "status": "closed",
+    "team_score": 87,
+    "competitor_team_score": 39,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      18,
+      8
+     ],
+     "2": [
+      15,
+      6
+     ],
+     "3": [
+      26,
+      11
+     ],
+     "4": [
+      28,
+      14
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159851,
+    "team_id": 8227,
+    "competitor_team_id": 14350,
+    "status": "closed",
+    "team_score": 56,
+    "competitor_team_score": 66,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      17,
+      11
+     ],
+     "2": [
+      17,
+      18
+     ],
+     "3": [
+      12,
+      12
+     ],
+     "4": [
+      10,
+      25
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159018,
+    "team_id": 2254,
+    "competitor_team_id": 8227,
+    "status": "closed",
+    "team_score": 73,
+    "competitor_team_score": 91,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      29,
+      21
+     ],
+     "2": [
+      20,
+      31
+     ],
+     "3": [
+      15,
+      20
+     ],
+     "4": [
+      9,
+      19
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 158263,
+    "team_id": 8227,
+    "competitor_team_id": 19494,
+    "status": "closed",
+    "team_score": 66,
+    "competitor_team_score": 76,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      15,
+      11
+     ],
+     "2": [
+      20,
+      24
+     ],
+     "3": [
+      16,
+      15
+     ],
+     "4": [
+      15,
+      26
+     ]
+    },
+    "tournament_tour": 2,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 31993,
+  "team": {
+   "id": 13921,
+   "name": "Бурые рыси",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 8931176,
+    "name": "607bccad-6e03-4a82-b9c2-4a978864b3e7.jpeg",
+    "original_name": "607bccad-6e03-4a82-b9c2-4a978864b3e7.jpeg",
+    "path": "https://fs.mtgame.ru/607bccad-6e03-4a82-b9c2-4a978864b3e7.jpeg",
+    "mime_type": "image/jpeg",
+    "size": 46203,
+    "engine": "yandex_s3",
+    "created_at": "2025-08-18T15:12:50.353094Z"
+   },
+   "created_at": "2025-08-18T15:12:50.806905Z",
+   "created_by_league_id": null,
+   "unique_code": "35CS"
+  },
+  "name": "Бурые Рыси",
+  "logo": {
+   "id": 12059660,
+   "name": "BuryeRysi.png",
+   "original_name": "Бурые Рыси.png",
+   "path": "https://fs.mtgame.ru/BuryeRysi.png",
+   "mime_type": "image/png",
+   "size": 96084,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:45:48.473481Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 6,
+  "won_games_count": 3,
+  "lose_games_count": 3,
+  "won_games_percent": 50.0,
+  "score_sum": 389,
+  "missed_sum": 365,
+  "score_points_sum": 389,
+  "missed_points_sum": 365,
+  "best_score_diff": 24,
+  "best_score_points_diff": 24,
+  "buchholz_score": 51,
+  "plus_minus": "+24",
+  "points": 9,
+  "mt_points": 0,
+  "last_games_count": 6,
+  "last_games_won": 3,
+  "final_standing": null,
+  "division": null,
+  "team_id": 13921,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 161129,
+    "team_id": 13921,
+    "competitor_team_id": 5443,
+    "status": "closed",
+    "team_score": 66,
+    "competitor_team_score": 68,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      11,
+      15
+     ],
+     "2": [
+      12,
+      12
+     ],
+     "3": [
+      25,
+      18
+     ],
+     "4": [
+      12,
+      15
+     ],
+     "5": [
+      6,
+      8
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160462,
+    "team_id": 13921,
+    "competitor_team_id": 5398,
+    "status": "closed",
+    "team_score": 74,
+    "competitor_team_score": 87,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      18,
+      19
+     ],
+     "2": [
+      16,
+      24
+     ],
+     "3": [
+      25,
+      23
+     ],
+     "4": [
+      15,
+      21
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159844,
+    "team_id": 2297,
+    "competitor_team_id": 13921,
+    "status": "closed",
+    "team_score": 59,
+    "competitor_team_score": 65,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      12,
+      16
+     ],
+     "2": [
+      11,
+      17
+     ],
+     "3": [
+      13,
+      19
+     ],
+     "4": [
+      23,
+      13
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159011,
+    "team_id": 13921,
+    "competitor_team_id": 8088,
+    "status": "closed",
+    "team_score": 59,
+    "competitor_team_score": 49,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      15,
+      20
+     ],
+     "2": [
+      13,
+      15
+     ],
+     "3": [
+      20,
+      4
+     ],
+     "4": [
+      11,
+      10
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 158253,
+    "team_id": 1474,
+    "competitor_team_id": 13921,
+    "status": "closed",
+    "team_score": 55,
+    "competitor_team_score": 54,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      19,
+      9
+     ],
+     "2": [
+      13,
+      11
+     ],
+     "3": [
+      11,
+      15
+     ],
+     "4": [
+      12,
+      19
+     ]
+    },
+    "tournament_tour": 2,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 32130,
+  "team": {
+   "id": 5025,
+   "name": "Los Lobos Locos",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 11936346,
+    "name": "IMG_5768_Aeq2Q.JPG",
+    "original_name": "IMG_5768.JPG",
+    "path": "https://fs.mtgame.ru/IMG_5768_Aeq2Q.JPG",
+    "mime_type": "image/jpeg",
+    "size": 48805,
+    "engine": "yandex_s3",
+    "created_at": "2026-08-18T10:22:16.658208Z"
+   },
+   "created_at": "2023-04-26T15:17:04.554164Z",
+   "created_by_league_id": null,
+   "unique_code": "UTUT"
+  },
+  "name": "Los Lobos Locos",
+  "logo": {
+   "id": 12059643,
+   "name": "LosLobosLocos.png",
+   "original_name": "Los Lobos Locos.png",
+   "path": "https://fs.mtgame.ru/LosLobosLocos.png",
+   "mime_type": "image/png",
+   "size": 108169,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:42:31.626250Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 6,
+  "won_games_count": 3,
+  "lose_games_count": 3,
+  "won_games_percent": 50.0,
+  "score_sum": 417,
+  "missed_sum": 398,
+  "score_points_sum": 417,
+  "missed_points_sum": 398,
+  "best_score_diff": 51,
+  "best_score_points_diff": 51,
+  "buchholz_score": 60,
+  "plus_minus": "+19",
+  "points": 9,
+  "mt_points": 0,
+  "last_games_count": 6,
+  "last_games_won": 3,
+  "final_standing": null,
+  "division": null,
+  "team_id": 5025,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 161132,
+    "team_id": 5025,
+    "competitor_team_id": 14369,
+    "status": "closed",
+    "team_score": 71,
+    "competitor_team_score": 66,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      19,
+      21
+     ],
+     "2": [
+      15,
+      20
+     ],
+     "3": [
+      16,
+      11
+     ],
+     "4": [
+      21,
+      14
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160465,
+    "team_id": 2297,
+    "competitor_team_id": 5025,
+    "status": "closed",
+    "team_score": 61,
+    "competitor_team_score": 48,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      10,
+      9
+     ],
+     "2": [
+      12,
+      14
+     ],
+     "3": [
+      25,
+      11
+     ],
+     "4": [
+      14,
+      14
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159843,
+    "team_id": 5025,
+    "competitor_team_id": 11633,
+    "status": "closed",
+    "team_score": 62,
+    "competitor_team_score": 75,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      14,
+      16
+     ],
+     "2": [
+      9,
+      16
+     ],
+     "3": [
+      29,
+      21
+     ],
+     "4": [
+      10,
+      22
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159005,
+    "team_id": 946,
+    "competitor_team_id": 5025,
+    "status": "closed",
+    "team_score": 91,
+    "competitor_team_score": 76,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      27,
+      24
+     ],
+     "2": [
+      23,
+      12
+     ],
+     "3": [
+      21,
+      21
+     ],
+     "4": [
+      20,
+      19
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 158251,
+    "team_id": 5025,
+    "competitor_team_id": 32,
+    "status": "closed",
+    "team_score": 60,
+    "competitor_team_score": 56,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      13,
+      13
+     ],
+     "2": [
+      15,
+      20
+     ],
+     "3": [
+      21,
+      8
+     ],
+     "4": [
+      11,
+      15
+     ]
+    },
+    "tournament_tour": 2,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 31986,
+  "team": {
+   "id": 14336,
+   "name": "GSE",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 8971522,
+    "name": "LogoGSe.png",
+    "original_name": "Лого ГСе.png",
+    "path": "https://fs.mtgame.ru/LogoGSe.png",
+    "mime_type": "image/png",
+    "size": 211606,
+    "engine": "yandex_s3",
+    "created_at": "2025-08-30T16:18:19.929199Z"
+   },
+   "created_at": "2025-08-30T14:44:47.356138Z",
+   "created_by_league_id": null,
+   "unique_code": "6897"
+  },
+  "name": "GSE",
+  "logo": {
+   "id": 12059628,
+   "name": "GSE.png",
+   "original_name": "GSE.png",
+   "path": "https://fs.mtgame.ru/GSE.png",
+   "mime_type": "image/png",
+   "size": 111889,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:40:22.107782Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 6,
+  "won_games_count": 3,
+  "lose_games_count": 3,
+  "won_games_percent": 50.0,
+  "score_sum": 404,
+  "missed_sum": 388,
+  "score_points_sum": 404,
+  "missed_points_sum": 388,
+  "best_score_diff": 22,
+  "best_score_points_diff": 22,
+  "buchholz_score": 64,
+  "plus_minus": "+16",
+  "points": 9,
+  "mt_points": 0,
+  "last_games_count": 6,
+  "last_games_won": 3,
+  "final_standing": null,
+  "division": null,
+  "team_id": 14336,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 161133,
+    "team_id": 19519,
+    "competitor_team_id": 14336,
+    "status": "closed",
+    "team_score": 63,
+    "competitor_team_score": 69,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      17,
+      18
+     ],
+     "2": [
+      15,
+      22
+     ],
+     "3": [
+      22,
+      13
+     ],
+     "4": [
+      9,
+      16
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160467,
+    "team_id": 14336,
+    "competitor_team_id": 19494,
+    "status": "closed",
+    "team_score": 63,
+    "competitor_team_score": 64,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      17,
+      14
+     ],
+     "2": [
+      16,
+      15
+     ],
+     "3": [
+      14,
+      21
+     ],
+     "4": [
+      16,
+      14
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159845,
+    "team_id": 5443,
+    "competitor_team_id": 14336,
+    "status": "closed",
+    "team_score": 59,
+    "competitor_team_score": 52,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      22,
+      3
+     ],
+     "2": [
+      12,
+      18
+     ],
+     "3": [
+      16,
+      17
+     ],
+     "4": [
+      9,
+      14
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159013,
+    "team_id": 14336,
+    "competitor_team_id": 18986,
+    "status": "closed",
+    "team_score": 93,
+    "competitor_team_score": 71,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      29,
+      15
+     ],
+     "2": [
+      19,
+      12
+     ],
+     "3": [
+      24,
+      19
+     ],
+     "4": [
+      21,
+      25
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 158254,
+    "team_id": 14336,
+    "competitor_team_id": 11806,
+    "status": "closed",
+    "team_score": 57,
+    "competitor_team_score": 69,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      22,
+      13
+     ],
+     "2": [
+      9,
+      19
+     ],
+     "3": [
+      15,
+      17
+     ],
+     "4": [
+      11,
+      20
+     ]
+    },
+    "tournament_tour": 2,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 32652,
+  "team": {
+   "id": 19596,
+   "name": "Rent Motors Team",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 12320532,
+    "name": "IMG_9139_Ac47s.png",
+    "original_name": "IMG_9139.png",
+    "path": "https://fs.mtgame.ru/IMG_9139_Ac47s.png",
+    "mime_type": "image/png",
+    "size": 154908,
+    "engine": "yandex_s3",
+    "created_at": "2026-10-03T14:04:33.247714Z"
+   },
+   "created_at": "2026-09-07T19:52:25.936228Z",
+   "created_by_league_id": null,
+   "unique_code": "LKZT"
+  },
+  "name": "Rent Motors Team",
+  "logo": {
+   "id": 12320532,
+   "name": "IMG_9139_Ac47s.png",
+   "original_name": "IMG_9139.png",
+   "path": "https://fs.mtgame.ru/IMG_9139_Ac47s.png",
+   "mime_type": "image/png",
+   "size": 154908,
+   "engine": "yandex_s3",
+   "created_at": "2026-10-03T14:04:33.247714Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 4,
+  "won_games_count": 2,
+  "lose_games_count": 2,
+  "won_games_percent": 50.0,
+  "score_sum": 337,
+  "missed_sum": 330,
+  "score_points_sum": 337,
+  "missed_points_sum": 330,
+  "best_score_diff": 20,
+  "best_score_points_diff": 20,
+  "buchholz_score": 40,
+  "plus_minus": "+7",
+  "points": 6,
+  "mt_points": 0,
+  "last_games_count": 4,
+  "last_games_won": 2,
+  "final_standing": null,
+  "division": null,
+  "team_id": 19596,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": null,
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 161126,
+    "team_id": 19596,
+    "competitor_team_id": 2297,
+    "status": "closed",
+    "team_score": 60,
+    "competitor_team_score": 71,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      13,
+      19
+     ],
+     "2": [
+      14,
+      14
+     ],
+     "3": [
+      11,
+      14
+     ],
+     "4": [
+      22,
+      24
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160469,
+    "team_id": 19596,
+    "competitor_team_id": 279,
+    "status": "closed",
+    "team_score": 100,
+    "competitor_team_score": 80,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      23,
+      17
+     ],
+     "2": [
+      18,
+      19
+     ],
+     "3": [
+      26,
+      13
+     ],
+     "4": [
+      33,
+      31
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159842,
+    "team_id": 19596,
+    "competitor_team_id": 18982,
+    "status": "closed",
+    "team_score": 90,
+    "competitor_team_score": 101,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      28,
+      26
+     ],
+     "2": [
+      27,
+      18
+     ],
+     "3": [
+      16,
+      32
+     ],
+     "4": [
+      19,
+      25
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159017,
+    "team_id": 8339,
+    "competitor_team_id": 19596,
+    "status": "closed",
+    "team_score": 78,
+    "competitor_team_score": 87,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      20,
+      25
+     ],
+     "2": [
+      7,
+      13
+     ],
+     "3": [
+      24,
+      20
+     ],
+     "4": [
+      27,
+      29
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 32091,
+  "team": {
+   "id": 416,
+   "name": "Los Angeles Clippers",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 8757603,
+    "name": "la-clippers-seeklogo.png",
+    "original_name": "la-clippers-seeklogo.png",
+    "path": "https://fs.mtgame.ru/la-clippers-seeklogo.png",
+    "mime_type": "image/png",
+    "size": 12663,
+    "engine": "yandex_s3",
+    "created_at": "2025-06-09T18:58:41.862063Z"
+   },
+   "created_at": "2020-09-02T06:44:22.779072Z",
+   "created_by_league_id": null,
+   "unique_code": "07R5"
+  },
+  "name": "Los Angeles Clippers",
+  "logo": {
+   "id": 12059641,
+   "name": "LAClippers.png",
+   "original_name": "LA Clippers.png",
+   "path": "https://fs.mtgame.ru/LAClippers.png",
+   "mime_type": "image/png",
+   "size": 20496,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:42:21.002448Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 6,
+  "won_games_count": 3,
+  "lose_games_count": 3,
+  "won_games_percent": 50.0,
+  "score_sum": 439,
+  "missed_sum": 494,
+  "score_points_sum": 439,
+  "missed_points_sum": 494,
+  "best_score_diff": 14,
+  "best_score_points_diff": 14,
+  "buchholz_score": 57,
+  "plus_minus": "-55",
+  "points": 9,
+  "mt_points": 0,
+  "last_games_count": 6,
+  "last_games_won": 3,
+  "final_standing": null,
+  "division": null,
+  "team_id": 416,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 161131,
+    "team_id": 416,
+    "competitor_team_id": 8227,
+    "status": "closed",
+    "team_score": 69,
+    "competitor_team_score": 106,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      16,
+      25
+     ],
+     "2": [
+      10,
+      25
+     ],
+     "3": [
+      18,
+      19
+     ],
+     "4": [
+      25,
+      37
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160470,
+    "team_id": 14350,
+    "competitor_team_id": 416,
+    "status": "closed",
+    "team_score": 63,
+    "competitor_team_score": 77,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      20,
+      19
+     ],
+     "2": [
+      18,
+      24
+     ],
+     "3": [
+      11,
+      20
+     ],
+     "4": [
+      14,
+      14
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159846,
+    "team_id": 5398,
+    "competitor_team_id": 416,
+    "status": "closed",
+    "team_score": 123,
+    "competitor_team_score": 82,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      30,
+      18
+     ],
+     "2": [
+      26,
+      18
+     ],
+     "3": [
+      29,
+      18
+     ],
+     "4": [
+      38,
+      28
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159012,
+    "team_id": 416,
+    "competitor_team_id": 19494,
+    "status": "closed",
+    "team_score": 76,
+    "competitor_team_score": 71,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      19,
+      17
+     ],
+     "2": [
+      18,
+      20
+     ],
+     "3": [
+      21,
+      13
+     ],
+     "4": [
+      18,
+      21
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 158255,
+    "team_id": 19510,
+    "competitor_team_id": 416,
+    "status": "closed",
+    "team_score": 70,
+    "competitor_team_score": 67,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      13,
+      17
+     ],
+     "2": [
+      11,
+      19
+     ],
+     "3": [
+      29,
+      23
+     ],
+     "4": [
+      17,
+      8
+     ]
+    },
+    "tournament_tour": 2,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 31997,
+  "team": {
+   "id": 231,
+   "name": "Shockers",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 1745,
+    "name": "shokers1.png",
+    "original_name": null,
+    "path": "https://fs.mtgame.ru/shokers1.png",
+    "mime_type": "",
+    "size": 182906,
+    "engine": "yandex_s3",
+    "created_at": "2020-01-20T11:10:29.318503Z"
+   },
+   "created_at": "2020-01-17T07:18:49.140752Z",
+   "created_by_league_id": null,
+   "unique_code": "8TF5"
+  },
+  "name": "Shockers",
+  "logo": {
+   "id": 12059651,
+   "name": "Shockers.png",
+   "original_name": "Shockers.png",
+   "path": "https://fs.mtgame.ru/Shockers.png",
+   "mime_type": "image/png",
+   "size": 39391,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:44:04.409443Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 6,
+  "won_games_count": 3,
+  "lose_games_count": 3,
+  "won_games_percent": 50.0,
+  "score_sum": 297,
+  "missed_sum": 373,
+  "score_points_sum": 297,
+  "missed_points_sum": 373,
+  "best_score_diff": 13,
+  "best_score_points_diff": 13,
+  "buchholz_score": 53,
+  "plus_minus": "-76",
+  "points": 9,
+  "mt_points": 0,
+  "last_games_count": 6,
+  "last_games_won": 3,
+  "final_standing": null,
+  "division": null,
+  "team_id": 231,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 161130,
+    "team_id": 19494,
+    "competitor_team_id": 231,
+    "status": "closed",
+    "team_score": 63,
+    "competitor_team_score": 28,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      22,
+      4
+     ],
+     "2": [
+      7,
+      8
+     ],
+     "3": [
+      14,
+      10
+     ],
+     "4": [
+      20,
+      6
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160471,
+    "team_id": 695,
+    "competitor_team_id": 231,
+    "status": "closed",
+    "team_score": 44,
+    "competitor_team_score": 57,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      9,
+      9
+     ],
+     "2": [
+      15,
+      19
+     ],
+     "3": [
+      11,
+      12
+     ],
+     "4": [
+      9,
+      17
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159848,
+    "team_id": 14369,
+    "competitor_team_id": 231,
+    "status": "closed",
+    "team_score": 59,
+    "competitor_team_score": 51,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      12,
+      14
+     ],
+     "2": [
+      23,
+      8
+     ],
+     "3": [
+      8,
+      17
+     ],
+     "4": [
+      16,
+      12
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159016,
+    "team_id": 231,
+    "competitor_team_id": 8713,
+    "status": "closed",
+    "team_score": 61,
+    "competitor_team_score": 58,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      10,
+      10
+     ],
+     "2": [
+      24,
+      7
+     ],
+     "3": [
+      8,
+      19
+     ],
+     "4": [
+      19,
+      22
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 158266,
+    "team_id": 231,
+    "competitor_team_id": 15007,
+    "status": "closed",
+    "team_score": 45,
+    "competitor_team_score": 44,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      18,
+      6
+     ],
+     "2": [
+      11,
+      16
+     ],
+     "3": [
+      4,
+      8
+     ],
+     "4": [
+      12,
+      14
+     ]
+    },
+    "tournament_tour": 2,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 31991,
+  "team": {
+   "id": 32,
+   "name": "Charlotte Bobcats",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 363,
+    "name": "Charlotte_Bobcats_logo.png",
+    "original_name": null,
+    "path": "https://fs.mtgame.ru/Charlotte_Bobcats_logo.png",
+    "mime_type": "image/png",
+    "size": 10488,
+    "engine": "yandex_s3",
+    "created_at": "2019-09-03T11:33:22.061280Z"
+   },
+   "created_at": "2019-08-27T11:33:05.101840Z",
+   "created_by_league_id": null,
+   "unique_code": "5X4I"
+  },
+  "name": "Charlotte Bobcats",
+  "logo": {
+   "id": 12059619,
+   "name": "Bobcats.png",
+   "original_name": "Bobcats.png",
+   "path": "https://fs.mtgame.ru/Bobcats.png",
+   "mime_type": "image/png",
+   "size": 38955,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:39:24.157394Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 7,
+  "won_games_count": 3,
+  "lose_games_count": 4,
+  "won_games_percent": 42.8,
+  "score_sum": 472,
+  "missed_sum": 457,
+  "score_points_sum": 472,
+  "missed_points_sum": 457,
+  "best_score_diff": 50,
+  "best_score_points_diff": 50,
+  "buchholz_score": 66,
+  "plus_minus": "+15",
+  "points": 10,
+  "mt_points": 0,
+  "last_games_count": 7,
+  "last_games_won": 3,
+  "final_standing": null,
+  "division": null,
+  "team_id": 32,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 163712,
+    "team_id": 18986,
+    "competitor_team_id": 32,
+    "status": "closed",
+    "team_score": 76,
+    "competitor_team_score": 63,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      20,
+      10
+     ],
+     "2": [
+      19,
+      9
+     ],
+     "3": [
+      18,
+      23
+     ],
+     "4": [
+      19,
+      21
+     ]
+    },
+    "tournament_tour": 7,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 161128,
+    "team_id": 32,
+    "competitor_team_id": 11745,
+    "status": "closed",
+    "team_score": 63,
+    "competitor_team_score": 67,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      14,
+      15
+     ],
+     "2": [
+      17,
+      16
+     ],
+     "3": [
+      18,
+      18
+     ],
+     "4": [
+      14,
+      18
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160466,
+    "team_id": 14369,
+    "competitor_team_id": 32,
+    "status": "closed",
+    "team_score": 62,
+    "competitor_team_score": 68,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      10,
+      16
+     ],
+     "2": [
+      14,
+      13
+     ],
+     "3": [
+      14,
+      15
+     ],
+     "4": [
+      24,
+      24
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159849,
+    "team_id": 32,
+    "competitor_team_id": 8088,
+    "status": "closed",
+    "team_score": 61,
+    "competitor_team_score": 43,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      12,
+      11
+     ],
+     "2": [
+      16,
+      11
+     ],
+     "3": [
+      13,
+      7
+     ],
+     "4": [
+      20,
+      14
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159009,
+    "team_id": 32,
+    "competitor_team_id": 18982,
+    "status": "closed",
+    "team_score": 56,
+    "competitor_team_score": 94,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      14,
+      22
+     ],
+     "2": [
+      14,
+      17
+     ],
+     "3": [
+      12,
+      28
+     ],
+     "4": [
+      16,
+      27
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 32005,
+  "team": {
+   "id": 19519,
+   "name": "Sparrows",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 12061638,
+    "name": "1000023522.png",
+    "original_name": "1000023522.png",
+    "path": "https://fs.mtgame.ru/1000023522.png",
+    "mime_type": "image/png",
+    "size": 498225,
+    "engine": "yandex_s3",
+    "created_at": "2026-09-09T07:19:59.136081Z"
+   },
+   "created_at": "2026-08-31T20:18:59.864531Z",
+   "created_by_league_id": null,
+   "unique_code": "2SL6"
+  },
+  "name": "Sparrows",
+  "logo": {
+   "id": 12061638,
+   "name": "1000023522.png",
+   "original_name": "1000023522.png",
+   "path": "https://fs.mtgame.ru/1000023522.png",
+   "mime_type": "image/png",
+   "size": 498225,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-09T07:19:59.136081Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 7,
+  "won_games_count": 3,
+  "lose_games_count": 4,
+  "won_games_percent": 42.8,
+  "score_sum": 380,
+  "missed_sum": 384,
+  "score_points_sum": 459,
+  "missed_points_sum": 468,
+  "best_score_diff": 20,
+  "best_score_points_diff": 20,
+  "buchholz_score": 61,
+  "plus_minus": "-4",
+  "points": 10,
+  "mt_points": 0,
+  "last_games_count": 7,
+  "last_games_won": 3,
+  "final_standing": null,
+  "division": null,
+  "team_id": 19519,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 163718,
+    "team_id": 19519,
+    "competitor_team_id": 14350,
+    "status": "closed",
+    "team_score": 56,
+    "competitor_team_score": 52,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      10,
+      15
+     ],
+     "2": [
+      19,
+      12
+     ],
+     "3": [
+      6,
+      16
+     ],
+     "4": [
+      21,
+      9
+     ]
+    },
+    "tournament_tour": 7,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 161133,
+    "team_id": 19519,
+    "competitor_team_id": 14336,
+    "status": "closed",
+    "team_score": 63,
+    "competitor_team_score": 69,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      17,
+      18
+     ],
+     "2": [
+      15,
+      22
+     ],
+     "3": [
+      22,
+      13
+     ],
+     "4": [
+      9,
+      16
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160473,
+    "team_id": 19519,
+    "competitor_team_id": 2301,
+    "status": "closed",
+    "team_score": 74,
+    "competitor_team_score": 54,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      19,
+      9
+     ],
+     "2": [
+      18,
+      12
+     ],
+     "3": [
+      15,
+      12
+     ],
+     "4": [
+      22,
+      21
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159850,
+    "team_id": 19494,
+    "competitor_team_id": 19519,
+    "status": "closed",
+    "team_score": 65,
+    "competitor_team_score": 55,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      19,
+      7
+     ],
+     "2": [
+      13,
+      15
+     ],
+     "3": [
+      18,
+      14
+     ],
+     "4": [
+      15,
+      19
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159014,
+    "team_id": 19519,
+    "competitor_team_id": 279,
+    "status": "closed",
+    "team_score": 64,
+    "competitor_team_score": 69,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      17,
+      18
+     ],
+     "2": [
+      17,
+      10
+     ],
+     "3": [
+      13,
+      19
+     ],
+     "4": [
+      17,
+      22
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 31989,
+  "team": {
+   "id": 2301,
+   "name": "Pokrasote",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 11702091,
+    "name": "IMG_7198.png",
+    "original_name": "IMG_7198.png",
+    "path": "https://fs.mtgame.ru/IMG_7198.png",
+    "mime_type": "image/png",
+    "size": 147961,
+    "engine": "yandex_s3",
+    "created_at": "2026-06-09T09:41:23.311515Z"
+   },
+   "created_at": "2022-06-07T19:30:07.442808Z",
+   "created_by_league_id": null,
+   "unique_code": "6MFX"
+  },
+  "name": "Pokrasote",
+  "logo": {
+   "id": 12059649,
+   "name": "Pokrasote.png",
+   "original_name": "Pokrasote.png",
+   "path": "https://fs.mtgame.ru/Pokrasote.png",
+   "mime_type": "image/png",
+   "size": 64172,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:43:54.330766Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 7,
+  "won_games_count": 3,
+  "lose_games_count": 4,
+  "won_games_percent": 42.8,
+  "score_sum": 463,
+  "missed_sum": 506,
+  "score_points_sum": 463,
+  "missed_points_sum": 506,
+  "best_score_diff": 19,
+  "best_score_points_diff": 19,
+  "buchholz_score": 63,
+  "plus_minus": "-43",
+  "points": 10,
+  "mt_points": 0,
+  "last_games_count": 7,
+  "last_games_won": 3,
+  "final_standing": null,
+  "division": null,
+  "team_id": 2301,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 163719,
+    "team_id": 279,
+    "competitor_team_id": 2301,
+    "status": "closed",
+    "team_score": 57,
+    "competitor_team_score": 76,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      24,
+      13
+     ],
+     "2": [
+      6,
+      24
+     ],
+     "3": [
+      11,
+      24
+     ],
+     "4": [
+      16,
+      15
+     ]
+    },
+    "tournament_tour": 7,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 161137,
+    "team_id": 2301,
+    "competitor_team_id": 8713,
+    "status": "closed",
+    "team_score": 70,
+    "competitor_team_score": 67,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      10,
+      17
+     ],
+     "2": [
+      16,
+      13
+     ],
+     "3": [
+      18,
+      16
+     ],
+     "4": [
+      26,
+      21
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160473,
+    "team_id": 19519,
+    "competitor_team_id": 2301,
+    "status": "closed",
+    "team_score": 74,
+    "competitor_team_score": 54,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      19,
+      9
+     ],
+     "2": [
+      18,
+      12
+     ],
+     "3": [
+      15,
+      12
+     ],
+     "4": [
+      22,
+      21
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159855,
+    "team_id": 2301,
+    "competitor_team_id": 19514,
+    "status": "closed",
+    "team_score": 69,
+    "competitor_team_score": 63,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      19,
+      20
+     ],
+     "2": [
+      14,
+      12
+     ],
+     "3": [
+      20,
+      15
+     ],
+     "4": [
+      16,
+      16
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159019,
+    "team_id": 14350,
+    "competitor_team_id": 2301,
+    "status": "closed",
+    "team_score": 75,
+    "competitor_team_score": 70,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      22,
+      23
+     ],
+     "2": [
+      14,
+      14
+     ],
+     "3": [
+      19,
+      15
+     ],
+     "4": [
+      20,
+      18
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 32115,
+  "team": {
+   "id": 695,
+   "name": "Каскад",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 5557869,
+    "name": "novyilogoKASKAD.png",
+    "original_name": "новый лого КАСКАД.png",
+    "path": "https://fs.mtgame.ru/novyilogoKASKAD.png",
+    "mime_type": "image/png",
+    "size": 184945,
+    "engine": "yandex_s3",
+    "created_at": "2024-01-21T11:14:39.972343Z"
+   },
+   "created_at": "2020-10-05T16:18:47.877507Z",
+   "created_by_league_id": null,
+   "unique_code": "OCTS"
+  },
+  "name": "Каскад",
+  "logo": {
+   "id": 12059665,
+   "name": "Kaskad.png",
+   "original_name": "Каскад.png",
+   "path": "https://fs.mtgame.ru/Kaskad.png",
+   "mime_type": "image/png",
+   "size": 91765,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:46:14.331334Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 7,
+  "won_games_count": 3,
+  "lose_games_count": 4,
+  "won_games_percent": 42.8,
+  "score_sum": 370,
+  "missed_sum": 436,
+  "score_points_sum": 423,
+  "missed_points_sum": 506,
+  "best_score_diff": 20,
+  "best_score_points_diff": 9,
+  "buchholz_score": 64,
+  "plus_minus": "-66",
+  "points": 10,
+  "mt_points": 0,
+  "last_games_count": 7,
+  "last_games_won": 3,
+  "final_standing": null,
+  "division": null,
+  "team_id": 695,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 163715,
+    "team_id": 8339,
+    "competitor_team_id": 695,
+    "status": "closed",
+    "team_score": 87,
+    "competitor_team_score": 67,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      21,
+      15
+     ],
+     "2": [
+      13,
+      10
+     ],
+     "3": [
+      31,
+      24
+     ],
+     "4": [
+      22,
+      18
+     ]
+    },
+    "tournament_tour": 7,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 161135,
+    "team_id": 279,
+    "competitor_team_id": 695,
+    "status": "closed",
+    "team_score": 41,
+    "competitor_team_score": 50,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      9,
+      15
+     ],
+     "2": [
+      8,
+      15
+     ],
+     "3": [
+      16,
+      2
+     ],
+     "4": [
+      8,
+      18
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160471,
+    "team_id": 695,
+    "competitor_team_id": 231,
+    "status": "closed",
+    "team_score": 44,
+    "competitor_team_score": 57,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      9,
+      9
+     ],
+     "2": [
+      15,
+      19
+     ],
+     "3": [
+      11,
+      12
+     ],
+     "4": [
+      9,
+      17
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159853,
+    "team_id": 695,
+    "competitor_team_id": 8713,
+    "status": "closed",
+    "team_score": 20,
+    "competitor_team_score": 0,
+    "result_type": "competitor_team_technical_defeat",
+    "score_by_period": {
+     "1": [
+      13,
+      14
+     ],
+     "2": [
+      24,
+      14
+     ],
+     "3": [
+      8,
+      16
+     ],
+     "4": [
+      16,
+      17
+     ],
+     "5": [
+      12,
+      9
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159015,
+    "team_id": 5398,
+    "competitor_team_id": 695,
+    "status": "closed",
+    "team_score": 102,
+    "competitor_team_score": 69,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      34,
+      14
+     ],
+     "2": [
+      18,
+      20
+     ],
+     "3": [
+      23,
+      27
+     ],
+     "4": [
+      27,
+      8
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 31992,
+  "team": {
+   "id": 2254,
+   "name": "Cyclones 1",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 34,
+    "name": "Домодедово",
+    "name_en": "Domodedovo",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 5026564,
+    "name": "Logonew.png",
+    "original_name": "Лого new.png",
+    "path": "https://fs.mtgame.ru/Logonew.png",
+    "mime_type": "image/png",
+    "size": 95598,
+    "engine": "yandex_s3",
+    "created_at": "2023-11-09T10:57:24.852638Z"
+   },
+   "created_at": "2022-05-31T08:34:41.438556Z",
+   "created_by_league_id": null,
+   "unique_code": "1ADJ"
+  },
+  "name": "Cyclones",
+  "logo": {
+   "id": 12059620,
+   "name": "Cyclones.png",
+   "original_name": "Cyclones.png",
+   "path": "https://fs.mtgame.ru/Cyclones.png",
+   "mime_type": "image/png",
+   "size": 42614,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:39:34.312563Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 6,
+  "won_games_count": 2,
+  "lose_games_count": 4,
+  "won_games_percent": 33.3,
+  "score_sum": 453,
+  "missed_sum": 415,
+  "score_points_sum": 453,
+  "missed_points_sum": 415,
+  "best_score_diff": 49,
+  "best_score_points_diff": 49,
+  "buchholz_score": 52,
+  "plus_minus": "+38",
+  "points": 8,
+  "mt_points": 0,
+  "last_games_count": 6,
+  "last_games_won": 2,
+  "final_standing": null,
+  "division": null,
+  "team_id": 2254,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 161136,
+    "team_id": 15007,
+    "competitor_team_id": 2254,
+    "status": "closed",
+    "team_score": 60,
+    "competitor_team_score": 109,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      6,
+      20
+     ],
+     "2": [
+      16,
+      31
+     ],
+     "3": [
+      19,
+      29
+     ],
+     "4": [
+      19,
+      29
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160475,
+    "team_id": 19514,
+    "competitor_team_id": 2254,
+    "status": "closed",
+    "team_score": 70,
+    "competitor_team_score": 93,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      12,
+      24
+     ],
+     "2": [
+      14,
+      17
+     ],
+     "3": [
+      18,
+      25
+     ],
+     "4": [
+      26,
+      27
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159854,
+    "team_id": 8339,
+    "competitor_team_id": 2254,
+    "status": "closed",
+    "team_score": 72,
+    "competitor_team_score": 64,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      18,
+      19
+     ],
+     "2": [
+      16,
+      11
+     ],
+     "3": [
+      15,
+      20
+     ],
+     "4": [
+      23,
+      14
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159018,
+    "team_id": 2254,
+    "competitor_team_id": 8227,
+    "status": "closed",
+    "team_score": 73,
+    "competitor_team_score": 91,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      29,
+      21
+     ],
+     "2": [
+      20,
+      31
+     ],
+     "3": [
+      15,
+      20
+     ],
+     "4": [
+      9,
+      19
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 158261,
+    "team_id": 2254,
+    "competitor_team_id": 18986,
+    "status": "closed",
+    "team_score": 53,
+    "competitor_team_score": 54,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      12,
+      13
+     ],
+     "2": [
+      11,
+      17
+     ],
+     "3": [
+      19,
+      14
+     ],
+     "4": [
+      11,
+      10
+     ]
+    },
+    "tournament_tour": 2,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 31995,
+  "team": {
+   "id": 14369,
+   "name": "Московские Витязи ДЮБЛ",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 8985669,
+    "name": "IMG_8073_Ivd5i.jpeg",
+    "original_name": "IMG_8073.jpeg",
+    "path": "https://fs.mtgame.ru/IMG_8073_Ivd5i.jpeg",
+    "mime_type": "image/jpeg",
+    "size": 46167,
+    "engine": "yandex_s3",
+    "created_at": "2025-09-01T08:26:15.592589Z"
+   },
+   "created_at": "2025-09-01T08:26:16.038024Z",
+   "created_by_league_id": null,
+   "unique_code": "DOGW"
+  },
+  "name": "Московские Витязи ДЮБЛ",
+  "logo": {
+   "id": 12147910,
+   "name": "IMG_8073_hmAEg_8AhD9.png",
+   "original_name": "IMG_8073_hmAEg.png",
+   "path": "https://fs.mtgame.ru/IMG_8073_hmAEg_8AhD9.png",
+   "mime_type": "image/png",
+   "size": 143005,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-17T20:03:15.772346Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 6,
+  "won_games_count": 2,
+  "lose_games_count": 4,
+  "won_games_percent": 33.3,
+  "score_sum": 394,
+  "missed_sum": 384,
+  "score_points_sum": 394,
+  "missed_points_sum": 384,
+  "best_score_diff": 46,
+  "best_score_points_diff": 46,
+  "buchholz_score": 58,
+  "plus_minus": "+10",
+  "points": 8,
+  "mt_points": 0,
+  "last_games_count": 6,
+  "last_games_won": 2,
+  "final_standing": null,
+  "division": null,
+  "team_id": 14369,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 161132,
+    "team_id": 5025,
+    "competitor_team_id": 14369,
+    "status": "closed",
+    "team_score": 71,
+    "competitor_team_score": 66,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      19,
+      21
+     ],
+     "2": [
+      15,
+      20
+     ],
+     "3": [
+      16,
+      11
+     ],
+     "4": [
+      21,
+      14
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160466,
+    "team_id": 14369,
+    "competitor_team_id": 32,
+    "status": "closed",
+    "team_score": 62,
+    "competitor_team_score": 68,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      10,
+      16
+     ],
+     "2": [
+      14,
+      13
+     ],
+     "3": [
+      14,
+      15
+     ],
+     "4": [
+      24,
+      24
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159848,
+    "team_id": 14369,
+    "competitor_team_id": 231,
+    "status": "closed",
+    "team_score": 59,
+    "competitor_team_score": 51,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      12,
+      14
+     ],
+     "2": [
+      23,
+      8
+     ],
+     "3": [
+      8,
+      17
+     ],
+     "4": [
+      16,
+      12
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159010,
+    "team_id": 11633,
+    "competitor_team_id": 14369,
+    "status": "closed",
+    "team_score": 71,
+    "competitor_team_score": 56,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      13,
+      14
+     ],
+     "2": [
+      19,
+      10
+     ],
+     "3": [
+      21,
+      12
+     ],
+     "4": [
+      18,
+      20
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 158252,
+    "team_id": 14369,
+    "competitor_team_id": 946,
+    "status": "closed",
+    "team_score": 66,
+    "competitor_team_score": 84,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      12,
+      20
+     ],
+     "2": [
+      23,
+      25
+     ],
+     "3": [
+      13,
+      13
+     ],
+     "4": [
+      18,
+      26
+     ]
+    },
+    "tournament_tour": 2,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 31994,
+  "team": {
+   "id": 15007,
+   "name": "Московские Витязи",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 9039892,
+    "name": "IMG_8073_OOSiW.jpeg",
+    "original_name": "IMG_8073.jpeg",
+    "path": "https://fs.mtgame.ru/IMG_8073_OOSiW.jpeg",
+    "mime_type": "image/jpeg",
+    "size": 46167,
+    "engine": "yandex_s3",
+    "created_at": "2025-09-10T18:24:30.681848Z"
+   },
+   "created_at": "2025-09-10T18:23:46.220338Z",
+   "created_by_league_id": null,
+   "unique_code": "HE48"
+  },
+  "name": "Московские Витязи",
+  "logo": {
+   "id": 12059667,
+   "name": "MoskovskieVitaziDUBL.png",
+   "original_name": "Московские Витязи ДЮБЛ.png",
+   "path": "https://fs.mtgame.ru/MoskovskieVitaziDUBL.png",
+   "mime_type": "image/png",
+   "size": 143005,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:46:23.665166Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 6,
+  "won_games_count": 2,
+  "lose_games_count": 4,
+  "won_games_percent": 33.3,
+  "score_sum": 333,
+  "missed_sum": 442,
+  "score_points_sum": 333,
+  "missed_points_sum": 442,
+  "best_score_diff": 27,
+  "best_score_points_diff": 27,
+  "buchholz_score": 50,
+  "plus_minus": "-109",
+  "points": 8,
+  "mt_points": 0,
+  "last_games_count": 6,
+  "last_games_won": 2,
+  "final_standing": null,
+  "division": null,
+  "team_id": 15007,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 161136,
+    "team_id": 15007,
+    "competitor_team_id": 2254,
+    "status": "closed",
+    "team_score": 60,
+    "competitor_team_score": 109,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      6,
+      20
+     ],
+     "2": [
+      16,
+      31
+     ],
+     "3": [
+      19,
+      29
+     ],
+     "4": [
+      19,
+      29
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160474,
+    "team_id": 8713,
+    "competitor_team_id": 15007,
+    "status": "closed",
+    "team_score": 72,
+    "competitor_team_score": 74,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      21,
+      23
+     ],
+     "2": [
+      8,
+      6
+     ],
+     "3": [
+      19,
+      18
+     ],
+     "4": [
+      19,
+      20
+     ],
+     "5": [
+      5,
+      7
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159852,
+    "team_id": 18986,
+    "competitor_team_id": 15007,
+    "status": "closed",
+    "team_score": 73,
+    "competitor_team_score": 36,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      13,
+      7
+     ],
+     "2": [
+      18,
+      4
+     ],
+     "3": [
+      21,
+      10
+     ],
+     "4": [
+      21,
+      15
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159020,
+    "team_id": 15007,
+    "competitor_team_id": 19514,
+    "status": "closed",
+    "team_score": 70,
+    "competitor_team_score": 43,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      16,
+      7
+     ],
+     "2": [
+      13,
+      12
+     ],
+     "3": [
+      18,
+      13
+     ],
+     "4": [
+      23,
+      11
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 158266,
+    "team_id": 231,
+    "competitor_team_id": 15007,
+    "status": "closed",
+    "team_score": 45,
+    "competitor_team_score": 44,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      18,
+      6
+     ],
+     "2": [
+      11,
+      16
+     ],
+     "3": [
+      4,
+      8
+     ],
+     "4": [
+      12,
+      14
+     ]
+    },
+    "tournament_tour": 2,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 31988,
+  "team": {
+   "id": 279,
+   "name": "Whestchester",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 8775780,
+    "name": "828x620.webp",
+    "original_name": "828x620.webp",
+    "path": "https://fs.mtgame.ru/828x620.webp",
+    "mime_type": "",
+    "size": 4238,
+    "engine": "yandex_s3",
+    "created_at": "2025-06-14T13:57:33.246458Z"
+   },
+   "created_at": "2020-06-19T06:40:44.654470Z",
+   "created_by_league_id": null,
+   "unique_code": "3D0M"
+  },
+  "name": "Westchester",
+  "logo": {
+   "id": 12059659,
+   "name": "Westchester.png",
+   "original_name": "Westchester.png",
+   "path": "https://fs.mtgame.ru/Westchester.png",
+   "mime_type": "image/png",
+   "size": 59222,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:45:38.842477Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 7,
+  "won_games_count": 2,
+  "lose_games_count": 5,
+  "won_games_percent": 28.5,
+  "score_sum": 463,
+  "missed_sum": 525,
+  "score_points_sum": 463,
+  "missed_points_sum": 525,
+  "best_score_diff": 18,
+  "best_score_points_diff": 18,
+  "buchholz_score": 66,
+  "plus_minus": "-62",
+  "points": 9,
+  "mt_points": 0,
+  "last_games_count": 7,
+  "last_games_won": 2,
+  "final_standing": null,
+  "division": null,
+  "team_id": 279,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 163719,
+    "team_id": 279,
+    "competitor_team_id": 2301,
+    "status": "closed",
+    "team_score": 57,
+    "competitor_team_score": 76,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      24,
+      13
+     ],
+     "2": [
+      6,
+      24
+     ],
+     "3": [
+      11,
+      24
+     ],
+     "4": [
+      16,
+      15
+     ]
+    },
+    "tournament_tour": 7,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 161135,
+    "team_id": 279,
+    "competitor_team_id": 695,
+    "status": "closed",
+    "team_score": 41,
+    "competitor_team_score": 50,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      9,
+      15
+     ],
+     "2": [
+      8,
+      15
+     ],
+     "3": [
+      16,
+      2
+     ],
+     "4": [
+      8,
+      18
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160469,
+    "team_id": 19596,
+    "competitor_team_id": 279,
+    "status": "closed",
+    "team_score": 100,
+    "competitor_team_score": 80,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      23,
+      17
+     ],
+     "2": [
+      18,
+      19
+     ],
+     "3": [
+      26,
+      13
+     ],
+     "4": [
+      33,
+      31
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159847,
+    "team_id": 19510,
+    "competitor_team_id": 279,
+    "status": "closed",
+    "team_score": 68,
+    "competitor_team_score": 60,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      17,
+      16
+     ],
+     "2": [
+      9,
+      14
+     ],
+     "3": [
+      15,
+      13
+     ],
+     "4": [
+      27,
+      17
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159014,
+    "team_id": 19519,
+    "competitor_team_id": 279,
+    "status": "closed",
+    "team_score": 64,
+    "competitor_team_score": 69,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      17,
+      18
+     ],
+     "2": [
+      17,
+      10
+     ],
+     "3": [
+      13,
+      19
+     ],
+     "4": [
+      17,
+      22
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 31999,
+  "team": {
+   "id": 14350,
+   "name": "MAX Basket 1",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 8977848,
+    "name": "logomaksbasketcb-052025-01-0906_53_22_99usQ.png",
+    "original_name": "лого макс баскет чб-05 2025-01-09 06_53_22.png",
+    "path": "https://fs.mtgame.ru/logomaksbasketcb-052025-01-0906_53_22_99usQ.png",
+    "mime_type": "image/png",
+    "size": 128102,
+    "engine": "yandex_s3",
+    "created_at": "2025-08-31T17:19:50.108876Z"
+   },
+   "created_at": "2025-08-31T17:19:50.962568Z",
+   "created_by_league_id": null,
+   "unique_code": "1XAE"
+  },
+  "name": "Max Basket",
+  "logo": {
+   "id": 12059645,
+   "name": "MaxBasket.png",
+   "original_name": "Max Basket.png",
+   "path": "https://fs.mtgame.ru/MaxBasket.png",
+   "mime_type": "image/png",
+   "size": 40096,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:42:43.740404Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 7,
+  "won_games_count": 2,
+  "lose_games_count": 5,
+  "won_games_percent": 28.5,
+  "score_sum": 425,
+  "missed_sum": 501,
+  "score_points_sum": 425,
+  "missed_points_sum": 501,
+  "best_score_diff": 10,
+  "best_score_points_diff": 10,
+  "buchholz_score": 65,
+  "plus_minus": "-76",
+  "points": 9,
+  "mt_points": 0,
+  "last_games_count": 7,
+  "last_games_won": 2,
+  "final_standing": null,
+  "division": null,
+  "team_id": 14350,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 163718,
+    "team_id": 19519,
+    "competitor_team_id": 14350,
+    "status": "closed",
+    "team_score": 56,
+    "competitor_team_score": 52,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      10,
+      15
+     ],
+     "2": [
+      19,
+      12
+     ],
+     "3": [
+      6,
+      16
+     ],
+     "4": [
+      21,
+      9
+     ]
+    },
+    "tournament_tour": 7,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 161134,
+    "team_id": 18986,
+    "competitor_team_id": 14350,
+    "status": "closed",
+    "team_score": 107,
+    "competitor_team_score": 63,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      27,
+      12
+     ],
+     "2": [
+      29,
+      16
+     ],
+     "3": [
+      21,
+      18
+     ],
+     "4": [
+      30,
+      17
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160470,
+    "team_id": 14350,
+    "competitor_team_id": 416,
+    "status": "closed",
+    "team_score": 63,
+    "competitor_team_score": 77,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      20,
+      19
+     ],
+     "2": [
+      18,
+      24
+     ],
+     "3": [
+      11,
+      20
+     ],
+     "4": [
+      14,
+      14
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159851,
+    "team_id": 8227,
+    "competitor_team_id": 14350,
+    "status": "closed",
+    "team_score": 56,
+    "competitor_team_score": 66,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      17,
+      11
+     ],
+     "2": [
+      17,
+      18
+     ],
+     "3": [
+      12,
+      12
+     ],
+     "4": [
+      10,
+      25
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159019,
+    "team_id": 14350,
+    "competitor_team_id": 2301,
+    "status": "closed",
+    "team_score": 75,
+    "competitor_team_score": 70,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      22,
+      23
+     ],
+     "2": [
+      14,
+      14
+     ],
+     "3": [
+      19,
+      15
+     ],
+     "4": [
+      20,
+      18
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 32090,
+  "team": {
+   "id": 8713,
+   "name": "Hungry dogs APEX",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 6886100,
+    "name": "IMG_20241004_012924_124.png",
+    "original_name": "IMG_20241004_012924_124.png",
+    "path": "https://fs.mtgame.ru/IMG_20241004_012924_124.png",
+    "mime_type": "image/png",
+    "size": 264290,
+    "engine": "yandex_s3",
+    "created_at": "2024-10-03T22:32:39.900901Z"
+   },
+   "created_at": "2024-09-24T16:55:17.359137Z",
+   "created_by_league_id": null,
+   "unique_code": "9B1Q"
+  },
+  "name": "Hungry Dogs APEX",
+  "logo": {
+   "id": 12059633,
+   "name": "HungryDogsAPEX.png",
+   "original_name": "Hungry Dogs APEX.png",
+   "path": "https://fs.mtgame.ru/HungryDogsAPEX.png",
+   "mime_type": "image/png",
+   "size": 74195,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:40:52.611831Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 6,
+  "won_games_count": 1,
+  "lose_games_count": 5,
+  "won_games_percent": 16.6,
+  "score_sum": 325,
+  "missed_sum": 385,
+  "score_points_sum": 395,
+  "missed_points_sum": 438,
+  "best_score_diff": 2,
+  "best_score_points_diff": 2,
+  "buchholz_score": 57,
+  "plus_minus": "-60",
+  "points": 6,
+  "mt_points": 0,
+  "last_games_count": 6,
+  "last_games_won": 1,
+  "final_standing": null,
+  "division": null,
+  "team_id": 8713,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 161137,
+    "team_id": 2301,
+    "competitor_team_id": 8713,
+    "status": "closed",
+    "team_score": 70,
+    "competitor_team_score": 67,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      10,
+      17
+     ],
+     "2": [
+      16,
+      13
+     ],
+     "3": [
+      18,
+      16
+     ],
+     "4": [
+      26,
+      21
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160474,
+    "team_id": 8713,
+    "competitor_team_id": 15007,
+    "status": "closed",
+    "team_score": 72,
+    "competitor_team_score": 74,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      21,
+      23
+     ],
+     "2": [
+      8,
+      6
+     ],
+     "3": [
+      19,
+      18
+     ],
+     "4": [
+      19,
+      20
+     ],
+     "5": [
+      5,
+      7
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159853,
+    "team_id": 695,
+    "competitor_team_id": 8713,
+    "status": "closed",
+    "team_score": 20,
+    "competitor_team_score": 0,
+    "result_type": "competitor_team_technical_defeat",
+    "score_by_period": {
+     "1": [
+      13,
+      14
+     ],
+     "2": [
+      24,
+      14
+     ],
+     "3": [
+      8,
+      16
+     ],
+     "4": [
+      16,
+      17
+     ],
+     "5": [
+      12,
+      9
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159016,
+    "team_id": 231,
+    "competitor_team_id": 8713,
+    "status": "closed",
+    "team_score": 61,
+    "competitor_team_score": 58,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      10,
+      10
+     ],
+     "2": [
+      24,
+      7
+     ],
+     "3": [
+      8,
+      19
+     ],
+     "4": [
+      19,
+      22
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 158258,
+    "team_id": 8713,
+    "competitor_team_id": 11745,
+    "status": "closed",
+    "team_score": 58,
+    "competitor_team_score": 92,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      9,
+      25
+     ],
+     "2": [
+      21,
+      16
+     ],
+     "3": [
+      15,
+      20
+     ],
+     "4": [
+      13,
+      31
+     ]
+    },
+    "tournament_tour": 2,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 32093,
+  "team": {
+   "id": 8088,
+   "name": "No mercy",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 1,
+    "name": "Москва",
+    "name_en": "Moscow",
+    "country": "RU"
+   },
+   "logo": {
+    "id": 6432795,
+    "name": "IMG_5026.jpeg",
+    "original_name": "IMG_5026.jpeg",
+    "path": "https://fs.mtgame.ru/IMG_5026.jpeg",
+    "mime_type": "image/jpeg",
+    "size": 16731,
+    "engine": "yandex_s3",
+    "created_at": "2024-05-21T13:30:13.699815Z"
+   },
+   "created_at": "2024-05-21T13:30:13.961957Z",
+   "created_by_league_id": null,
+   "unique_code": "F6DH"
+  },
+  "name": "No mercy",
+  "logo": {
+   "id": 12070764,
+   "name": "NoMercy.png",
+   "original_name": "No Mercy.png",
+   "path": "https://fs.mtgame.ru/NoMercy.png",
+   "mime_type": "image/png",
+   "size": 60669,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-10T06:00:21.240232Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 6,
+  "won_games_count": 1,
+  "lose_games_count": 5,
+  "won_games_percent": 16.6,
+  "score_sum": 284,
+  "missed_sum": 363,
+  "score_points_sum": 284,
+  "missed_points_sum": 363,
+  "best_score_diff": 21,
+  "best_score_points_diff": 21,
+  "buchholz_score": 55,
+  "plus_minus": "-79",
+  "points": 7,
+  "mt_points": 0,
+  "last_games_count": 6,
+  "last_games_won": 1,
+  "final_standing": null,
+  "division": null,
+  "team_id": 8088,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 161138,
+    "team_id": 19514,
+    "competitor_team_id": 8088,
+    "status": "closed",
+    "team_score": 58,
+    "competitor_team_score": 41,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      15,
+      2
+     ],
+     "2": [
+      13,
+      17
+     ],
+     "3": [
+      21,
+      11
+     ],
+     "4": [
+      9,
+      11
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160472,
+    "team_id": 8227,
+    "competitor_team_id": 8088,
+    "status": "closed",
+    "team_score": 87,
+    "competitor_team_score": 39,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      18,
+      8
+     ],
+     "2": [
+      15,
+      6
+     ],
+     "3": [
+      26,
+      11
+     ],
+     "4": [
+      28,
+      14
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159849,
+    "team_id": 32,
+    "competitor_team_id": 8088,
+    "status": "closed",
+    "team_score": 61,
+    "competitor_team_score": 43,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      12,
+      11
+     ],
+     "2": [
+      16,
+      11
+     ],
+     "3": [
+      13,
+      7
+     ],
+     "4": [
+      20,
+      14
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159011,
+    "team_id": 13921,
+    "competitor_team_id": 8088,
+    "status": "closed",
+    "team_score": 59,
+    "competitor_team_score": 49,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      15,
+      20
+     ],
+     "2": [
+      13,
+      15
+     ],
+     "3": [
+      20,
+      4
+     ],
+     "4": [
+      11,
+      10
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 158262,
+    "team_id": 8088,
+    "competitor_team_id": 14350,
+    "status": "closed",
+    "team_score": 65,
+    "competitor_team_score": 44,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      12,
+      13
+     ],
+     "2": [
+      16,
+      9
+     ],
+     "3": [
+      14,
+      5
+     ],
+     "4": [
+      23,
+      17
+     ]
+    },
+    "tournament_tour": 2,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ },
+ {
+  "id": 32002,
+  "team": {
+   "id": 19514,
+   "name": "G-Town 2",
+   "sport": {
+    "id": 3,
+    "name": "Баскетбол",
+    "name_en": null,
+    "parent_id": 1,
+    "is_hidden": false
+   },
+   "city": {
+    "id": 238,
+    "name": "Зеленоград",
+    "name_en": "Zelenograd",
+    "country": "RU"
+   },
+   "logo": null,
+   "created_at": "2026-08-31T18:05:18.341289Z",
+   "created_by_league_id": null,
+   "unique_code": "QZAS"
+  },
+  "name": "G-Town 2",
+  "logo": {
+   "id": 12059625,
+   "name": "G-Town_6PxVa.png",
+   "original_name": "G-Town.png",
+   "path": "https://fs.mtgame.ru/G-Town_6PxVa.png",
+   "mime_type": "image/png",
+   "size": 27975,
+   "engine": "yandex_s3",
+   "created_at": "2026-09-08T12:40:02.096502Z"
+  },
+  "team_photo": null,
+  "team_uniform": null,
+  "group": {
+   "id": 6514,
+   "name": "Шелепиха",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "games_count": 6,
+  "won_games_count": 1,
+  "lose_games_count": 5,
+  "won_games_percent": 16.6,
+  "score_sum": 322,
+  "missed_sum": 425,
+  "score_points_sum": 322,
+  "missed_points_sum": 425,
+  "best_score_diff": 17,
+  "best_score_points_diff": 17,
+  "buchholz_score": 50,
+  "plus_minus": "-103",
+  "points": 7,
+  "mt_points": 0,
+  "last_games_count": 6,
+  "last_games_won": 1,
+  "final_standing": null,
+  "division": null,
+  "team_id": 19514,
+  "tournament_id": 4145,
+  "has_changes": false,
+  "additional_data": {
+   "color": null,
+   "nickname": null
+  },
+  "field_values": [],
+  "last_five_games": [
+   {
+    "id": 161138,
+    "team_id": 19514,
+    "competitor_team_id": 8088,
+    "status": "closed",
+    "team_score": 58,
+    "competitor_team_score": 41,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      15,
+      2
+     ],
+     "2": [
+      13,
+      17
+     ],
+     "3": [
+      21,
+      11
+     ],
+     "4": [
+      9,
+      11
+     ]
+    },
+    "tournament_tour": 6,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 160475,
+    "team_id": 19514,
+    "competitor_team_id": 2254,
+    "status": "closed",
+    "team_score": 70,
+    "competitor_team_score": 93,
+    "result_type": "competitor_team_won",
+    "score_by_period": {
+     "1": [
+      12,
+      24
+     ],
+     "2": [
+      14,
+      17
+     ],
+     "3": [
+      18,
+      25
+     ],
+     "4": [
+      26,
+      27
+     ]
+    },
+    "tournament_tour": 5,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159855,
+    "team_id": 2301,
+    "competitor_team_id": 19514,
+    "status": "closed",
+    "team_score": 69,
+    "competitor_team_score": 63,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      19,
+      20
+     ],
+     "2": [
+      14,
+      12
+     ],
+     "3": [
+      20,
+      15
+     ],
+     "4": [
+      16,
+      16
+     ]
+    },
+    "tournament_tour": 4,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 159020,
+    "team_id": 15007,
+    "competitor_team_id": 19514,
+    "status": "closed",
+    "team_score": 70,
+    "competitor_team_score": 43,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      16,
+      7
+     ],
+     "2": [
+      13,
+      12
+     ],
+     "3": [
+      18,
+      13
+     ],
+     "4": [
+      23,
+      11
+     ]
+    },
+    "tournament_tour": 3,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   },
+   {
+    "id": 158265,
+    "team_id": 279,
+    "competitor_team_id": 19514,
+    "status": "closed",
+    "team_score": 67,
+    "competitor_team_score": 49,
+    "result_type": "team_won",
+    "score_by_period": {
+     "1": [
+      22,
+      8
+     ],
+     "2": [
+      16,
+      11
+     ],
+     "3": [
+      13,
+      12
+     ],
+     "4": [
+      16,
+      18
+     ]
+    },
+    "tournament_tour": 2,
+    "tournament_playoff_id": null,
+    "tournament_stage_id": null
+   }
+  ]
+ }
+]

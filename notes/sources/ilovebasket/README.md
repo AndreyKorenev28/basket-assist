@@ -164,7 +164,7 @@ HTML содержит только `<team-profile team-id="9056" api-url="https:
 
 ## 9. Соцсети
 
-На всех страницах moscow.ilovebasket.ru только **федеральные** аккаунты: https://vk.com/mlblbasket, https://t.me/mlblbasket, instagram mlblbasket, YouTube-канал. Контакт: zimin@ilovebasket.ru. Отдельных VK/Telegram МЛБЛ-Москва на сайте не найдено (⚠ могут существовать — не искал вне сайта). Новости — раздел `/publications` (HTML, без RSS). Где оперативно сообщают о смене времени — ⚠ не выяснено; по данным API время приходит сразу в календаре.
+На всех страницах moscow.ilovebasket.ru только **федеральные** аккаунты: https://vk.com/mlblbasket, https://t.me/mlblbasket, instagram mlblbasket, YouTube-канал. Контакт: <e-mail оргкомитета — см. регламент на сайте>. Отдельных VK/Telegram МЛБЛ-Москва на сайте не найдено (⚠ могут существовать — не искал вне сайта). Новости — раздел `/publications` (HTML, без RSS). Где оперативно сообщают о смене времени — ⚠ не выяснено; по данным API время приходит сразу в календаре.
 
 ## Другие города на движке
 
