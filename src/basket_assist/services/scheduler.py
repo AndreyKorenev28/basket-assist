@@ -2,8 +2,8 @@
 
 Сейчас: синхронизация с сайтами лиг и реакция на изменения матчей.
 - Раз в сутки ночью — полная синхронизация (календарь, заявка на сезон, таблица).
-- Ср–Сб, каждый час 9:00–23:00 по времени лиги — только календарь (решение владельца 2026-10-18:
-  с утра среды, к запуску опросов; АБЛ публикует тур во вторник — его подхватит ночная синхронизация).
+- Ср–Пт, каждый час 9:00–23:00 по времени лиги — только календарь (решение владельца 2026-10-18:
+  с утра среды, к запуску опросов; в выходные переносов не бывает; АБЛ публикует тур во вторник — его подхватит ночная синхронизация).
 - После синхронизации: анонсы изменившихся матчей обновляются; о переносе и смене времени — сообщение в беседу.
 Факт запуска хранится в notification_log (kind = "job"), поэтому перезапуск бота не повторяет синхронизацию.
 """
@@ -26,6 +26,7 @@ from basket_assist.services.sync import sync_team_entry
 from basket_assist.sources import make_adapter
 from basket_assist.sources.base import SourceError
 from basket_assist.storage.tables import (
+    Attendance,
     ChangeEvent,
     Chat,
     League,
@@ -40,7 +41,7 @@ log = logging.getLogger(__name__)
 
 TICK = 60  # секунд
 NIGHT_HOUR = 4  # полная синхронизация — первая проверка после 04:00 по времени лиги
-HOURLY_DAYS = (2, 3, 4, 5)  # ср–сб (понедельник = 0)
+HOURLY_DAYS = (2, 3, 4)  # ср–пт (понедельник = 0); в выходные переносов не бывает (решение владельца)
 HOURLY_FROM, HOURLY_TO = 9, 23
 MATCH_KINDS = (ChangeKind.RESCHEDULED, ChangeKind.TIME_CHANGED, ChangeKind.TIME_SET, ChangeKind.MATCH_ADDED)
 
@@ -143,13 +144,40 @@ async def process_changes(session: AsyncSession, channel: ChannelAdapter) -> Non
                 .scalars()
                 .first()
             )
-            if chat is None:
-                continue
-            try:
-                await channel.send(chat.peer_id, text)
-            except ChannelError as e:
-                log.warning("не удалось сообщить об изменении матча %s: %s", match.id, e)
+            if chat is not None:
+                try:
+                    await channel.send(chat.peer_id, text)
+                except ChannelError as e:
+                    log.warning("не удалось сообщить об изменении матча %s: %s", match.id, e)
+            if ev.kind in (ChangeKind.RESCHEDULED, ChangeKind.TIME_CHANGED):
+                await _ask_voters_to_confirm(session, channel, entry.tenant_id, ev, match, text)
     await session.commit()
+
+
+async def _ask_voters_to_confirm(
+    session: AsyncSession, channel: ChannelAdapter, tenant_id: int, ev: ChangeEvent, match: Match, text: str
+) -> None:
+    """Перенос / новое время: отметки сохраняются (решение владельца 2026-10-18), но каждому отметившемуся —
+    личное сообщение с его ответом и просьбой проверить. Без открытой лички хватит сообщения в беседе."""
+    votes = (
+        await session.execute(
+            select(Attendance.player_id, Attendance.vote).filter_by(tenant_id=tenant_id, match_id=match.id)
+        )
+    ).all()
+    head = text.removesuffix(" Проверьте свою отметку в анонсе.")
+    for player_id, vote in votes:
+        if not await notify.once(
+            session, tenant_id, "match_change", f"{ev.id}:{player_id}", match_id=match.id
+        ):
+            continue
+        await notify.dm(
+            session,
+            channel,
+            tenant_id,
+            player_id,
+            f"{head}\nВаш ответ сохранён: «{polls.VOTE_LABELS[vote]}». "
+            "Если планы изменились — нажмите другую кнопку в анонсе в беседе команды.",
+        )
 
 
 async def _change_text(session: AsyncSession, ev: ChangeEvent, match: Match, tenant_id: int) -> str | None:

@@ -10,17 +10,20 @@ import pytest
 from sqlalchemy import select
 
 from basket_assist.channels.base import ChannelError
-from basket_assist.domain.models import ChangeKind
+from basket_assist.domain.models import ChangeKind, Vote
 from basket_assist.services import scheduler
 from basket_assist.services.sync import SyncResult
 from basket_assist.sources.base import SourceError
 from basket_assist.storage.bootstrap import apply_tenant_config
 from basket_assist.storage.tables import (
+    Attendance,
     ChangeEvent,
     Chat,
     League,
     LeagueTeam,
     Match,
+    MessengerAccount,
+    Player,
     PollMessage,
     TeamEntry,
     Tenant,
@@ -49,7 +52,9 @@ def msk(y, mo, d, h, mi=0):
         (msk(2026, 10, 21, 8, 59), ["full"]),
         (msk(2026, 10, 21, 9, 0), ["full", "matches"]),
         (msk(2026, 10, 21, 23, 59), ["full", "matches"]),
-        (msk(2026, 10, 24, 12, 0), ["full", "matches"]),  # сб
+        (msk(2026, 10, 23, 12, 0), ["full", "matches"]),  # пт — последний день почасовой
+        (msk(2026, 10, 24, 12, 0), ["full"]),  # сб — в выходные почасовой нет
+        (msk(2026, 10, 24, 23, 0), ["full"]),
         (msk(2026, 10, 19, 12, 0), ["full"]),  # пн
         (msk(2026, 10, 20, 12, 0), ["full"]),  # вт
         (msk(2026, 10, 25, 12, 0), ["full"]),  # вс
@@ -131,6 +136,12 @@ async def test_tick_night_and_off_days(session, tenant_cfg, fake_sync):
         assert len(fs.calls) == len(ids)
         await scheduler.tick(session, ch, client, msk(2026, 10, 19, 12, 0).astimezone(UTC))  # пн днём
         assert len(fs.calls) == len(ids)  # почасовой в понедельник нет
+
+        # суббота: ночная полная есть, почасовой нет
+        await scheduler.tick(session, ch, client, msk(2026, 10, 24, 4, 0).astimezone(UTC))
+        await scheduler.tick(session, ch, client, msk(2026, 10, 24, 12, 0).astimezone(UTC))
+        await scheduler.tick(session, ch, client, msk(2026, 10, 24, 13, 0).astimezone(UTC))
+        assert fs.calls[len(ids) :] == [(i, True, True) for i in ids]
 
 
 @pytest.mark.parametrize(
@@ -296,6 +307,160 @@ async def test_process_changes_tenant_isolation(session, tenant_cfg):
     assert peers.count(OTHER_CHAT) == 2 and peers.count(CHAT) == 1
     ours_texts = [t for p, t, _ in ch.sent if p == CHAT]
     assert ours_texts == [ours_texts[0]] and "Westchester — Ракета" in ours_texts[0]
+
+
+# ---------- личка отметившимся при переносе / смене времени ----------
+
+ASK = "Если планы изменились — нажмите другую кнопку в анонсе в беседе команды."
+
+
+async def _voter(session, tenant_id, match, name, vk, vote=None, dm=True):
+    p = Player(tenant_id=tenant_id, display_name=name)
+    session.add(p)
+    await session.flush()
+    if vk:
+        session.add(
+            MessengerAccount(
+                tenant_id=tenant_id, player_id=p.id, channel="vk", external_user_id=vk, dm_allowed=dm
+            )
+        )
+    if vote:
+        session.add(Attendance(tenant_id=tenant_id, match_id=match.id, player_id=p.id, vote=vote))
+    await session.flush()
+    return p
+
+
+async def _votes(session):
+    return sorted((a.player_id, a.vote) for a in (await session.scalars(select(Attendance))).all())
+
+
+async def _our_tenant(session):
+    return (await session.scalars(select(TeamEntry).order_by(TeamEntry.id))).first().tenant_id
+
+
+@pytest.mark.parametrize(
+    ("kind", "payload", "head"),
+    [
+        (
+            ChangeKind.RESCHEDULED,
+            json.dumps({"was": "2026-10-18"}),
+            "⚠️ Перенос матча: Westchester — Pokrasote (АБЛ) — теперь сб 24.10, 15:00. Было: 18.10.",
+        ),
+        (
+            ChangeKind.TIME_CHANGED,
+            None,
+            "⏰ Изменилось время матча: Westchester — Pokrasote (АБЛ) — теперь сб 24.10, 15:00.",
+        ),
+    ],
+    ids=["rescheduled", "time_changed"],
+)
+async def test_process_changes_dm_voters(session, tenant_cfg, kind, payload, head):
+    _, t, ours, rival = await _abl(session, tenant_cfg)
+    m = _match(t, ours, rival)
+    other_m = _match(t, ours, rival, "2")
+    session.add_all([m, other_m])
+    await session.flush()
+    tid = await _our_tenant(session)
+    await _voter(session, tid, m, "Иван Петров", "101", Vote.GOING)
+    await _voter(session, tid, m, "Пётр Сидоров", "102", Vote.NOT_GOING)
+    await _voter(session, tid, m, "Олег Тестов", "103")  # не отметился
+    await _voter(session, tid, m, "Илья Кузнецов", "104", Vote.GOING, dm=False)  # лички нет
+    await _voter(session, tid, m, "Антон Попов", None, Vote.GOING)  # нет аккаунта VK
+    await _voter(session, tid, other_m, "Глеб Волков", "105", Vote.GOING)  # отметка на другой матч
+    session.add(ChangeEvent(kind=kind, match_id=m.id, payload=payload))
+    await session.commit()
+    before = await _votes(session)
+
+    ch = FakeChannel()
+    await scheduler.process_changes(session, ch)
+    chat_texts = [txt for p, txt, _ in ch.sent if p == CHAT]
+    assert chat_texts == [f"{head} Проверьте свою отметку в анонсе."]  # беседа — как раньше
+    dms = sorted((p, txt) for p, txt, _ in ch.sent if p != CHAT)
+    assert dms == [
+        ("101", f"{head}\nВаш ответ сохранён: «Буду». {ASK}"),
+        ("102", f"{head}\nВаш ответ сохранён: «Не буду». {ASK}"),
+    ]
+    assert await _votes(session) == before  # отметки не меняются
+
+    # то же событие снова попало в обработку — лички не дублируются (notification_log)
+    ev = (await session.scalars(select(ChangeEvent))).one()
+    ev.processed = False
+    await session.commit()
+    ch2 = FakeChannel()
+    await scheduler.process_changes(session, ch2)
+    assert [p for p, _, _ in ch2.sent] == [CHAT]
+    await scheduler.process_changes(session, ch2)  # обычный повтор — ничего
+    assert len(ch2.sent) == 1
+
+
+@pytest.mark.parametrize("kind", [ChangeKind.TIME_SET, ChangeKind.MATCH_ADDED])
+async def test_process_changes_no_dm_for_time_set_and_added(session, tenant_cfg, kind):
+    _, t, ours, rival = await _abl(session, tenant_cfg)
+    m = _match(t, ours, rival)
+    session.add(m)
+    await session.flush()
+    await _voter(session, await _our_tenant(session), m, "Иван Петров", "101", Vote.GOING)
+    session.add(ChangeEvent(kind=kind, match_id=m.id))
+    await session.commit()
+    ch = FakeChannel()
+    await scheduler.process_changes(session, ch)
+    assert [p for p, _, _ in ch.sent] == [CHAT]
+
+
+async def test_process_changes_dm_without_chat(session, tenant_cfg):
+    _, t, ours, rival = await _abl(session, tenant_cfg)
+    m = _match(t, ours, rival)
+    session.add(m)
+    await session.flush()
+    await _voter(session, await _our_tenant(session), m, "Иван Петров", "101", Vote.GOING)
+    await session.delete((await session.execute(select(Chat))).scalar_one())
+    session.add(ChangeEvent(kind=ChangeKind.TIME_CHANGED, match_id=m.id))
+    await session.commit()
+    ch = FakeChannel()
+    await scheduler.process_changes(session, ch)
+    assert [p for p, _, _ in ch.sent] == ["101"]
+    assert "«Буду»" in ch.sent[0][1]
+
+
+async def test_process_changes_dm_tenant_isolation(session, tenant_cfg):
+    _, t, ours, rival = await _abl(session, tenant_cfg)
+    our_tid = await _our_tenant(session)
+    other = Tenant(key="other", name="Другая команда")
+    session.add(other)
+    await session.flush()
+    other_team = LeagueTeam(league_id=t.league_id, external_id="5000", name="Ракета")
+    session.add(other_team)
+    await session.flush()
+    session.add_all(
+        [
+            TeamEntry(tenant_id=other.id, league_team_id=other_team.id, tournament_id=t.id, source_url="x"),
+            Chat(tenant_id=other.id, channel="vk", peer_id=OTHER_CHAT),
+        ]
+    )
+    m_other = _match(t, other_team, rival, "10")  # матч только другой команды
+    m_derby = _match(t, ours, other_team, "11")  # обе команды сервиса
+    session.add_all([m_other, m_derby])
+    await session.flush()
+    # отметка в нашем тенанте на матч другой команды — личку о нём не получает
+    await _voter(session, our_tid, m_other, "Иван Петров", "101", Vote.GOING)
+    await _voter(session, other.id, m_other, "Сергей Орлов", "201", Vote.NOT_GOING)
+    await _voter(session, our_tid, m_derby, "Пётр Сидоров", "102", Vote.GOING)
+    await _voter(session, other.id, m_derby, "Денис Лебедев", "202", Vote.GOING)
+    session.add_all(
+        [
+            ChangeEvent(kind=ChangeKind.TIME_CHANGED, match_id=m_other.id),
+            ChangeEvent(kind=ChangeKind.TIME_CHANGED, match_id=m_derby.id),
+        ]
+    )
+    await session.commit()
+
+    ch = FakeChannel()
+    await scheduler.process_changes(session, ch)
+    dms = {p: txt for p, txt, _ in ch.sent if p not in (CHAT, OTHER_CHAT)}
+    assert set(dms) == {"201", "102", "202"}
+    assert "Ракета — Pokrasote" in dms["201"] and "«Не буду»" in dms["201"]
+    assert "Westchester — Ракета" in dms["102"] and "«Буду»" in dms["102"]
+    assert "Westchester — Ракета" in dms["202"] and "«Буду»" in dms["202"]
 
 
 # ---------- refresh_active_polls ----------
