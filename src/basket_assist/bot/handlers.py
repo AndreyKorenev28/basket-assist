@@ -18,21 +18,48 @@ from basket_assist.storage.tables import Chat, MessengerAccount, TeamEntry, Tena
 
 log = logging.getLogger(__name__)
 
+HELP_WORDS = ("помощь", "команды", "help", "")  # "" — сообщение из одних «?»/«!»
+UNKNOWN = "Не понял. Напишите «помощь» — покажу, что умею."
 HELP_CHAT = (
-    "Я помогаю команде: анонсы матчей и голосование «Буду / Не буду», напоминания, "
-    "заявка на игру для капитана.\n"
-    "Команды (обратитесь ко мне): «игры» — ближайшие матчи, «подключиться» — ссылка для личных сообщений."
+    "Я помогаю команде: анонсы матчей с голосованием «Буду / Не буду», напоминания, "
+    "заявка на игру для капитана.\n\n"
+    "Обратитесь ко мне:\n"
+    "• игры — ближайшие матчи\n"
+    "• подключиться — ссылка, чтобы получать напоминания в личку\n"
+    "• помощь — этот список\n\n"
+    "Остальные команды — в личке со мной."
 )
+HELP_DM = (
+    "Что я умею:\n\n"
+    "• игры — ближайшие матчи: дата, время, зал, соперник\n"
+    "• мои данные — к каким заявкам на сезон вы привязаны и под каким номером "
+    "(если что-то не так — там есть кнопка «Это ошибка»)\n"
+    "• помощь — этот список\n\n"
+    "Отметиться на игру — кнопками «Буду / Не буду» в анонсе в беседе команды."
+)
+HELP_LEADER = (
+    "Для руководителей команды:\n\n"
+    "• состав — кто отметился на ближайшую игру в каждой лиге\n"
+    "• игроки — все игроки и их статусы по лигам\n"
+    "• сопоставление — привязать новых игроков к заявкам на сезон\n"
+    "• исправить Петров — изменить привязку игрока (по имени или фамилии)"
+)
+HELP_RIGHTS = "\n• права — назначить или снять и. о. капитана"  # только капитану и заместителю
+HELP_BUTTONS_HINT = "\n\nКоманду можно написать или нажать кнопку ниже."
+
+
+def _cmd(label: str, command: str, color: str = "primary") -> Button:
+    """Кнопка-команда: нажатие выполняет то же, что текст `command` (с теми же проверками прав)."""
+    return Button(label, {"c": command}, color)
+
+
+CHAT_BUTTONS = [[_cmd("Игры", "игры"), _cmd("Подключиться", "подключиться")]]
+UNKNOWN_BUTTONS = [[_cmd("Помощь", "помощь", "secondary")]]
 WELCOME_DM = (
     "Привет! Вы подключены к Basket Assist.\n"
     "Сюда буду присылать напоминания об играх и важные сообщения по заявке.\n"
     "Я храню только то, что нужно для заявки на игру: имя, ID VK, ваши отметки «Буду / Не буду» "
     "и связь с заявкой на сезон. Переписку беседы я не читаю и не сохраняю.\n"
-)
-DM_COMMANDS = "Команды: «игры» — ближайшие матчи, «мои данные» — ваша привязка к заявкам на сезон."
-LEADER_COMMANDS = (
-    "Для руководителей: «игроки» — все игроки и их статусы по лигам, «сопоставление» — привязка игроков "
-    "к заявкам на сезон, «исправить <имя>» — изменить привязку, «права» — и. о. капитана."
 )
 
 
@@ -62,13 +89,14 @@ async def _tenant_for_user(session: AsyncSession, channel: ChannelAdapter, user_
 async def handle(session: AsyncSession, channel: ChannelAdapter, event: Event) -> None:
     match event:
         case ButtonPress():
-            tenant_id = await _tenant_for_chat(session, channel, event.peer_id) or await _tenant_for_user(
-                session, channel, event.user_id
-            )
+            chat_tenant = await _tenant_for_chat(session, channel, event.peer_id)
+            tenant_id = chat_tenant or await _tenant_for_user(session, channel, event.user_id)
             if tenant_id is None:
                 return
             if "m" in event.payload:
                 await polls.on_vote(session, channel, tenant_id, event)
+            elif "c" in event.payload:
+                await _command_button(session, channel, tenant_id, event, in_chat=chat_tenant is not None)
             elif "a" in event.payload:
                 await _dm_button(session, channel, tenant_id, event)
         case DmAllowed():
@@ -115,17 +143,24 @@ async def _new_member(session, channel: ChannelAdapter, tenant_id: int, event: I
 
 
 async def _chat_command(session, channel: ChannelAdapter, tenant_id: int, event: IncomingMessage) -> None:
-    cmd = event.text.lower().strip(" .!?")
+    await _chat_reply(session, channel, tenant_id, event.peer_id, event.text)
+
+
+async def _chat_reply(session, channel: ChannelAdapter, tenant_id: int, peer_id: str, text: str) -> None:
+    """Команда в беседе — из обращения к боту или с кнопки."""
+    cmd = text.lower().strip(" .!?")
     if cmd in ("игры", "матчи", "расписание"):
-        await channel.send(event.peer_id, await upcoming_text(session, tenant_id))
+        await channel.send(peer_id, await upcoming_text(session, tenant_id))
     elif cmd in ("подключиться", "старт", "начать"):
         await channel.send(
-            event.peer_id,
+            peer_id,
             f"Чтобы получать напоминания в личку, откройте ссылку и нажмите «Начать»: "
             f"{channel.connect_link('chat')}",
         )
+    elif cmd in HELP_WORDS:
+        await channel.send(peer_id, HELP_CHAT, CHAT_BUTTONS)
     else:
-        await channel.send(event.peer_id, HELP_CHAT)
+        await channel.send(peer_id, UNKNOWN, UNKNOWN_BUTTONS)
 
 
 async def _my_data(session, channel: ChannelAdapter, tenant_id: int, player_id: int) -> tuple[str, list]:
@@ -148,39 +183,81 @@ async def _my_data(session, channel: ChannelAdapter, tenant_id: int, player_id: 
 
 async def _dm(session, channel: ChannelAdapter, tenant_id: int, event: IncomingMessage) -> None:
     started = event.payload.get("command") == "start" or event.ref is not None
-    player = await set_dm_allowed(
-        session, tenant_id, channel, event.user_id, True
-    )  # раз пишет — личка открыта
+    await _dm_command(session, channel, tenant_id, event.peer_id, event.user_id, event.text, started)
+
+
+async def _dm_command(
+    session,
+    channel: ChannelAdapter,
+    tenant_id: int,
+    peer_id: str,
+    user_id: str,
+    text: str,
+    started: bool = False,
+) -> None:
+    """Команда в личке — из текста или с кнопки. Права проверяются здесь, одинаково для обоих путей."""
+    player = await set_dm_allowed(session, tenant_id, channel, user_id, True)  # раз пишет — личка открыта
     await session.commit()
     is_leader = await leaders.is_leader(session, tenant_id, player.id)
-    hint = DM_COMMANDS + ("\n" + LEADER_COMMANDS if is_leader else "")
-    cmd = event.text.lower().strip(" .!?")
+    cmd = text.lower().strip(" .!?")
     if started or cmd in ("начать", "старт", "start"):
-        await channel.send(event.peer_id, WELCOME_DM + hint)
+        help_text, buttons = await _help_dm(session, player.id, is_leader)
+        await channel.send(peer_id, WELCOME_DM + "\n" + help_text, buttons)
+    elif cmd in HELP_WORDS:
+        await channel.send(peer_id, *await _help_dm(session, player.id, is_leader))
     elif cmd in ("игры", "матчи", "расписание"):
-        await channel.send(event.peer_id, await upcoming_text(session, tenant_id))
+        await channel.send(peer_id, await upcoming_text(session, tenant_id))
     elif cmd in ("мои данные", "данные"):
         text, buttons = await _my_data(session, channel, tenant_id, player.id)
-        await channel.send(event.peer_id, text, buttons)
+        await channel.send(peer_id, text, buttons)
     elif cmd in ("сопоставление", "сопоставить") and is_leader:
-        await channel.send(event.peer_id, *await leader.matching_summary(session, tenant_id))
+        await channel.send(peer_id, *await leader.matching_summary(session, tenant_id))
+    elif cmd in ("состав", "кто идёт", "кто идет") and is_leader:
+        await channel.send(peer_id, *await leader.lineup(session, tenant_id))
     elif cmd in ("игроки", "список") and is_leader:
         for text in await leader.players_list(session, tenant_id):
-            await channel.send(event.peer_id, text)
+            await channel.send(peer_id, text)
     elif cmd.startswith("исправить") and is_leader:
-        query = event.text.strip()[len("исправить") :].strip()
+        query = text.strip()[len("исправить") :].strip()
         if not query:  # без имени — общий список, из него видно, кого исправлять
             for text in await leader.players_list(session, tenant_id):
-                await channel.send(event.peer_id, text)
+                await channel.send(peer_id, text)
         else:
-            await channel.send(event.peer_id, *await leader.find_players(session, tenant_id, query))
+            await channel.send(peer_id, *await leader.find_players(session, tenant_id, query))
     elif cmd in ("права", "и. о.", "ио") and is_leader:
         if await leaders.is_captain_or_vice(session, player.id):
-            await channel.send(event.peer_id, *await leader.rights_menu(session, tenant_id))
+            await channel.send(peer_id, *await leader.rights_menu(session, tenant_id))
         else:
-            await channel.send(event.peer_id, "Передавать права может только капитан или заместитель.")
+            await channel.send(peer_id, "Передавать права может только капитан или заместитель.")
     else:
-        await channel.send(event.peer_id, hint)
+        await channel.send(peer_id, UNKNOWN, UNKNOWN_BUTTONS)
+
+
+async def _help_dm(session, player_id: int, is_leader: bool) -> tuple[str, list[list[Button]]]:
+    """Список команд в личке и кнопки к нему: игроку — общие, руководителям — ещё свои («права» — без и. о.)."""
+    buttons = [[_cmd("Игры", "игры"), _cmd("Мои данные", "мои данные")]]
+    if not is_leader:
+        return HELP_DM + HELP_BUTTONS_HINT, buttons
+    buttons.append([_cmd("Состав", "состав", "secondary"), _cmd("Игроки", "игроки", "secondary")])
+    last_row = [_cmd("Сопоставление", "сопоставление", "secondary")]
+    rights = ""
+    if await leaders.is_captain_or_vice(session, player_id):
+        rights = HELP_RIGHTS
+        last_row.append(_cmd("Права", "права", "secondary"))
+    buttons.append(last_row)
+    return f"{HELP_DM}\n\n{HELP_LEADER}{rights}{HELP_BUTTONS_HINT}", buttons
+
+
+async def _command_button(
+    session, channel: ChannelAdapter, tenant_id: int, press: ButtonPress, *, in_chat: bool
+) -> None:
+    """Кнопка-команда из подсказки: выполняем как текстовую команду, сообщение с подсказкой не трогаем."""
+    command = str(press.payload.get("c", ""))
+    await channel.answer_button(press, "")
+    if in_chat:
+        await _chat_reply(session, channel, tenant_id, press.peer_id, command)
+    else:
+        await _dm_command(session, channel, tenant_id, press.peer_id, press.user_id, command)
 
 
 async def _dm_button(session, channel: ChannelAdapter, tenant_id: int, press: ButtonPress) -> None:

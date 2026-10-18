@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from basket_assist.channels.base import Button, ButtonPress, ChannelAdapter
-from basket_assist.services import leaders, notify, roster
+from basket_assist.services import digests, leaders, notify, roster
 from basket_assist.storage.tables import (
     Chat,
     League,
@@ -34,6 +34,15 @@ def _label(text: str) -> str:
 def _fio(r: SeasonRosterEntry) -> str:
     num = f" №{r.number}" if r.number else ""
     return f"{r.last_name} {r.first_name}{num}"
+
+
+# ---------- Состав на матч ----------
+
+
+async def lineup(session: AsyncSession, tenant_id: int) -> tuple[str, list[list[Button]]]:
+    """«состав»: кто отметился на ближайшие игры, с кнопкой «Обновить»."""
+    text = await digests.lineup_text(session, tenant_id)
+    return text, [[Button("Обновить", {"a": "lineup"}, "secondary")]]
 
 
 # ---------- Сопоставление ----------
@@ -165,33 +174,55 @@ async def players_list(session: AsyncSession, tenant_id: int) -> list[str]:
     active = [p for p in players if p.active]
     # Сначала собираем ячейки (значок, номер), потом выравниваем: в VK шрифт не моноширинный,
     # поэтому ровными делаем только начало строки — значки и номера, добитые пробелом шириной в цифру.
-    table: list[tuple[list[tuple[str, str]], str]] = []
+    # Сопоставленным — ФИО из заявки на сезон (первой лиги, где есть связь), сортировка по фамилии;
+    # не сопоставленным ни в одной лиге — имя из VK, отдельным блоком в конце.
+    matched: list[tuple[tuple, list[tuple[str, str]], str]] = []
+    unmatched: list[tuple[list[tuple[str, str]], str]] = []
     for p in active:
-        cells = []
+        cells, fio = [], None
         for entry, _ in leagues:
             status = await roster.roster_status(session, tenant_id, p.id, entry.id)
             number = ""
             if status == "in_roster":
                 r = await roster.roster_entry_for(session, tenant_id, p.id, entry.id)
-                number = r.number if r is not None and r.number else ""
+                if r is not None:
+                    number = r.number or ""
+                    fio = fio or (r.last_name, r.first_name)
             cells.append((PLAYERS_MARKS[status], str(number)))
         dm = "" if p.id in dm_open else " 🔕"
-        table.append((cells, f"{p.display_name}{dm}"))
+        if fio:
+            key = (fio[0].lower().replace("ё", "е"), fio[1].lower().replace("ё", "е"), p.id)
+            matched.append((key, cells, f"{fio[0]} {fio[1]}{dm}"))
+        else:
+            unmatched.append((cells, f"{p.display_name}{dm}"))
+    matched.sort(key=lambda t: t[0])
+    table = [(c, n) for _, c, n in matched] + unmatched
     width = max((len(n) for cells, _ in table for _, n in cells), default=0)
-    lines = [
-        f"Игроки команды: {len(active)}",
-        PLAYERS_LEGEND,
-        "Колонки слева направо: " + " · ".join(name for _, name in leagues),
-        "",
-    ]
-    for cells, name in table:
+
+    def fmt(cells: list[tuple[str, str]], name: str) -> str:
         row = GAP.join(mark + FIGURE_SPACE + num.rjust(width, FIGURE_SPACE) for mark, num in cells)
-        lines.append(f"{row}{GAP}{name}")
+        return f"{row}{GAP}{name}"
+
+    lines = [f"Игроки команды: {len(active)}", PLAYERS_LEGEND, "", _header([n for _, n in leagues], width)]
+    lines += [fmt(c, n) for _, c, n in matched]
+    if unmatched:
+        lines += ["", "Не сопоставлены ни в одной лиге (имя из VK):"]
+        lines += [fmt(c, n) for c, n in unmatched]
     others = [p.display_name for p in players if not p.active]
     if others:
         lines += ["", f"Не игроки команды ({len(others)}): " + ", ".join(others)]
     lines += ["", "Изменить: «исправить <имя или фамилия>»."]
     return _split(lines)
+
+
+def _header(leagues: list[str], width: int) -> str:
+    """Заголовки над колонками. Выравнивание приблизительное: буквы шире цифр, точно в VK не подогнать.
+
+    Ширина ячейки ≈ значок (~1,6 цифры) + пробел + `width` цифр; заглавная буква ≈ 1,25 цифры.
+    """
+    cell = 2.6 + width
+    heads = [name + FIGURE_SPACE * max(0, round(cell - 1.25 * len(name))) for name in leagues]
+    return GAP.join(heads) + GAP + "Игрок"
 
 
 def _split(lines: list[str]) -> list[str]:
@@ -344,6 +375,9 @@ async def on_button(
         await channel.answer_button(press, "Это доступно только руководителям команды")
         return None
 
+    if a == "lineup":  # «Обновить» под составом — перерисовываем то же сообщение
+        await channel.answer_button(press, "Обновлено")
+        return await lineup(session, tenant_id)
     if a == "lall":
         n = await roster.confirm_all_unambiguous(session, tenant_id, me.id)
         await session.commit()
