@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from basket_assist.channels.base import ChannelAdapter, ChannelError
 from basket_assist.domain.models import ChangeKind
-from basket_assist.services import notify, polls
+from basket_assist.services import notify, polls, weekly
 from basket_assist.services.schedule import FINISHED, format_when, teams
 from basket_assist.services.sync import sync_team_entry
 from basket_assist.sources import make_adapter
@@ -99,6 +99,11 @@ async def run(sessions: async_sessionmaker, channel: ChannelAdapter, client: htt
                 await tick(session, channel, client)
         except Exception:
             log.exception("ошибка планировщика")
+        try:  # отдельно: сбой синхронизации не должен мешать опросам и сводкам
+            async with sessions() as session:
+                await weekly.tick(session, channel)
+        except Exception:
+            log.exception("ошибка недельного цикла")
         await asyncio.sleep(TICK)
 
 

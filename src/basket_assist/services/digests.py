@@ -1,6 +1,6 @@
 """Состав на матч для руководителей команды: кто отметился на ближайшие игры (domain.md, «Состав на матч»).
 
-Сейчас — по запросу (команда «состав»). Тот же текст станет основой сводок за 24 ч и 2 ч (M4).
+По запросу (команда «состав») и в сводках за 24 ч и 2 ч до матча (`match_digest`, services/weekly.py).
 """
 
 from datetime import UTC, datetime
@@ -12,7 +12,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from basket_assist.domain.models import Vote
 from basket_assist.services import polls, roster
 from basket_assist.services.schedule import format_when, kit_hint, teams, upcoming_matches
-from basket_assist.storage.tables import Attendance, League, LeagueTeam, MessengerAccount, Player, TeamEntry
+from basket_assist.storage.tables import (
+    Attendance,
+    League,
+    LeagueTeam,
+    Match,
+    MessengerAccount,
+    Player,
+    TeamEntry,
+)
 
 NOT_ELIGIBLE = {
     "not_in_roster": "нет в заявке на сезон",
@@ -100,6 +108,40 @@ async def _match_block(session: AsyncSession, tenant_id: int, league, ours, riva
     lines.append(f"Не буду ({len(not_going)}): " + (", ".join(sorted(not_going, key=_sort_key)) or "—"))
     lines.append(f"Не ответили ({len(silent)}): " + (", ".join(sorted(silent, key=_sort_key)) or "—"))
     return "\n".join(lines)
+
+
+async def match_digest(session: AsyncSession, tenant_id: int, match: Match, title: str) -> str:
+    """Сводка руководителю по одному матчу (за 24 ч / за 2 ч): заголовок + состав на матч."""
+    league, ours, rival, _ = await polls._context(session, match, tenant_id)
+    now = datetime.now(UTC).astimezone(ZoneInfo(league.timezone))
+    block = await _match_block(session, tenant_id, league, ours, rival, match)
+    return f"{title}\n\n{block}\n\nНа {now:%d.%m %H:%M}"
+
+
+async def application_text(session: AsyncSession, tenant_id: int, match: Match) -> str | None:
+    """Черновик заявки на игру для копирования: «номер ФИО» построчно, только заявленные на сезон, «Буду».
+
+    None — некого подавать. Отдельным сообщением: в VK на телефоне сообщение копируется целиком.
+    """
+    _, _, _, entry = await polls._context(session, match, tenant_id)
+    going = (
+        await session.scalars(
+            select(Player)
+            .join(Attendance, Attendance.player_id == Player.id)
+            .where(
+                Attendance.tenant_id == tenant_id,
+                Attendance.match_id == match.id,
+                Attendance.vote == Vote.GOING,
+            )
+        )
+    ).all()
+    rows = []
+    for p in going:
+        if await roster.roster_status(session, tenant_id, p.id, entry.id) != "in_roster":
+            continue
+        name = await polls.player_name(session, tenant_id, p, entry)
+        rows.append((_sort_key(name), f"{await _number(session, tenant_id, p.id, entry) or '?'} {name}"))
+    return "\n".join(line for _, line in sorted(rows)) or None
 
 
 def _size_note(n: int, lo: int, hi: int) -> str:

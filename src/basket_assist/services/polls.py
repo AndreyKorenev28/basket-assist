@@ -211,6 +211,10 @@ async def on_vote(session: AsyncSession, channel: ChannelAdapter, tenant_id: int
         await channel.answer_button(press, f"Отмечено: {VOTE_LABELS[vote]}")
         if changed:  # повторное нажатие той же кнопки ничего не меняет (domain.md)
             await refresh(session, channel, tenant_id, match)
+    if changed:
+        from basket_assist.services import weekly  # weekly импортирует polls
+
+        await weekly.vote_changed(session, channel, tenant_id, match, player, VOTE_LABELS[vote])
     if changed and vote == Vote.GOING:
         await _signal_not_in_roster(session, channel, tenant_id, match, player)
 

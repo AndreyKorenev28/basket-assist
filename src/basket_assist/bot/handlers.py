@@ -108,7 +108,7 @@ async def handle(session: AsyncSession, channel: ChannelAdapter, event: Event) -
             tenant_id = chat_tenant or await _tenant_for_user(session, channel, event.user_id)
             if tenant_id is None:
                 return
-            if "m" in event.payload:
+            if "a" not in event.payload and "m" in event.payload:  # голос: {"m", "v"}; у сводки тоже есть "m"
                 await polls.on_vote(session, channel, tenant_id, event)
             elif "c" in event.payload:
                 await _command_button(session, channel, tenant_id, event, in_chat=chat_tenant is not None)

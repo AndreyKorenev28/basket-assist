@@ -11,12 +11,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from basket_assist.channels.base import Button, ButtonPress, ChannelAdapter
-from basket_assist.services import digests, leaders, notify, roster
+from basket_assist.services import digests, leaders, notify, polls, roster, weekly
 from basket_assist.services.table_image import PlayersTable, TableRow, render_players
 from basket_assist.storage.tables import (
     Chat,
     League,
     LeagueTeam,
+    Match,
     MessengerAccount,
     Player,
     RosterLink,
@@ -425,6 +426,17 @@ async def on_button(
     if a == "lineup":  # «Обновить» под составом — перерисовываем то же сообщение
         await channel.answer_button(press, "Обновлено")
         return await lineup(session, tenant_id)
+    if a == "dg":  # «Обновить» под сводкой за 24 ч / 2 ч
+        match = await session.get(Match, d.get("m"))
+        try:
+            if match is None:
+                raise polls.PollError("нет матча")
+            result = await weekly.digest_message(session, tenant_id, match, str(d.get("k", "digest24")))
+        except polls.PollError:  # чужой (другой команды сервиса) или удалённый матч
+            await channel.answer_button(press, "Матч не найден")
+            return None
+        await channel.answer_button(press, "Обновлено")
+        return result
     if a == "lall":
         n = await roster.confirm_all_unambiguous(session, tenant_id, me.id)
         await session.commit()
