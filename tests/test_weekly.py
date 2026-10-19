@@ -298,6 +298,7 @@ def _dg_buttons(m: Match, kind: str) -> list[list[Button]]:
     return [
         [Button("Обновить", {"a": "dg", **ref}, "secondary")],
         [Button("Добавить в заявку", {"a": "aa", **ref}), Button("Убрать из заявки", {"a": "ar", **ref})],
+        [Button(weekly.COPY_BUTTON, {"a": "ac", "m": m.id}, "secondary")],
     ]
 
 

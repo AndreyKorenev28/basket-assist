@@ -37,7 +37,8 @@ DIGESTS = {  # вид сводки → (за сколько до начала, �
     "digest24": (timedelta(hours=24), "📋 Сводка за сутки до игры"),
     "digest2": (timedelta(hours=2), "📋 Финальная сводка: игра через 2 часа"),
 }
-APP_TITLE = "📝 Заявка на игру"  # карточка по запросу («заявка», кнопка под «составом»)
+APP_TITLE = "📝 Состав и заявка на игру"  # карточка по запросу (кнопка «Состав и заявка»)
+COPY_BUTTON = "📋 Текст для копирования"
 REMIND_BEFORE = timedelta(hours=30)  # напоминание молчащим (architecture.md §5)
 REMIND_AFTER_POLL = timedelta(hours=3)  # опрос запущен поздно — не напоминаем в ту же минуту, что и анонс
 
@@ -239,12 +240,8 @@ async def _send_digests(
 async def application_card(
     session: AsyncSession, tenant_id: int, match: Match
 ) -> list[tuple[str, list[list[Button]] | None]]:
-    """«заявка» по запросу: карточка с кнопками правки + (если есть кого подавать) текст для копирования."""
-    text, buttons = await digest_message(session, tenant_id, match, "app")
-    application = await digests.application_text(session, tenant_id, match)
-    if not application:
-        return [(text, buttons)]
-    return [(f"{text}\n\n{APPLICATION_HINT}", buttons), (application, None)]
+    """Карточка по запросу («Состав и заявка»): кнопки правки; текст для копирования — по кнопке «📋»."""
+    return [await digest_message(session, tenant_id, match, "app")]
 
 
 async def send_digest(
@@ -262,9 +259,10 @@ async def send_digest(
 async def digest_message(
     session: AsyncSession, tenant_id: int, match: Match, kind: str
 ) -> tuple[str, list[list[Button]]]:
-    """Текст сводки и кнопки: [Обновить], [Добавить в заявку] [Убрать из заявки] (leader.on_button).
+    """Текст сводки и кнопки: [Обновить], [Добавить в заявку] [Убрать из заявки], [📋] (leader.on_button).
 
-    kind: digest24 / digest2 — сводки по расписанию; app — карточка заявки по запросу («заявка»).
+    kind: digest24 / digest2 — сводки по расписанию; app — карточка по запросу («Состав и заявка»).
+    «📋» шлёт свежий текст для копирования: после правок текст, пришедший со сводкой, устаревает.
     """
     title = APP_TITLE if kind == "app" else DIGESTS.get(kind, DIGESTS["digest24"])[1]
     # финальная: изменения после сводки за сутки отмечены (если суточная была)
@@ -277,6 +275,7 @@ async def digest_message(
     return text, [
         [Button("Обновить", {"a": "dg", **ref}, "secondary")],
         [Button("Добавить в заявку", {"a": "aa", **ref}), Button("Убрать из заявки", {"a": "ar", **ref})],
+        [Button(COPY_BUTTON, {"a": "ac", "m": match.id}, "secondary")],
     ]
 
 

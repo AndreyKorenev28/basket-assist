@@ -32,8 +32,14 @@ NOT_ELIGIBLE = {
 }
 
 
-async def lineup_text(session: AsyncSession, tenant_id: int) -> str:
-    """Состав на ближайший матч каждой лиги на текущий момент."""
+NO_MATCHES = "Ближайших матчей на сайтах лиг пока нет."
+
+
+async def nearest_by_league(session: AsyncSession, tenant_id: int) -> list[tuple]:
+    """[(league, ours, rival, match | None)] — ближайший матч каждого выступления, в порядке выступлений.
+
+    Каждая лига — даже без матчей (match = None), чтобы капитан не гадал, куда она делась.
+    """
     nearest: dict[int, tuple] = {}  # выступление → первый предстоящий матч
     for league, ours, rival, match in await upcoming_matches(session, tenant_id):
         entry = (await polls._context(session, match, tenant_id))[3]
@@ -41,18 +47,31 @@ async def lineup_text(session: AsyncSession, tenant_id: int) -> str:
     entries = (
         await session.scalars(select(TeamEntry).filter_by(tenant_id=tenant_id).order_by(TeamEntry.id))
     ).all()
-    blocks, tz = [], None
-    for entry in entries:  # каждая лига — даже без матчей, чтобы капитан не гадал, куда она делась
+    out = []
+    for entry in entries:
         if entry.id in nearest:
-            league = nearest[entry.id][0]
-            blocks.append(await _match_block(session, tenant_id, *nearest[entry.id]))
+            out.append(nearest[entry.id])
         else:
             ours = await session.get(LeagueTeam, entry.league_team_id)
-            league = await session.get(League, ours.league_id)
-            blocks.append(f"🏀 {league.name}: {ours.name}\nБлижайших матчей на сайте лиги пока нет.")
+            out.append((await session.get(League, ours.league_id), ours, None, None))
+    return out
+
+
+def no_matches_block(league: League, ours: LeagueTeam) -> str:
+    return f"🏀 {league.name}: {ours.name}\nБлижайших матчей на сайте лиги пока нет."
+
+
+async def lineup_text(session: AsyncSession, tenant_id: int) -> str:
+    """Состав на ближайший матч каждой лиги на текущий момент — одним текстом."""
+    blocks, tz = [], None
+    for league, ours, rival, match in await nearest_by_league(session, tenant_id):
+        if match is None:
+            blocks.append(no_matches_block(league, ours))
+        else:
+            blocks.append(await _match_block(session, tenant_id, league, ours, rival, match))
         tz = tz or ZoneInfo(league.timezone)  # в MVP у всех лиг Europe/Moscow
     if not blocks:
-        return "Ближайших матчей на сайтах лиг пока нет."
+        return NO_MATCHES
     now = datetime.now(UTC).astimezone(tz)
     return "\n\n".join(blocks) + f"\n\nНа {now:%d.%m %H:%M}"
 

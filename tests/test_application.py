@@ -19,6 +19,7 @@ from basket_assist.storage.tables import (
     Player,
     SeasonRosterEntry,
     TeamEntry,
+    Tenant,
     utcnow,
 )
 from tests.fakes import FakeChannel
@@ -210,6 +211,7 @@ async def test_digest_message_number_hint(session, tenant_cfg):
             ("Добавить в заявку", {"a": "aa", "m": m.id, "k": "digest2"}),
             ("Убрать из заявки", {"a": "ar", "m": m.id, "k": "digest2"}),
         ],
+        [("📋 Текст для копирования", {"a": "ac", "m": m.id})],
     ]
 
 
@@ -682,6 +684,7 @@ def _app_buttons(m) -> list:
     return [
         [("Обновить", {"a": "dg", **ref})],
         [("Добавить в заявку", {"a": "aa", **ref}), ("Убрать из заявки", {"a": "ar", **ref})],
+        [("📋 Текст для копирования", {"a": "ac", "m": m.id})],
     ]
 
 
@@ -689,96 +692,80 @@ def _plain(rows) -> list:
     return [[(b.label, b.payload) for b in row] for row in rows]
 
 
-async def _ids(session, tenant) -> list[int]:
-    return sorted(m.id for _, _, _, m in await leader._open_matches(session, tenant.id))
+NO_ABL = "🏀 АБЛ: Westchester\nБлижайших матчей на сайте лиги пока нет."
+NO_MLBL = "🏀 МЛБЛ: МИРЭА\nБлижайших матчей на сайте лиги пока нет."
 
 
-async def test_open_matches_only_nearest_per_league(session, tenant_cfg):
-    tenant, entries, m = await _abl(session, tenant_cfg)
-    later = await _rel_match(session, entries["abl"], "g2", days=3)
-    await _publish(session, later)  # второй анонс в той же лиге — берём только ближайший
-    await _rel_match(session, entries["mlbl"], "m1", days=1, with_time=False)
-    next_ml = await _rel_match(session, entries["mlbl"], "m2", days=2)
-    await _publish(session, next_ml)
-    # МЛБЛ: ближайший матч без времени — лигу пропускаем, следующий (с анонсом) не подставляем
-    assert await _ids(session, tenant) == [m.id]
+async def test_lineup_card_for_league_with_poll_and_no_matches_block(session, tenant_cfg):
+    """Сообщение на каждое выступление в порядке TeamEntry.id: АБЛ — карточка, МЛБЛ — матчей нет."""
+    tenant, _, m = await _abl(session, tenant_cfg)
+    [(card, buttons), (empty, none)] = await leader.lineup(session, tenant.id)
+    assert [(card, buttons)] == await weekly.application_card(session, tenant.id, m)
+    assert card.startswith(f"{weekly.APP_TITLE}\n\n🏀 АБЛ: Соперник g1 — Westchester")
+    assert "Сводка" not in card and weekly.APPLICATION_HINT not in card
+    assert _plain(buttons) == _app_buttons(m)
+    assert (empty, none) == (NO_MLBL, None)
 
 
-async def test_open_matches_nearest_without_poll_no_button_for_league(session, tenant_cfg):
-    """Ближайший матч лиги без анонса, у следующего анонс есть — кнопки «Заявка» для лиги нет
-    (тот же матч, что в «составе»)."""
+async def test_lineup_no_matches_each_league(session, tenant_cfg):
+    tenant, _ = await _ready(session, tenant_cfg)
+    assert await leader.lineup(session, tenant.id) == [(NO_ABL, None), (NO_MLBL, None)]
+
+
+async def test_lineup_no_team_entries(session, tenant_cfg):
+    await _ready(session, tenant_cfg)
+    lonely = Tenant(key="lonely", name="Без выступлений")
+    session.add(lonely)
+    await session.commit()
+    assert await leader.lineup(session, lonely.id) == [(digests.NO_MATCHES, None)]
+
+
+async def test_lineup_match_without_time(session, tenant_cfg):
+    tenant, entries = await _ready(session, tenant_cfg)
+    m = await _rel_match(session, entries["mlbl"], "m1", days=2, with_time=False)
+    [(abl, none), (text, buttons)] = await leader.lineup(session, tenant.id)
+    assert (abl, none) == (NO_ABL, None) and buttons is None
+    assert text.startswith("🏀 МЛБЛ: Соперник m1 — МИРЭА")
+    assert "Время не назначено" in text
+    assert text.endswith(f"\nЗнаете время — напишите «время {m.match_date:%d.%m} 19:00».")
+
+
+async def test_lineup_time_set_poll_not_started(session, tenant_cfg):
+    tenant, entries = await _ready(session, tenant_cfg)
+    await _rel_match(session, entries["abl"], "g1", days=2)
+    league = await _league(session, entries["abl"])
+    [(text, buttons), _] = await leader.lineup(session, tenant.id)
+    assert buttons is None and text.startswith("🏀 АБЛ: Соперник g1 — Westchester")
+    assert text.endswith(f"Опрос ещё не запущен. Он запускается в среду перед игрой, в {league.poll_time}.")
+
+
+async def test_lineup_only_nearest_match_per_league(session, tenant_cfg):
+    """Ближайший матч без анонса, у следующего анонс есть — карточки нет (тот же матч, что в сводке);
+    ближайший МЛБЛ без времени — следующий (с анонсом) не подставляем."""
     tenant, entries = await _ready(session, tenant_cfg)
     nearest = await _rel_match(session, entries["abl"], "g1", days=1)
     following = await _rel_match(session, entries["abl"], "g2", days=2)
     await _publish(session, following)
-    assert await _ids(session, tenant) == []
-    _, rows = await leader.lineup(session, tenant.id)
-    assert _plain(rows) == [[("Обновить", {"a": "lineup"})]]
-    [(text, buttons)] = await leader.application_menu(session, tenant.id)
-    assert text.startswith("Сейчас нет матча с запущенным опросом") and buttons is None
+    await _rel_match(session, entries["mlbl"], "m1", days=1, with_time=False)
+    next_ml = await _rel_match(session, entries["mlbl"], "m2", days=2)
+    await _publish(session, next_ml)
+    [(abl, b1), (mlbl, b2)] = await leader.lineup(session, tenant.id)
+    assert b1 is None and "Соперник g1" in abl and "Опрос ещё не запущен." in abl
+    assert b2 is None and "Соперник m1" in mlbl and "Знаете время" in mlbl
     await _publish(session, nearest)
-    assert await _ids(session, tenant) == [nearest.id]
+    [(abl, b1), _] = await leader.lineup(session, tenant.id)
+    assert abl.startswith(weekly.APP_TITLE) and "Соперник g1" in abl
+    assert _plain(b1) == _app_buttons(nearest)
 
 
-async def test_open_matches_no_poll_none(session, tenant_cfg):
-    tenant, entries = await _ready(session, tenant_cfg)
-    await _rel_match(session, entries["abl"], "g1", days=1)
-    assert await _ids(session, tenant) == []
-
-
-async def test_lineup_application_buttons_per_league(session, tenant_cfg):
-    tenant, entries = await _ready(session, tenant_cfg)
-    refresh = [("Обновить", {"a": "lineup"})]
-    m = await _rel_match(session, entries["abl"], "g1", days=1)
-    _, rows = await leader.lineup(session, tenant.id)
-    assert _plain(rows) == [refresh], "матч есть, анонса нет — кнопки «Заявка» нет"
-    await _publish(session, m)
-    _, rows = await leader.lineup(session, tenant.id)
-    assert _plain(rows) == [[("Заявка: АБЛ", {"a": "ap", "m": m.id})], refresh]
-    m2 = await _rel_match(session, entries["mlbl"], "m1", days=2)
-    await _publish(session, m2)
-    _, rows = await leader.lineup(session, tenant.id)
-    assert sorted(_plain(rows)[:-1]) == sorted(
-        [[("Заявка: АБЛ", {"a": "ap", "m": m.id})], [("Заявка: МЛБЛ", {"a": "ap", "m": m2.id})]]
-    )
-    assert _plain(rows)[-1] == refresh
-
-
-async def test_application_menu_no_matches(session, tenant_cfg):
-    tenant, entries = await _ready(session, tenant_cfg)
-    await _rel_match(session, entries["abl"], "g1", days=1)  # без анонса
-    [(text, buttons)] = await leader.application_menu(session, tenant.id)
-    assert text.startswith("Сейчас нет матча с запущенным опросом") and buttons is None
-
-
-async def test_application_menu_one_match_card(session, tenant_cfg):
-    tenant, _, m = await _abl(session, tenant_cfg)
-    [(text, buttons)] = await leader.application_menu(session, tenant.id)  # заявка пуста — без текста
-    assert text.startswith(weekly.APP_TITLE) and weekly.APPLICATION_HINT not in text
-    assert _plain(buttons) == _app_buttons(m)
-
-    await _vote(session, tenant.id, m, await _player(session, tenant, PETROV))
-    menu = await leader.application_menu(session, tenant.id)
-    assert menu == await weekly.application_card(session, tenant.id, m)
-    [(card, buttons), (copy, none)] = menu
-    assert card.startswith(weekly.APP_TITLE) and card.endswith(f"\n\n{weekly.APPLICATION_HINT}")
-    assert "Сводка" not in card and _plain(buttons) == _app_buttons(m)
-    assert copy == await digests.application_text(session, tenant.id, m) and "Петров" in copy
-    assert none is None
-
-
-async def test_application_menu_several_matches_choice(session, tenant_cfg):
+async def test_lineup_two_leagues_two_cards(session, tenant_cfg):
     tenant, entries, m = await _abl(session, tenant_cfg)
     m2 = await _rel_match(session, entries["mlbl"], "m1", days=2)
     await _publish(session, m2)
-    [(text, rows)] = await leader.application_menu(session, tenant.id)
-    assert text == "Заявка на какой матч?"
-    assert sorted(_plain(rows)) == sorted(
-        [
-            [("АБЛ: Соперник g1 — Westchester", {"a": "ap", "m": m.id})],
-            [("МЛБЛ: Соперник m1 — МИРЭА", {"a": "ap", "m": m2.id})],
-        ]
-    )
+    [(abl, b1), (mlbl, b2)] = await leader.lineup(session, tenant.id)
+    assert abl.startswith(weekly.APP_TITLE) and "🏀 АБЛ: Соперник g1" in abl
+    assert mlbl.startswith(weekly.APP_TITLE) and "🏀 МЛБЛ: Соперник m1" in mlbl
+    assert _plain(b1) == _app_buttons(m) and _plain(b2) == _app_buttons(m2)
 
 
 async def test_digest_message_app_kind(session, tenant_cfg):
@@ -788,6 +775,14 @@ async def test_digest_message_app_kind(session, tenant_cfg):
     assert _plain(buttons) == _app_buttons(m)
 
 
+async def test_application_card_without_copy_text(session, tenant_cfg):
+    """Карточка — одно сообщение даже с непустой заявкой: текст для копирования — по кнопке «📋»."""
+    tenant, _, m = await _abl(session, tenant_cfg)
+    await _vote(session, tenant.id, m, await _player(session, tenant, PETROV))
+    [(card, buttons)] = await weekly.application_card(session, tenant.id, m)
+    assert weekly.APPLICATION_HINT not in card and _plain(buttons) == _app_buttons(m)
+
+
 async def test_ap_button_sends_card_then_edit_keeps_app_title(session, tenant_cfg):
     tenant, _, m = await _abl(session, tenant_cfg)
     await _vote(session, tenant.id, m, await _player(session, tenant, PETROV))
@@ -795,8 +790,8 @@ async def test_ap_button_sends_card_then_edit_keeps_app_title(session, tenant_cf
     press = ButtonPress(CAPTAIN, CAPTAIN, MessageRef(CAPTAIN, "50"), {"a": "ap", "m": m.id}, "e")
     await handle(session, ch, press)
     expected = await weekly.application_card(session, tenant.id, m)
-    assert ch.sent == [(CAPTAIN, t, b) for t, b in expected] and len(ch.sent) == 2
-    assert ch.edits == [] and ch.toasts == [""], "исходное сообщение («состав») не трогаем"
+    assert ch.sent == [(CAPTAIN, t, b) for t, b in expected] and len(ch.sent) == 1
+    assert ch.edits == [] and ch.toasts == [""], "исходное (старое) сообщение не трогаем"
 
     card_id = next(mid for (peer, mid), t in ch.messages.items() if peer == CAPTAIN and t == expected[0][0])
     card = MessageRef(CAPTAIN, card_id)
@@ -811,7 +806,7 @@ async def test_ap_button_sends_card_then_edit_keeps_app_title(session, tenant_cf
     redrawn = ch.messages[(CAPTAIN, card_id)]
     assert redrawn.startswith(weekly.APP_TITLE) and "Сидоров Евгений" in redrawn
     assert _plain(ch.buttons[(CAPTAIN, card_id)]) == _app_buttons(m)
-    assert len(ch.sent) == 2, "правка — тем же сообщением"
+    assert len(ch.sent) == 1, "правка — тем же сообщением"
 
 
 async def test_ap_button_only_leaders(session, tenant_cfg):
@@ -822,8 +817,7 @@ async def test_ap_button_only_leaders(session, tenant_cfg):
     assert ch.sent == [] and ch.edits == []
 
 
-async def test_ap_button_foreign_or_missing_match(session, tenant_cfg):
-    tenant, entries = await _ready(session, tenant_cfg)
+async def _foreign_match(session, entries):
     b, _, _ = await _second_tenant(session, entries)
     own_b = (
         await session.scalars(
@@ -832,7 +826,12 @@ async def test_ap_button_foreign_or_missing_match(session, tenant_cfg):
             )
         )
     ).one()
-    foreign = await _rel_match(session, own_b, "b1", days=1)
+    return await _rel_match(session, own_b, "b1", days=1)
+
+
+async def test_ap_button_foreign_or_missing_match(session, tenant_cfg):
+    _, entries = await _ready(session, tenant_cfg)
+    foreign = await _foreign_match(session, entries)
     ch = FakeChannel()
     for mid in (foreign.id, 99999):
         await handle(session, ch, _bp(CAPTAIN, {"a": "ap", "m": mid}))
@@ -840,10 +839,11 @@ async def test_ap_button_foreign_or_missing_match(session, tenant_cfg):
     assert ch.sent == [] and ch.edits == []
 
 
-@pytest.mark.parametrize("cmd", ["заявка", "Заявка", "заявка на игру"])
+@pytest.mark.parametrize("cmd", ["заявка", "Заявка", "заявка на игру", "состав и заявка", "состав"])
 async def test_application_command_for_leaders(session, tenant_cfg, cmd):
-    tenant, _, m = await _abl(session, tenant_cfg)
-    expected = await leader.application_menu(session, tenant.id)
+    """«заявка» и «состав и заявка» — одна команда: те же сообщения, что leader.lineup."""
+    tenant, _, _ = await _abl(session, tenant_cfg)
+    expected = await leader.lineup(session, tenant.id)
     for who in (CAPTAIN, VICE):
         ch = FakeChannel()
         await handle(session, ch, IncomingMessage(who, who, cmd, is_chat=False, mentioned=False))
@@ -854,5 +854,60 @@ async def test_application_command_no_match_text(session, tenant_cfg):
     await _ready(session, tenant_cfg)
     ch = FakeChannel()
     await handle(session, ch, IncomingMessage(CAPTAIN, CAPTAIN, "заявка", is_chat=False, mentioned=False))
-    [(peer, text, buttons)] = ch.sent
-    assert peer == CAPTAIN and text.startswith("Сейчас нет матча с запущенным опросом") and buttons is None
+    assert ch.sent == [(CAPTAIN, NO_ABL, None), (CAPTAIN, NO_MLBL, None)]
+
+
+# ---------- «📋 Текст для копирования» (кнопка «ac») ----------
+
+
+async def test_copy_button_sends_application_text(session, tenant_cfg):
+    tenant, _, m = await _abl(session, tenant_cfg)
+    await _vote(session, tenant.id, m, await _player(session, tenant, PETROV))
+    await _vote(session, tenant.id, m, await _player(session, tenant, SIDOROV))
+    ch = FakeChannel()
+    for who in (CAPTAIN, VICE):
+        await handle(session, ch, _bp(who, {"a": "ac", "m": m.id}))
+    assert ch.toasts == ["", ""] and ch.edits == []
+    expected = "7 Петров Александр\n11 Сидоров Евгений"
+    assert expected == await digests.application_text(session, tenant.id, m)
+    assert ch.sent == [(CAPTAIN, expected, None), (VICE, expected, None)]
+
+
+async def test_copy_button_reflects_leader_edits(session, tenant_cfg):
+    tenant, _, m = await _abl(session, tenant_cfg)
+    petrov = await _player(session, tenant, PETROV)
+    await _vote(session, tenant.id, m, petrov)
+    ch = FakeChannel()
+    await handle(session, ch, _bp(CAPTAIN, {"a": "ac", "m": m.id}))
+    assert ch.sent[-1][1] == "7 Петров Александр"
+    await _edit(session, tenant.id, m, petrov, removed=True)
+    await _edit(session, tenant.id, m, await _player(session, tenant, SIDOROV), removed=False)
+    await handle(session, ch, _bp(CAPTAIN, {"a": "ac", "m": m.id}))
+    assert ch.sent[-1] == (CAPTAIN, "11 Сидоров Евгений", None)
+
+
+async def test_copy_button_empty_application(session, tenant_cfg):
+    _, _, m = await _abl(session, tenant_cfg)
+    ch = FakeChannel()
+    await handle(session, ch, _bp(CAPTAIN, {"a": "ac", "m": m.id}))
+    assert ch.toasts == ["В заявке на игру пока никого нет"]
+    assert ch.sent == [] and ch.edits == []
+
+
+async def test_copy_button_foreign_or_missing_match(session, tenant_cfg):
+    _, entries = await _ready(session, tenant_cfg)
+    foreign = await _foreign_match(session, entries)
+    ch = FakeChannel()
+    for payload in ({"a": "ac", "m": foreign.id}, {"a": "ac", "m": 99999}, {"a": "ac"}):
+        await handle(session, ch, _bp(CAPTAIN, payload))
+    assert ch.toasts == ["Матч не найден"] * 3
+    assert ch.sent == [] and ch.edits == []
+
+
+async def test_copy_button_only_leaders(session, tenant_cfg):
+    tenant, _, m = await _abl(session, tenant_cfg)
+    await _vote(session, tenant.id, m, await _player(session, tenant, PETROV))
+    ch = FakeChannel()
+    await handle(session, ch, _bp(PETROV, {"a": "ac", "m": m.id}))
+    assert ch.toasts == ["Это доступно только руководителям команды"]
+    assert ch.sent == [] and ch.edits == []

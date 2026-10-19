@@ -25,7 +25,7 @@ from basket_assist.bot.handlers import (
 from basket_assist.channels.base import ButtonPress, ChannelError, IncomingMessage, MessageRef
 from basket_assist.domain.matching import Candidate, Confidence
 from basket_assist.domain.models import RosterLinkStatus
-from basket_assist.services import leaders, polls, roster, table_image
+from basket_assist.services import leaders, polls, roster, table_image, weekly
 from basket_assist.storage.tables import (
     Chat,
     League,
@@ -1165,10 +1165,7 @@ async def test_players_command_hidden_from_player(session, tenant_cfg, cmd):
 # ---------- «помощь» и неизвестные команды ----------
 
 PLAYER_COMMANDS = [[("Игры", "игры", "primary"), ("Мои данные", "мои данные", "primary")]]
-LEADER_ROWS = [
-    [("Состав", "состав", "secondary"), ("Заявка", "заявка", "secondary")],
-    [("Игроки", "игроки", "secondary")],
-]
+LEADER_ROWS = [[("Состав и заявка", "состав", "secondary"), ("Игроки", "игроки", "secondary")]]
 MATCHING = ("Сопоставление", "сопоставление", "secondary")
 ACTING_COMMANDS = [*PLAYER_COMMANDS, *LEADER_ROWS, [MATCHING]]
 CAPTAIN_COMMANDS = [*PLAYER_COMMANDS, *LEADER_ROWS, [MATCHING, ("Права", "права", "secondary")]]
@@ -1581,16 +1578,7 @@ def test_split_keeps_all_lines():
     assert leader._split(["одна"]) == ["одна"]
 
 
-# ---------- «состав»: состав на матч (M4) ----------
-
-LINEUP_BUTTONS = [[("Обновить", {"a": "lineup"}, "secondary")]]  # матчей с опросом нет
-
-
-def _lineup_with_app(*matches: tuple[str, int]) -> list:
-    """[Заявка: лига] на каждый матч с запущенным опросом, затем [Обновить]."""
-    return [
-        [(f"Заявка: {league}", {"a": "ap", "m": mid}, "secondary")] for league, mid in matches
-    ] + LINEUP_BUTTONS
+# ---------- «Состав и заявка»: состав на матч и заявка на игру (M4, с 20.10 — одна кнопка) ----------
 
 
 def _lineup_buttons(rows):
@@ -1598,17 +1586,33 @@ def _lineup_buttons(rows):
     return [[(b.label, b.payload, b.color) for b in row] for row in rows]
 
 
+def _card_buttons(m) -> list:
+    ref = {"m": m.id, "k": "app"}
+    return [
+        [("Обновить", {"a": "dg", **ref}, "secondary")],
+        [
+            ("Добавить в заявку", {"a": "aa", **ref}, "secondary"),
+            ("Убрать из заявки", {"a": "ar", **ref}, "secondary"),
+        ],
+        [(weekly.COPY_BUTTON, {"a": "ac", "m": m.id}, "secondary")],
+    ]
+
+
 def test_help_leader_starts_with_lineup():
     assert HELP_LEADER.startswith(
         "Для руководителей команды.\n\nКнопками ниже или текстом:\n"
-        "• состав — кто отметился на ближайшую игру в каждой лиге"
+        "• состав и заявка — кто отметился на ближайшую игру в каждой лиге; "
+        "правка заявки на игру и текст для копирования\n"
     )
+    assert "• заявка —" not in HELP_LEADER and "• состав —" not in HELP_LEADER
     assert HELP_RIGHTS.startswith("\n• права — ")
     assert HELP_LEADER_TEXT.startswith("\n\n✍️ Только текстом")
     assert HELP_BUTTONS_HINT not in CAPTAIN_HELP and HELP_BUTTONS_HINT not in ACTING_HELP
 
 
-@pytest.mark.parametrize("cmd", ["состав", "Состав", "кто идёт", "Кто идет?"])
+@pytest.mark.parametrize(
+    "cmd", ["состав", "Состав", "кто идёт", "Кто идет?", "состав и заявка", "Заявка", "заявка на игру"]
+)
 async def test_lineup_text_command_for_leaders(session, tenant_cfg, cmd):
     tenant, entries = await _ready(session, tenant_cfg)
     captain = await _player(session, tenant, CAPTAIN)
@@ -1617,47 +1621,54 @@ async def test_lineup_text_command_for_leaders(session, tenant_cfg, cmd):
     m = await _match_for(session, entries["abl"])
     chat = (await session.execute(select(Chat))).scalar_one()
     await polls.publish(session, FakeChannel(), chat, m)
+    expected = await leader.lineup(session, tenant.id)
     for who in (CAPTAIN, VICE, PETROV):  # капитан, заместитель, и. о.
         ch = FakeChannel()
         await handle(session, ch, IncomingMessage(who, who, cmd, is_chat=False, mentioned=False))
-        [(peer, text, buttons)] = ch.sent
-        assert peer == who
-        assert text.startswith("🏀 АБЛ: Westchester — Соперник") and "Не ответили (3):" in text
-        assert _lineup_buttons(buttons) == _lineup_with_app(("АБЛ", m.id))
+        assert ch.sent == [(who, t, btn) for t, btn in expected]
+        [(_, card, buttons), (_, mlbl, none)] = ch.sent  # АБЛ — карточка, МЛБЛ — матчей нет
+        assert card.startswith(f"{weekly.APP_TITLE}\n\n🏀 АБЛ: Westchester — Соперник")
+        assert "Не ответили (3):" in card
+        assert _lineup_buttons(buttons) == _card_buttons(m)
+        assert mlbl == "🏀 МЛБЛ: МИРЭА\nБлижайших матчей на сайте лиги пока нет." and none is None
 
 
-async def test_lineup_refresh_edits_message(session, tenant_cfg):
+async def test_lineup_old_refresh_button_sends_new_messages(session, tenant_cfg):
+    """«Обновить» под старым «составом» (до объединения) — новые сообщения, старое не редактируем."""
     tenant, entries = await _ready(session, tenant_cfg)
     m = await _match_for(session, entries["abl"])
     ch = FakeChannel()
     chat = (await session.execute(select(Chat))).scalar_one()
     await polls.publish(session, ch, chat, m)
-    await handle(session, ch, _cmd_press(CAPTAIN, CAPTAIN, "состав"))  # кнопка «Состав» из подсказки
-    first = ch.sent[-1][1]
-    assert "Буду (0):" in first and ch.edits == []
+    await handle(session, ch, _cmd_press(CAPTAIN, CAPTAIN, "состав"))  # кнопка «Состав и заявка»
+    assert "Буду (0):" in ch.sent[-2][1] and ch.edits == []
 
     await handle(
         session, ch, ButtonPress(CHAT, SIDOROV, MessageRef(CHAT, "101"), {"m": m.id, "v": "going"}, "e")
     )
     sent_before = len(ch.sent)
+    ch.toasts.clear()
+    edits_before = len(ch.edits)
     ref = MessageRef(CAPTAIN, "500")
     await handle(session, ch, ButtonPress(CAPTAIN, CAPTAIN, ref, {"a": "lineup"}, "e"))
-    assert ch.toasts[-1] == "Обновлено"
-    assert ch.edits[-1][0] == ref, "«Обновить» редактирует то же сообщение"
-    updated = ch.messages[(CAPTAIN, "500")]
-    assert "Буду (1):" in updated and "  №11 Сидоров Евгений" in updated
-    assert _lineup_buttons(ch.buttons[(CAPTAIN, "500")]) == _lineup_with_app(("АБЛ", m.id))
-    assert len(ch.sent) == sent_before, "нового сообщения нет"
+    assert ch.toasts == [""]
+    assert len(ch.edits) == edits_before, "старое сообщение не редактируем"
+    new = ch.sent[sent_before:]
+    expected = await leader.lineup(session, tenant.id)
+    assert new == [(CAPTAIN, t, btn) for t, btn in expected] and len(new) == 2
+    assert "Буду (1):" in new[0][1] and "  №11 Сидоров Евгений" in new[0][1]
+    assert _lineup_buttons(new[0][2]) == _card_buttons(m)
 
 
-async def test_lineup_refresh_falls_back_to_send(session, tenant_cfg):
+async def test_lineup_old_refresh_button_no_matches(session, tenant_cfg):
     await _ready(session, tenant_cfg)
     ch = FakeChannel(editable=False)
     await handle(session, ch, _press(CAPTAIN, {"a": "lineup"}))
-    assert ch.toasts == ["Обновлено"] and ch.edits == []
-    [(peer, text, buttons)] = ch.sent
-    assert peer == CAPTAIN and "Ближайших матчей на сайте лиги пока нет." in text
-    assert _lineup_buttons(buttons) == LINEUP_BUTTONS
+    assert ch.toasts == [""] and ch.edits == []
+    assert ch.sent == [
+        (CAPTAIN, "🏀 АБЛ: Westchester\nБлижайших матчей на сайте лиги пока нет.", None),
+        (CAPTAIN, "🏀 МЛБЛ: МИРЭА\nБлижайших матчей на сайте лиги пока нет.", None),
+    ]
 
 
 async def test_lineup_denied_for_player(session, tenant_cfg):
