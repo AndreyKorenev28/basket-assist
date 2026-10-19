@@ -37,6 +37,8 @@ class MatchDTO:
     venue_address: str | None = None
     score_home: int | None = None
     score_away: int | None = None
+    # дата не опубликована, match_date — ожидаемая (суббота ближайших выходных); АБЛ: черновик тура
+    date_is_estimate: bool = False
 
 
 @dataclass(frozen=True)

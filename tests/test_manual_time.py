@@ -110,7 +110,8 @@ async def test_several_matches_buttons_then_tm(session, tenant_cfg):
     text, rows = await leader.time_command(session, tenant.id, _cmd(a))
     assert text == "В этот день несколько матчей — для какого время 18:30?"
     assert sorted(btn.payload["m"] for [btn] in rows) == sorted([a.id, b.id])
-    assert all(btn.payload == {"a": "tm", "m": btn.payload["m"], "t": "18:30"} for [btn] in rows)
+    day = f"{a.match_date.day}.{a.match_date.month}"  # день из команды: для ожидаемых выходных — сб или вс
+    assert all(btn.payload == {"a": "tm", "m": btn.payload["m"], "t": "18:30", "d": day} for [btn] in rows)
     assert all(isinstance(btn, Button) and len(btn.label) <= 40 for [btn] in rows)
     await session.refresh(a)
     assert a.start_at is None, "до выбора матча время не пишем"

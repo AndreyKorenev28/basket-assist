@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from basket_assist.channels.base import Button, ButtonPress, ChannelAdapter
 from basket_assist.domain.models import TimeStatus
 from basket_assist.services import digests, leaders, notify, polls, roster, weekly
-from basket_assist.services.schedule import format_when, teams, upcoming_matches
+from basket_assist.services.schedule import format_when, teams, upcoming_matches, weekend_days
 from basket_assist.services.table_image import PlayersTable, TableRow, render_players
 from basket_assist.storage.tables import (
     ApplicationEntry,
@@ -220,26 +220,51 @@ async def time_command(session: AsyncSession, tenant_id: int, args: str) -> tupl
         return "Не понял время. Пример: «время 25.10 18:30».", []
     found = [
         (league, ours, rival, match)
-        for league, ours, rival, match in await upcoming_matches(session, tenant_id, limit=10)
-        if (match.match_date.day, match.match_date.month) == (day, month)
+        for league, ours, rival, match in await upcoming_matches(
+            session,
+            tenant_id,
+            limit=10,
+            include_estimate=True,  # руководитель может опередить сайт лиги
+        )
+        if (day, month) in _days_of(match)
     ]
     if not found:
         return f"Не нашёл нашего предстоящего матча на {day:02d}.{month:02d}.", []
     hm = f"{hh:02d}:{mm:02d}"
     if len(found) == 1:
-        return await set_manual_time(session, tenant_id, found[0][3], hm), []
+        return await set_manual_time(session, tenant_id, found[0][3], hm, (day, month)), []
     rows = [
-        [Button(_label(f"{league.name}: {teams(match, ours, rival)}"), {"a": "tm", "m": match.id, "t": hm})]
+        [
+            Button(
+                _label(f"{league.name}: {teams(match, ours, rival)}"),
+                {"a": "tm", "m": match.id, "t": hm, "d": f"{day}.{month}"},
+            )
+        ]
         for league, ours, rival, match in found[:5]
     ]
     return f"В этот день несколько матчей — для какого время {hm}?", rows
 
 
-async def set_manual_time(session: AsyncSession, tenant_id: int, match: Match, hm: str) -> str:
+def _days_of(match: Match) -> set[tuple[int, int]]:
+    """Дни, которыми руководитель может назвать матч: дата матча, а для ожидаемых выходных — сб и вс."""
+    days = weekend_days(match) if match.date_is_estimate else (match.match_date,)
+    return {(d.day, d.month) for d in days}
+
+
+async def set_manual_time(
+    session: AsyncSession, tenant_id: int, match: Match, hm: str, day_month: tuple[int, int] | None = None
+) -> str:
     """Записать время, введённое руководителем. Если время уже есть на сайте лиги — оно главнее."""
     league, ours, rival, _ = await polls._context(session, match, tenant_id)
     if match.start_at is not None and match.time_source != "manual":
         return f"У матча уже есть время с сайта лиги: {format_when(match, league)}. Оно главнее — если лига ошиблась, свяжитесь с ней."
+    if match.date_is_estimate:  # дата была ожидаемой (выходные) — руководитель назвал день
+        day = next(
+            (d for d in weekend_days(match) if day_month is None or (d.day, d.month) == day_month), None
+        )
+        if day is None:
+            return "Этот день не совпадает с выходными матча — напишите дату субботы или воскресенья."
+        match.match_date, match.date_is_estimate = day, False
     hh, mm = (int(x) for x in hm.split(":"))
     local = datetime.combine(match.match_date, time(hh, mm), ZoneInfo(league.timezone))
     match.start_at = local.astimezone(UTC).replace(tzinfo=None)
@@ -661,7 +686,8 @@ async def on_button(
         try:
             if match is None:
                 raise polls.PollError("нет матча")
-            text = await set_manual_time(session, tenant_id, match, str(d["t"]))
+            day_month = tuple(int(x) for x in str(d["d"]).split(".")) if d.get("d") else None
+            text = await set_manual_time(session, tenant_id, match, str(d["t"]), day_month)
         except polls.PollError:
             await channel.answer_button(press, "Матч не найден")
             return None

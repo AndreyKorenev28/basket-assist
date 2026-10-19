@@ -6,7 +6,7 @@
 - название команды в турнире (tournament_team.name) точнее, чем team.name.
 """
 
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -45,7 +45,15 @@ def _parse_dt(value: str | None) -> datetime | None:
     return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(UTC).replace(tzinfo=None)
 
 
-def parse_games(items: list[dict]) -> list[MatchDTO]:
+def expected_weekend(today: date) -> date:
+    """Суббота ближайших выходных (сегодня, если сегодня суббота; воскресенье — следующая суббота)."""
+    return today + timedelta(days=(5 - today.weekday()) % 7)
+
+
+def parse_games(items: list[dict], today: date | None = None) -> list[MatchDTO]:
+    """Тур, который уже составлен, но без согласованного времени, приходит черновиком: status=draft,
+    datetime=null, зала нет (проверено 2026-10-19). Дату такой игры считаем ожидаемой — ближайшие выходные."""
+    today = today or datetime.now(UTC).astimezone(TZ).date()
     out = []
     for g in items:
         start = _parse_dt(g.get("datetime"))
@@ -56,7 +64,10 @@ def parse_games(items: list[dict]) -> list[MatchDTO]:
                 external_id=str(g["id"]),
                 home=_team(g.get("team"), g.get("tournament_team")),
                 away=_team(g.get("competitor_team"), g.get("competitor_tournament_team")),
-                match_date=(start.replace(tzinfo=UTC).astimezone(TZ).date() if start else date.min),
+                match_date=(
+                    start.replace(tzinfo=UTC).astimezone(TZ).date() if start else expected_weekend(today)
+                ),
+                date_is_estimate=start is None,
                 start_at=start,
                 played=played,
                 venue_name=court.get("name"),

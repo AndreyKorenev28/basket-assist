@@ -1,0 +1,133 @@
+[
+ {
+  "additional_data": {},
+  "competitor_team": {
+   "city": {
+    "country": "RU",
+    "id": 1,
+    "name": "РњРѕСЃРєРІР°"
+   },
+   "id": 279,
+   "logo": null,
+   "name": "Whestchester",
+   "sport": {
+    "id": 3,
+    "is_hidden": false,
+    "name": "Р‘Р°СЃРєРµС‚Р±РѕР»",
+    "name_en": null,
+    "parent_id": 1
+   },
+   "unique_code": "3D0M"
+  },
+  "competitor_team_id": 279,
+  "competitor_team_name": null,
+  "competitor_team_score": 0,
+  "competitor_tournament_team": {
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   },
+   "field_values": [],
+   "id": 31988,
+   "logo": {
+    "created_at": "2026-09-08T12:45:38.842477",
+    "engine": "yandex_s3",
+    "id": 12059659,
+    "mime_type": "image/png",
+    "name": "Westchester.png",
+    "original_name": "Westchester.png",
+    "path": "https://fs.mtgame.ru/Westchester.png",
+    "size": 59222
+   },
+   "name": "Westchester"
+  },
+  "competitor_tournament_team_id": 31988,
+  "datetime": null,
+  "division_id": null,
+  "game_config": {},
+  "id": 164568,
+  "location": null,
+  "media_count": null,
+  "media_live_count": null,
+  "mhl_carousel": null,
+  "playoff_number": null,
+  "playoff_round": null,
+  "playoff_stage": "",
+  "result_type": null,
+  "score_by_period": {},
+  "status": "draft",
+  "team": {
+   "city": {
+    "country": "RU",
+    "id": 1,
+    "name": "РњРѕСЃРєРІР°"
+   },
+   "id": 8088,
+   "logo": null,
+   "name": "No mercy",
+   "sport": {
+    "id": 3,
+    "is_hidden": false,
+    "name": "Р‘Р°СЃРєРµС‚Р±РѕР»",
+    "name_en": null,
+    "parent_id": 1
+   },
+   "unique_code": "F6DH"
+  },
+  "team_id": 8088,
+  "team_score": 0,
+  "tournament": {
+   "alias": "shelepiha27",
+   "id": 4145,
+   "league_id": 2,
+   "logo": {
+    "created_at": "2026-09-01T10:12:43.813972",
+    "engine": "yandex_s3",
+    "id": 11992204,
+    "mime_type": "image/png",
+    "name": "q_shelepiha_line_black_JuIhN.png",
+    "original_name": "q_shelepiha_line_black.png",
+    "path": "https://fs.mtgame.ru/q_shelepiha_line_black_JuIhN.png",
+    "size": 9944
+   },
+   "name": "РЁРµР»РµРїРёС…Р°",
+   "preview_image": null
+  },
+  "tournament_court": null,
+  "tournament_group": {
+   "id": 6514,
+   "name": "РЁРµР»РµРїРёС…Р°",
+   "sort": 1,
+   "tournament_stage_id": null,
+   "tournament_round_id": null,
+   "division_id": null
+  },
+  "tournament_id": 4145,
+  "tournament_playoff": null,
+  "tournament_playoff_id": null,
+  "tournament_round_id": null,
+  "tournament_stage": null,
+  "tournament_stage_id": null,
+  "tournament_team": {
+   "additional_data": {
+    "color": null,
+    "nickname": null
+   },
+   "field_values": [],
+   "id": 32093,
+   "logo": {
+    "created_at": "2026-09-10T06:00:21.240232",
+    "engine": "yandex_s3",
+    "id": 12070764,
+    "mime_type": "image/png",
+    "name": "NoMercy.png",
+    "original_name": "No Mercy.png",
+    "path": "https://fs.mtgame.ru/NoMercy.png",
+    "size": 60669
+   },
+   "name": "No mercy"
+  },
+  "tournament_team_id": 32093,
+  "tournament_tour": 8
+ }
+]

@@ -76,6 +76,7 @@ async def tick(session: AsyncSession, channel: ChannelAdapter, now: datetime | N
                     Match.tournament_id == entry.tournament_id,
                     or_(Match.home_team_id == team.id, Match.away_team_id == team.id),
                     Match.status.not_in(FINISHED),
+                    Match.date_is_estimate.is_(False),  # черновик без даты: ни опроса, ни предупреждений
                     Match.match_date >= today,
                     or_(Match.start_at.is_(None), Match.start_at > now_utc),
                 )
@@ -180,10 +181,11 @@ async def _warn_no_time(
         return
     await session.commit()
     _, ours, rival, _ = await polls._context(session, match, tenant_id)
+    example = f"время {match.match_date:%d.%m} 18:30"
     text = (
         f"⏰ Время матча не назначено: {teams(match, ours, rival)} ({league.name}), {format_when(match, league)}.\n"
         "Опрос не запускается, пока у матча нет времени. Свяжитесь с лигой. "
-        f"Если лига сообщила время, а на сайте его нет — напишите «время {match.match_date:%d.%m} 18:30» "
+        f"Если лига сообщила время, а на сайте его нет — напишите «{example}» "
         "(со своим временем). Напомню завтра, если ничего не изменится."
     )
     for lead in await leaders.digest_recipients(session, tenant_id):

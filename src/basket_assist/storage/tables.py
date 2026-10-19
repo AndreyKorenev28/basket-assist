@@ -91,6 +91,8 @@ class Match(Base):
     time_status: Mapped[str] = mapped_column(String(20))
     # "manual" — время ввёл руководитель (на сайте лиги его ещё нет); None — время с сайта лиги
     time_source: Mapped[str | None] = mapped_column(String(10))
+    # дата ещё не опубликована лигой: match_date — суббота ожидаемых выходных (MatchDTO.date_is_estimate)
+    date_is_estimate: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
     status: Mapped[str] = mapped_column(String(20))
     venue_name: Mapped[str | None] = mapped_column(String(200))
     venue_address: Mapped[str | None] = mapped_column(String(255))

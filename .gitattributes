@@ -1,0 +1,8 @@
+# Всё в репозитории и в выкладке на сервер (git archive) — с LF: скрипты и systemd-юниты на Linux
+# не работают с CRLF («#!/bin/sh\r»). Исключение — файлы, которые запускаются в Windows.
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.png binary
+*.db binary
+*.gz binary

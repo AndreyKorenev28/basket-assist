@@ -167,7 +167,7 @@ async def process_changes(session: AsyncSession, channel: ChannelAdapter) -> Non
     for ev in events:
         ev.processed = True
         match = await session.get(Match, ev.match_id) if ev.match_id else None
-        if match is None or match.status in FINISHED:
+        if match is None or match.status in FINISHED or match.date_is_estimate:  # черновик без даты — молчим
             continue
         for entry in await _entries_for(session, match):
             text = await _change_text(session, ev, match, entry.tenant_id)

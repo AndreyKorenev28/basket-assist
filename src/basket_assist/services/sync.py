@@ -96,11 +96,12 @@ async def _sync_matches(
                 start_at=dto.start_at,
                 time_status=TimeStatus.TIME_SET if dto.start_at else TimeStatus.DATE_ONLY,
                 status=MatchStatus.PLAYED if dto.played else MatchStatus.SCHEDULED,
+                date_is_estimate=dto.date_is_estimate,
             )
             session.add(m)
             await session.flush()
             result.matches_new += 1
-            if not initial:
+            if not initial and not dto.date_is_estimate:  # черновик без даты для команды пока не существует
                 _change(
                     session,
                     result,
@@ -114,7 +115,28 @@ async def _sync_matches(
                 )
         else:
             changed = False
-            if m.match_date != dto.match_date:
+            if m.date_is_estimate and not dto.date_is_estimate:
+                # лига опубликовала дату: для команды матч появляется сейчас (не перенос и не «время назначено»)
+                m.match_date, m.date_is_estimate = dto.match_date, False
+                m.start_at = dto.start_at
+                m.time_status = TimeStatus.TIME_SET if dto.start_at else TimeStatus.DATE_ONLY
+                _change(
+                    session,
+                    result,
+                    ChangeKind.MATCH_ADDED,
+                    {
+                        "date": dto.match_date,
+                        "start_at": dto.start_at,
+                        "vs": f"{dto.home.name} — {dto.away.name}",
+                    },
+                    match_id=m.id,
+                )
+                changed = True
+            elif m.date_is_estimate:
+                m.match_date = dto.match_date  # черновик: ожидаемые выходные уточнились — молча
+            elif m.match_date != dto.match_date and dto.date_is_estimate:
+                pass  # дату уже уточнили (вручную или сайтом), а черновик на сайте ещё без даты — не трогаем
+            elif m.match_date != dto.match_date:
                 _change(
                     session,
                     result,
