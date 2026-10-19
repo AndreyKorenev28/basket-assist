@@ -252,12 +252,19 @@ async def test_no_time_warning_daily(session, tenant_cfg):
         await weekly.tick(session, ch, now=now)
     assert len(_texts(ch, CAPTAIN)) == 1, "второе предупреждение в тот же день не уходит"
 
-    await weekly.tick(session, ch, now=at(THU, 0, 0))  # новый день по времени лиги
+    for now in (at(THU, 0, 0), at(THU, 9, 59)):  # новый день, но ещё не время опроса — не будим ночью
+        await weekly.tick(session, ch, now=now)
+    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 1
+    await weekly.tick(session, ch, now=at(THU, 10))  # повтор — во время опроса лиги
     assert len(_texts(ch, CAPTAIN, NO_TIME)) == 2 and len(_texts(ch, VICE, NO_TIME)) == 2
-    await weekly.tick(session, ch, now=at(FRI, 9))
-    await weekly.tick(session, ch, now=at(SAT, 9))
+    await weekly.tick(session, ch, now=at(THU, 23, 59))
+    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 2
+    for now in (at(FRI, 9), at(FRI, 10), at(SAT, 9, 59)):
+        await weekly.tick(session, ch, now=now)
+    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 3
+    await weekly.tick(session, ch, now=at(SAT, 10))  # день матча — тоже с 10:00
     assert len(_texts(ch, CAPTAIN, NO_TIME)) == 4
-    await weekly.tick(session, ch, now=at(SUN, 9))  # день матча прошёл
+    await weekly.tick(session, ch, now=at(SUN, 10))  # день матча прошёл
     assert len(_texts(ch, CAPTAIN, NO_TIME)) == 4
     assert _to(ch, CHAT) == [] and ch.pins == []
 
@@ -334,10 +341,10 @@ async def test_woke_up_late_only_final_digest(session, tenant_cfg):
     [(digest, buttons)] = _to(ch, CAPTAIN)  # без «Буду» — заявки вторым сообщением нет
     assert digest.startswith(D2) and weekly.APPLICATION_HINT not in digest
     assert buttons == _dg_buttons(m, "digest2")
-    assert await notify.was_sent(session, tenant.id, "digest24_skipped", str(m.id)), (
+    assert await notify.was_sent(session, tenant.id, "digest24_skipped", weekly.cycle_key(m)), (
         "суточная помечена пропущенной"
     )
-    assert not await notify.was_sent(session, tenant.id, "digest24", str(m.id)), (
+    assert not await notify.was_sent(session, tenant.id, "digest24", weekly.cycle_key(m)), (
         "«digest24» — только если ушла"
     )
     await weekly.tick(session, ch, now=START - timedelta(minutes=30))
@@ -396,7 +403,7 @@ async def test_vote_changed_only_after_digest24(session, tenant_cfg):
     await weekly.vote_changed(session, ch, tenant.id, m, petrov, "Буду")
     assert ch.sent == []
 
-    await notify.once(session, tenant.id, "digest24", str(m.id), match_id=m.id)
+    await notify.once(session, tenant.id, "digest24", weekly.cycle_key(m), match_id=m.id)
     await session.commit()
     await weekly.vote_changed(session, ch, tenant.id, m, petrov, "Буду")
     for peer in (CAPTAIN, VICE):
@@ -412,7 +419,7 @@ async def test_vote_changed_only_after_digest24(session, tenant_cfg):
 async def test_vote_changed_silent_after_start(session, tenant_cfg):
     tenant, entries = await _ready(session, tenant_cfg)
     m = await _rel_match(session, entries["abl"], "g1", days=-0.01)
-    await notify.once(session, tenant.id, "digest24", str(m.id), match_id=m.id)
+    await notify.once(session, tenant.id, "digest24", weekly.cycle_key(m), match_id=m.id)
     await session.commit()
     ch = FakeChannel()
     await weekly.vote_changed(session, ch, tenant.id, m, await _player(session, tenant, PETROV), "Буду")
@@ -431,7 +438,7 @@ async def test_vote_changed_via_on_vote(session, tenant_cfg):
     await handle(session, ch, _press(m, PETROV, "going"))
     assert _texts(ch, CAPTAIN) == [], "до сводки за 24 ч — тишина"
 
-    await notify.once(session, tenant.id, "digest24", str(m.id), match_id=m.id)
+    await notify.once(session, tenant.id, "digest24", weekly.cycle_key(m), match_id=m.id)
     await session.commit()
     await handle(session, ch, _press(m, PETROV, "not_going"))
     await handle(session, ch, _press(m, PETROV, "not_going"))  # повторное нажатие — не изменение
@@ -502,7 +509,7 @@ async def test_isolated_between_tenants(session, tenant_cfg):
     assert "Сидоров" not in b_digest and "Капитанов" not in b_digest
     assert "Громов" not in "".join(t for t, _ in _to(ch, CAPTAIN) + _to(ch, VICE))
     for t in (tenant.id, b.id):
-        assert await notify.was_sent(session, t, "digest24", str(m.id))
+        assert await notify.was_sent(session, t, "digest24", weekly.cycle_key(m))
 
 
 async def test_leader_on_button_dg_directly(session, tenant_cfg):

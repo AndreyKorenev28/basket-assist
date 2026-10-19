@@ -39,6 +39,15 @@ DIGESTS = {  # вид сводки → (за сколько до начала, �
 }
 APP_TITLE = "📝 Заявка на игру"  # карточка по запросу («заявка», кнопка под «составом»)
 REMIND_BEFORE = timedelta(hours=30)  # напоминание молчащим (architecture.md §5)
+REMIND_AFTER_POLL = timedelta(hours=3)  # опрос запущен поздно — не напоминаем в ту же минуту, что и анонс
+
+
+def cycle_key(match: Match) -> str:
+    """Ключ журнала для напоминания и сводок: матч + дата. Перенос на другую дату — новый цикл
+    (сводки и напоминание по новой дате уходят заново), смена времени в тот же день — тот же."""
+    return f"{match.id}:{match.match_date.isoformat()}"
+
+
 NUMBER_HINT = "Нет номера или он другой — напишите «номер Петров 23»."
 APPLICATION_HINT = "Следующим сообщением — заявка на игру (номер и ФИО), его удобно скопировать целиком."
 
@@ -77,7 +86,7 @@ async def tick(session: AsyncSession, channel: ChannelAdapter, now: datetime | N
             if now_utc < poll_opens_at(match, league):
                 continue
             if match.start_at is None:
-                await _warn_no_time(session, channel, entry.tenant_id, match, league, today)
+                await _warn_no_time(session, channel, entry.tenant_id, match, league, today, now_utc)
             else:
                 await _ensure_poll(session, channel, entry.tenant_id, match, now_utc)
                 await _remind_silent(session, channel, entry, match, now_utc)
@@ -92,12 +101,16 @@ async def _remind_silent(
     С открытой личкой — в личку с кнопками «Буду / Не буду» (нажатие = голос в анонсе);
     остальным — одно сообщение в беседу с упоминаниями (domain.md, «Подключение игрока к боту»).
     """
-    if not (match.start_at - REMIND_BEFORE <= now_utc < match.start_at - DIGESTS["digest2"][0]):
-        return
     tenant_id = entry.tenant_id
-    if await polls._current_poll(session, tenant_id, match.id) is None:
+    if now_utc < match.start_at - REMIND_BEFORE:
+        return  # рано: дешёвая проверка до запроса в БД (тик — каждую минуту)
+    poll = await polls._current_poll(session, tenant_id, match.id)
+    if poll is None:
         return  # без анонса напоминать не о чем; попробуем на следующей минуте
-    if not await notify.once(session, tenant_id, "remind30", str(match.id), match_id=match.id):
+    remind_at = max(match.start_at - REMIND_BEFORE, poll.posted_at + REMIND_AFTER_POLL)
+    if not (remind_at <= now_utc < match.start_at - DIGESTS["digest2"][0]):
+        return
+    if not await notify.once(session, tenant_id, "remind30", cycle_key(match), match_id=match.id):
         return
     await session.commit()
     league, ours, rival, _ = await polls._context(session, match, tenant_id)
@@ -151,8 +164,18 @@ async def _remind_silent(
 
 
 async def _warn_no_time(
-    session: AsyncSession, channel: ChannelAdapter, tenant_id: int, match: Match, league: League, today
+    session: AsyncSession,
+    channel: ChannelAdapter,
+    tenant_id: int,
+    match: Match,
+    league: League,
+    today,
+    now_utc: datetime,
 ) -> None:
+    # повтор — раз в сутки в то же время, что и опрос (по умолчанию 10:00 по времени лиги), не ночью
+    hh, mm = (int(x) for x in league.poll_time.split(":"))
+    if now_utc.replace(tzinfo=UTC).astimezone(ZoneInfo(league.timezone)).time() < time(hh, mm):
+        return
     if not await notify.once(session, tenant_id, "no_time", f"{match.id}:{today}", match_id=match.id):
         return
     await session.commit()
@@ -204,7 +227,7 @@ async def _send_digests(
         # (отдельный ключ: «digest24» значит, что суточная правда ушла — от неё считаются 🆕 и изменения)
         stale = kind == "digest24" and now_utc >= match.start_at - DIGESTS["digest2"][0]
         key_kind = "digest24_skipped" if stale else kind
-        if not await notify.once(session, tenant_id, key_kind, str(match.id), match_id=match.id):
+        if not await notify.once(session, tenant_id, key_kind, cycle_key(match), match_id=match.id):
             continue
         await session.commit()
         if not stale:
@@ -243,7 +266,9 @@ async def digest_message(
     """
     title = APP_TITLE if kind == "app" else DIGESTS.get(kind, DIGESTS["digest24"])[1]
     # финальная: изменения после сводки за сутки отмечены (если суточная была)
-    since = await notify.sent_at(session, tenant_id, "digest24", str(match.id)) if kind == "digest2" else None
+    since = (
+        await notify.sent_at(session, tenant_id, "digest24", cycle_key(match)) if kind == "digest2" else None
+    )
     text = await digests.match_digest(session, tenant_id, match, title, since)
     text += f"\n\n{NUMBER_HINT}"
     ref = {"m": match.id, "k": kind}
@@ -257,7 +282,7 @@ async def vote_changed(
     session: AsyncSession, channel: ChannelAdapter, tenant_id: int, match: Match, player: Player, label: str
 ) -> None:
     """После сводки за 24 ч — каждое изменение ответа руководителям (кроме самого проголосовавшего)."""
-    key = str(match.id)
+    key = cycle_key(match)
     if not (
         await notify.was_sent(session, tenant_id, "digest24", key)
         or await notify.was_sent(session, tenant_id, "digest2", key)  # суточной не было — после финальной

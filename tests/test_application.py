@@ -495,12 +495,48 @@ async def _close_dm(session, *vk_ids):
     await session.commit()
 
 
+def _after_poll():
+    """Анонс _abl опубликован «сейчас» — напоминание не раньше чем через REMIND_AFTER_POLL (3 ч)."""
+    return utcnow() + weekly.REMIND_AFTER_POLL
+
+
+async def test_remind_late_poll_waits_3h(session, tenant_cfg):
+    """Опрос запущен поздно (уже внутри окна 30 ч): напоминание не в ту же минуту, а через 3 ч после анонса."""
+    tenant, entries = await _ready(session, tenant_cfg)
+    await _week_match(session, entries["abl"], "g1")
+    ch = FakeChannel()
+    posted = START - timedelta(hours=20)  # время появилось поздно — анонс сразу
+    await weekly.tick(session, ch, now=posted)
+    assert len(_to(ch, CHAT)) == 1 and _reminders(ch) == {}, "анонс ушёл, напоминания в ту же минуту нет"
+    await weekly.tick(session, ch, now=posted + timedelta(hours=2, minutes=59))
+    assert _reminders(ch) == {}
+    await weekly.tick(session, ch, now=posted + timedelta(hours=3))
+    assert set(_reminders(ch)) == {CAPTAIN, PETROV, SIDOROV}
+    await weekly.tick(session, ch, now=posted + timedelta(hours=4))
+    assert len([1 for _, t, _ in ch.sent if t.startswith(REMIND)]) == 3, "один раз"
+
+
+async def test_remind_late_poll_too_close_to_start(session, tenant_cfg):
+    """Анонс за 4 ч до игры: +3 ч попадает после начала окна сводки за 2 ч — напоминания нет вовсе."""
+    tenant, entries = await _ready(session, tenant_cfg)
+    await _week_match(session, entries["abl"], "g1")
+    ch = FakeChannel()
+    for now in (
+        START - timedelta(hours=4),
+        START - timedelta(hours=2, minutes=1),
+        START - timedelta(hours=1),
+    ):
+        await weekly.tick(session, ch, now=now)
+    assert len(_to(ch, CHAT)) == 1 and _reminders(ch) == {}
+
+
 async def test_remind_window_once_dm_with_vote_buttons(session, tenant_cfg):
     tenant, entries = await _ready(session, tenant_cfg)
     m = await _week_match(session, entries["abl"], "g1")
     petrov = await _player(session, tenant, PETROV)
     await _vote(session, tenant.id, m, petrov, "not_going")  # ответил — не напоминаем
     ch = FakeChannel()
+    await weekly.tick(session, ch, now=START - timedelta(hours=50))  # анонс заранее (как в среду)
     await weekly.tick(session, ch, now=START - timedelta(hours=30, minutes=1))
     assert _reminders(ch) == {} and len(_to(ch, CHAT)) == 1, "анонс есть, напоминания ещё нет"
 
@@ -547,7 +583,7 @@ async def test_remind_without_poll_then_later(session, tenant_cfg):
 async def test_remind_dm_button_counts_vote(session, tenant_cfg):
     tenant, entries, m = await _abl(session, tenant_cfg)
     ch = FakeChannel()
-    await weekly._remind_silent(session, ch, entries["abl"], m, utcnow())
+    await weekly._remind_silent(session, ch, entries["abl"], m, _after_poll())
     [[going, _]] = _reminders(ch)[PETROV]
     await handle(session, ch, ButtonPress(PETROV, PETROV, MessageRef(PETROV, "777"), going.payload, "e"))
     assert ch.toasts[-1] == "Отмечено: Буду"
@@ -564,7 +600,7 @@ async def test_remind_mentions_only_chat_members(session, tenant_cfg):
     await _close_dm(session, CAPTAIN, SIDOROV)
     ch = FakeChannel()
     ch.members = [SIDOROV, PETROV, "999"]  # Капитанова в беседе нет (например, тестовая беседа)
-    await weekly._remind_silent(session, ch, entries["abl"], m, utcnow())
+    await weekly._remind_silent(session, ch, entries["abl"], m, _after_poll())
     assert set(_reminders(ch)) == {PETROV}, "личка — только с открытой"
     [(peer, text)] = ch.mention_sent
     assert peer == CHAT
@@ -578,7 +614,7 @@ async def test_remind_nobody_in_chat_no_message(session, tenant_cfg):
     await _close_dm(session, SIDOROV)
     ch = FakeChannel()
     ch.members = [CAPTAIN]
-    await weekly._remind_silent(session, ch, entries["abl"], m, utcnow())
+    await weekly._remind_silent(session, ch, entries["abl"], m, _after_poll())
     assert ch.mention_sent == [] and _to(ch, CHAT, reminders=True) == []
 
 
@@ -587,7 +623,7 @@ async def test_remind_chat_members_error(session, tenant_cfg):
     await _close_dm(session, SIDOROV)
     ch = FakeChannel()
     ch.members_error = ChannelError(917, "нет доступа к беседе")
-    await weekly._remind_silent(session, ch, entries["abl"], m, utcnow())
+    await weekly._remind_silent(session, ch, entries["abl"], m, _after_poll())
     assert ch.mention_sent == [] and _to(ch, CHAT, reminders=True) == []
     assert set(_reminders(ch)) == {CAPTAIN, PETROV}, "личка ушла"
 
@@ -602,8 +638,8 @@ async def test_remind_chat_send_error_is_logged(session, tenant_cfg):
 
     ch = Broken()
     ch.members = [SIDOROV]
-    await weekly._remind_silent(session, ch, entries["abl"], m, utcnow())  # не падает
-    await weekly._remind_silent(session, ch, entries["abl"], m, utcnow())
+    await weekly._remind_silent(session, ch, entries["abl"], m, _after_poll())  # не падает
+    await weekly._remind_silent(session, ch, entries["abl"], m, _after_poll())
     assert set(_reminders(ch)) == {CAPTAIN, PETROV}
 
 

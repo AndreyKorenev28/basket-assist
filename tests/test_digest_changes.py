@@ -24,7 +24,9 @@ async def _after_digest24(session, tenant_cfg):
     t0 = utcnow() - timedelta(hours=2)
     await session.execute(update(Attendance).values(updated_at=t0 - timedelta(hours=1)))
     session.add(
-        NotificationLog(tenant_id=tenant.id, kind="digest24", dedup_key=str(m.id), match_id=m.id, sent_at=t0)
+        NotificationLog(
+            tenant_id=tenant.id, kind="digest24", dedup_key=weekly.cycle_key(m), match_id=m.id, sent_at=t0
+        )
     )
     await session.commit()
     return tenant, m
@@ -133,12 +135,12 @@ async def test_changed_since_only_own_tenant_and_match(session, tenant_cfg):
 
 async def test_sent_at_and_was_sent(session, tenant_cfg):
     tenant, m = await _after_digest24(session, tenant_cfg)
-    at = await notify.sent_at(session, tenant.id, "digest24", str(m.id))
+    at = await notify.sent_at(session, tenant.id, "digest24", weekly.cycle_key(m))
     assert at is not None and at.tzinfo is None
-    assert await notify.was_sent(session, tenant.id, "digest24", str(m.id))
-    assert await notify.sent_at(session, tenant.id, "digest2", str(m.id)) is None
-    assert not await notify.was_sent(session, tenant.id, "digest2", str(m.id))
-    assert await notify.sent_at(session, tenant.id + 1, "digest24", str(m.id)) is None
+    assert await notify.was_sent(session, tenant.id, "digest24", weekly.cycle_key(m))
+    assert await notify.sent_at(session, tenant.id, "digest2", weekly.cycle_key(m)) is None
+    assert not await notify.was_sent(session, tenant.id, "digest2", weekly.cycle_key(m))
+    assert await notify.sent_at(session, tenant.id + 1, "digest24", weekly.cycle_key(m)) is None
 
 
 async def test_tick_final_digest_marks_change_after_daily(session, tenant_cfg):
