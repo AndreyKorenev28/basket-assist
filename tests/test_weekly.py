@@ -296,9 +296,11 @@ START = at(SAT, 12)
 def _dg_buttons(m: Match, kind: str) -> list[list[Button]]:
     ref = {"m": m.id, "k": kind}
     return [
-        [Button("Обновить", {"a": "dg", **ref}, "secondary")],
-        [Button("Добавить в заявку", {"a": "aa", **ref}), Button("Убрать из заявки", {"a": "ar", **ref})],
-        [Button(weekly.COPY_BUTTON, {"a": "ac", "m": m.id}, "secondary")],
+        [Button("➕ Добавить", {"a": "aa", **ref}), Button("➖ Убрать", {"a": "ar", **ref})],
+        [
+            Button("🔄 Обновить", {"a": "dg", **ref}, "secondary"),
+            Button(weekly.COPY_BUTTON, {"a": "ac", "m": m.id}, "secondary"),
+        ],
     ]
 
 

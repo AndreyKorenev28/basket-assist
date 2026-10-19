@@ -12,6 +12,11 @@ class Button:
     color: str = "secondary"  # positive / negative / primary / secondary
 
 
+# Две кнопки в ряду — по половине ширины: на телефоне (Android, VK) влезает ~12 символов, дальше «…».
+# Длинные подписи — своим рядом во всю ширину (решение владельца 2026-10-20).
+PAIR_LABEL_MAX = 12
+
+
 @dataclass(frozen=True)
 class MessageRef:
     peer_id: str

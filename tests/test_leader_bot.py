@@ -42,7 +42,7 @@ from basket_assist.storage.tables import (
     Tournament,
     utcnow,
 )
-from tests.fakes import FakeChannel
+from tests.fakes import FakeChannel, assert_pair_labels
 from tests.test_roster import CAPTAIN, CHAT, MEMBERS, VICE, _entry_id, _player, _press, _setup
 
 PETROV, SIDOROV, FRIEND = "10", "11", "13"
@@ -80,6 +80,7 @@ def _assert_vk_keyboard(rows) -> None:
     assert len(buttons) <= 10, f"кнопок {len(buttons)}"
     for b in buttons:
         assert 0 < len(b.label) <= 40, b.label
+    assert_pair_labels(rows)
 
 
 # ---------- Передача прав через кнопки ----------
@@ -563,7 +564,7 @@ async def test_roster_page_hides_taken_rows(session, tenant_cfg):
         page += 1
     assert a1 not in shown and big0 not in shown
     assert len(shown) == len(set(shown)) == 11  # 13 − 2 занятых
-    assert "стр. 1/2" in pages_text
+    assert "стр. 1/3" in pages_text  # 11 строк по PAGE = 4
 
     # подделанная кнопка с занятой строкой — конфликт, связь не меняется
     ch = FakeChannel()
@@ -621,7 +622,7 @@ async def test_queue_skip_then_confirm_goes_forward_not_back(session, tenant_cfg
     assert _card_item(ch) == c
     assert f"Осталось в очереди: {len(keys) - 1}" in ch.messages[(VICE, "500")]  # полный размер очереди
 
-    # «Нет в заявке» и «Не игрок команды» тоже ведут дальше
+    # «Нет в заявке» и «Не игрок» (не игрок команды) тоже ведут дальше
     await handle(session, ch, _press(VICE, {"a": "ln", "p": c[0], "e": c[1]}))
     after_c = keys[3]
     assert _card_item(ch) == after_c
@@ -713,7 +714,7 @@ async def test_matching_card_after_unknown_or_same(session, tenant_cfg):
     assert (skip["p"], skip["e"]) == keys[2]
 
 
-# ---------- «Не играет в лиге» (not_in_league) ----------
+# ---------- «Не в лиге» (not_in_league) ----------
 
 
 async def test_not_in_league_only_this_league_no_dms_and_goes_forward(session, tenant_cfg):
@@ -769,7 +770,7 @@ async def test_card_with_three_candidates_fits_vk_keyboard(session, tenant_cfg):
     actions = [[b.payload["a"] for b in row] for row in rows]
     assert actions == [["lk"], ["lk"], ["lk"], ["ls"], ["ln", "lnl"], ["lx", "lskip"]]
     lnl = rows[4][1]
-    assert lnl.label == "Не играет в лиге" and lnl.payload == {"a": "lnl", "p": petrov.id, "e": abl.id}
+    assert lnl.label == "Не в лиге" and lnl.payload == {"a": "lnl", "p": petrov.id, "e": abl.id}
 
 
 async def test_not_in_league_shown_in_my_data_and_fix(session, tenant_cfg):
@@ -1165,10 +1166,11 @@ async def test_players_command_hidden_from_player(session, tenant_cfg, cmd):
 # ---------- «помощь» и неизвестные команды ----------
 
 PLAYER_COMMANDS = [[("Игры", "игры", "primary"), ("Мои данные", "мои данные", "primary")]]
-LEADER_ROWS = [[("Состав и заявка", "состав", "secondary"), ("Игроки", "игроки", "secondary")]]
-MATCHING = ("Сопоставление", "сопоставление", "secondary")
-ACTING_COMMANDS = [*PLAYER_COMMANDS, *LEADER_ROWS, [MATCHING]]
-CAPTAIN_COMMANDS = [*PLAYER_COMMANDS, *LEADER_ROWS, [MATCHING, ("Права", "права", "secondary")]]
+LINEUP = [("Состав и заявка", "состав", "secondary")]  # длинная подпись — своим рядом
+PLAYERS = ("Игроки", "игроки", "secondary")
+MATCHING = [("Сопоставление", "сопоставление", "secondary")]
+ACTING_COMMANDS = [LINEUP, *PLAYER_COMMANDS, [PLAYERS], MATCHING]
+CAPTAIN_COMMANDS = [LINEUP, *PLAYER_COMMANDS, [PLAYERS, ("Права", "права", "secondary")], MATCHING]
 
 
 def _commands(rows) -> list[list[tuple[str, str, str]]]:
@@ -1291,7 +1293,7 @@ async def test_chat_help(session, tenant_cfg, cmd):
     ch = FakeChannel()
     await handle(session, ch, IncomingMessage(CHAT, SIDOROV, cmd, is_chat=True, mentioned=True))
     assert ch.sent == [(CHAT, HELP_CHAT, CHAT_BUTTONS)]
-    assert _commands(CHAT_BUTTONS) == [[("Игры", "игры", "primary"), ("Перейти к боту", "бот", "primary")]]
+    assert _commands(CHAT_BUTTONS) == [[("Игры", "игры", "primary")], [("Перейти к боту", "бот", "primary")]]
     assert "в личке" in HELP_CHAT and HELP_LEADER not in HELP_CHAT
     assert "• бот — перейти в личку" in HELP_CHAT and "подключиться" not in HELP_CHAT
 
@@ -1589,12 +1591,8 @@ def _lineup_buttons(rows):
 def _card_buttons(m) -> list:
     ref = {"m": m.id, "k": "app"}
     return [
-        [("Обновить", {"a": "dg", **ref}, "secondary")],
-        [
-            ("Добавить в заявку", {"a": "aa", **ref}, "secondary"),
-            ("Убрать из заявки", {"a": "ar", **ref}, "secondary"),
-        ],
-        [(weekly.COPY_BUTTON, {"a": "ac", "m": m.id}, "secondary")],
+        [("➕ Добавить", {"a": "aa", **ref}, "secondary"), ("➖ Убрать", {"a": "ar", **ref}, "secondary")],
+        [("🔄 Обновить", {"a": "dg", **ref}, "secondary"), ("📋 Текст", {"a": "ac", "m": m.id}, "secondary")],
     ]
 
 

@@ -38,7 +38,7 @@ DIGESTS = {  # вид сводки → (за сколько до начала, �
     "digest2": (timedelta(hours=2), "📋 Финальная сводка: игра через 2 часа"),
 }
 APP_TITLE = "📝 Состав и заявка на игру"  # карточка по запросу (кнопка «Состав и заявка»)
-COPY_BUTTON = "📋 Текст для копирования"
+COPY_BUTTON = "📋 Текст"  # текст для копирования; в паре — не длиннее PAIR_LABEL_MAX
 REMIND_BEFORE = timedelta(hours=30)  # напоминание молчащим (architecture.md §5)
 REMIND_AFTER_POLL = timedelta(hours=3)  # опрос запущен поздно — не напоминаем в ту же минуту, что и анонс
 
@@ -259,7 +259,7 @@ async def send_digest(
 async def digest_message(
     session: AsyncSession, tenant_id: int, match: Match, kind: str
 ) -> tuple[str, list[list[Button]]]:
-    """Текст сводки и кнопки: [Обновить], [Добавить в заявку] [Убрать из заявки], [📋] (leader.on_button).
+    """Текст сводки и кнопки: [➕ Добавить] [➖ Убрать], [🔄 Обновить] [📋 Текст] (leader.on_button).
 
     kind: digest24 / digest2 — сводки по расписанию; app — карточка по запросу («Состав и заявка»).
     «📋» шлёт свежий текст для копирования: после правок текст, пришедший со сводкой, устаревает.
@@ -273,9 +273,11 @@ async def digest_message(
     text += f"\n\n{NUMBER_HINT}"
     ref = {"m": match.id, "k": kind}
     return text, [
-        [Button("Обновить", {"a": "dg", **ref}, "secondary")],
-        [Button("Добавить в заявку", {"a": "aa", **ref}), Button("Убрать из заявки", {"a": "ar", **ref})],
-        [Button(COPY_BUTTON, {"a": "ac", "m": match.id}, "secondary")],
+        [Button("➕ Добавить", {"a": "aa", **ref}), Button("➖ Убрать", {"a": "ar", **ref})],
+        [
+            Button("🔄 Обновить", {"a": "dg", **ref}, "secondary"),
+            Button(COPY_BUTTON, {"a": "ac", "m": match.id}, "secondary"),
+        ],
     ]
 
 

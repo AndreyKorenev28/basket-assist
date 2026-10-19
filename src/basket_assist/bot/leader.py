@@ -30,7 +30,7 @@ from basket_assist.storage.tables import (
     utcnow,
 )
 
-PAGE = 6
+PAGE = 4  # строк заявки на сезон на странице: по одной ФИО в ряд + навигация + «Отмена» ≤ 6 рядов VK
 DURATIONS = {3: "3 дня", 7: "7 дней", 14: "14 дней", 0: "До отмены"}
 
 
@@ -49,7 +49,7 @@ def _fio(r: SeasonRosterEntry) -> str:
 async def lineup(session: AsyncSession, tenant_id: int) -> list[tuple[str, list[list[Button]] | None]]:
     """«Состав и заявка»: по сообщению на каждую лигу (ближайший матч).
 
-    Идёт опрос — карточка с правкой заявки на игру и «📋 Текст для копирования»;
+    Идёт опрос — карточка с правкой заявки на игру и «📋 Текст» (текст для копирования);
     опроса нет — состояние матча без кнопок и подсказка, что делать капитану.
     """
     out: list[tuple[str, list[list[Button]] | None]] = []
@@ -455,20 +455,28 @@ async def _card(session: AsyncSession, tenant_id: int, item: roster.QueueItem):
             rows.append([Button(_label(f"✅ {_fio(r)}"), {"a": "lk", "p": p, "e": e, "r": r.id}, "positive")])
     else:
         lines.append("Совпадений в заявке на сезон не нашлось.")
+    lines += ["", CARD_LEGEND]
     rows.append([Button("Выбрать из заявки", {"a": "ls", "p": p, "e": e, "pg": 0}, "primary")])
     rows.append(
         [
             Button("Нет в заявке", {"a": "ln", "p": p, "e": e}),
-            Button("Не играет в лиге", {"a": "lnl", "p": p, "e": e}),
+            Button("Не в лиге", {"a": "lnl", "p": p, "e": e}),
         ]
     )
     rows.append(
         [
-            Button("Не игрок команды", {"a": "lx", "p": p, "e": e}, "negative"),
+            Button("Не игрок", {"a": "lx", "p": p, "e": e}, "negative"),
             Button("Пропустить", {"a": "lskip", "p": p, "e": e}),
         ]
     )
     return "\n".join(lines), rows
+
+
+# подписи кнопок в паре короткие (PAIR_LABEL_MAX) — полный смысл здесь, в тексте карточки
+CARD_LEGEND = (
+    "«Нет в заявке» — играет за команду, но не заявлен на сезон; «Не в лиге» — не играет в этой лиге; "
+    "«Не игрок» — не игрок команды (во всех лигах)."
+)
 
 
 async def roster_page(
@@ -479,8 +487,8 @@ async def roster_page(
     taken = await roster._taken(session, tenant_id, entry)
     rows_all = [r for r in await roster.roster_rows(session, entry) if r.id not in taken]
     chunk = rows_all[page * PAGE : (page + 1) * PAGE]
-    buttons = [Button(_label(_fio(r)), {"a": "lk", "p": player_id, "e": entry_id, "r": r.id}) for r in chunk]
-    rows = [buttons[i : i + 2] for i in range(0, len(buttons), 2)]
+    # ФИО длинные — по одной в ряд, во всю ширину (PAIR_LABEL_MAX)
+    rows = [[Button(_label(_fio(r)), {"a": "lk", "p": player_id, "e": entry_id, "r": r.id})] for r in chunk]
     nav = []
     if page > 0:
         nav.append(Button("← Назад", {"a": "ls", "p": player_id, "e": entry_id, "pg": page - 1}))
@@ -639,7 +647,7 @@ async def on_button(
         for text, buttons in await lineup(session, tenant_id):
             await channel.send(press.peer_id, text, buttons)
         return None
-    if a == "ac":  # «📋 Текст для копирования» — свежая заявка на игру отдельным сообщением
+    if a == "ac":  # «📋 Текст» — свежая заявка на игру отдельным сообщением
         match = await session.get(Match, d.get("m"))
         try:
             if match is None:

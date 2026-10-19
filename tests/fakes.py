@@ -1,6 +1,18 @@
 """Фальшивый канал для тестов сервисов: запоминает, что бот отправил."""
 
-from basket_assist.channels.base import Button, ButtonPress, ChannelError, MessageRef
+from basket_assist.channels.base import PAIR_LABEL_MAX, Button, ButtonPress, ChannelError, MessageRef
+
+
+def assert_pair_labels(buttons: list[list[Button]] | None) -> None:
+    """В ряду из 2+ кнопок каждая — пол-ширины: на телефоне влезает не больше PAIR_LABEL_MAX символов."""
+    for row in buttons or []:
+        if len(row) < 2:
+            continue
+        for b in row:
+            assert len(b.label) <= PAIR_LABEL_MAX, (
+                f"подпись «{b.label}» в ряду из {len(row)} кнопок: {len(b.label)} символов > {PAIR_LABEL_MAX} "
+                f"(ряд: {[x.label for x in row]}) — длинную подпись ставить своим рядом"
+            )
 
 
 class FakeChannel:
@@ -30,6 +42,7 @@ class FakeChannel:
             yield
 
     async def send(self, peer_id: str, text: str, buttons: list[list[Button]] | None = None) -> MessageRef:
+        assert_pair_labels(buttons)
         self._next += 1
         ref = MessageRef(peer_id, str(self._next))
         self.sent.append((peer_id, text, buttons))
@@ -42,6 +55,7 @@ class FakeChannel:
     ) -> MessageRef:
         if self.image_error is not None:
             raise self.image_error
+        assert_pair_labels(buttons)
         self._next += 1
         ref = MessageRef(peer_id, str(self._next))
         self.images.append((peer_id, image, text, buttons))
@@ -50,6 +64,7 @@ class FakeChannel:
         return ref
 
     async def edit(self, msg: MessageRef, text: str, buttons=None) -> bool:
+        assert_pair_labels(buttons)
         if not self.editable:
             self.editable = True  # старое не редактируется, новое — да
             return False

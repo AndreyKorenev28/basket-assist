@@ -206,12 +206,11 @@ async def test_digest_message_number_hint(session, tenant_cfg):
     text, buttons = await weekly.digest_message(session, tenant.id, m, "digest2")
     assert text.endswith(f"\n\n{weekly.NUMBER_HINT}")
     assert [[(b.label, b.payload) for b in row] for row in buttons] == [
-        [("Обновить", {"a": "dg", "m": m.id, "k": "digest2"})],
         [
-            ("Добавить в заявку", {"a": "aa", "m": m.id, "k": "digest2"}),
-            ("Убрать из заявки", {"a": "ar", "m": m.id, "k": "digest2"}),
+            ("➕ Добавить", {"a": "aa", "m": m.id, "k": "digest2"}),
+            ("➖ Убрать", {"a": "ar", "m": m.id, "k": "digest2"}),
         ],
-        [("📋 Текст для копирования", {"a": "ac", "m": m.id})],
+        [("🔄 Обновить", {"a": "dg", "m": m.id, "k": "digest2"}), ("📋 Текст", {"a": "ac", "m": m.id})],
     ]
 
 
@@ -682,9 +681,8 @@ def test_vk_mention_escapes(name, expected):
 def _app_buttons(m) -> list:
     ref = {"m": m.id, "k": "app"}
     return [
-        [("Обновить", {"a": "dg", **ref})],
-        [("Добавить в заявку", {"a": "aa", **ref}), ("Убрать из заявки", {"a": "ar", **ref})],
-        [("📋 Текст для копирования", {"a": "ac", "m": m.id})],
+        [("➕ Добавить", {"a": "aa", **ref}), ("➖ Убрать", {"a": "ar", **ref})],
+        [("🔄 Обновить", {"a": "dg", **ref}), ("📋 Текст", {"a": "ac", "m": m.id})],
     ]
 
 
@@ -857,7 +855,7 @@ async def test_application_command_no_match_text(session, tenant_cfg):
     assert ch.sent == [(CAPTAIN, NO_ABL, None), (CAPTAIN, NO_MLBL, None)]
 
 
-# ---------- «📋 Текст для копирования» (кнопка «ac») ----------
+# ---------- «📋 Текст» — текст для копирования (кнопка «ac») ----------
 
 
 async def test_copy_button_sends_application_text(session, tenant_cfg):

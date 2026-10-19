@@ -73,7 +73,7 @@ def _cmd(label: str, command: str, color: str = "primary") -> Button:
 # «Состав и заявка» — одна команда (до 20.10 были отдельные «состав» и «заявка»)
 LINEUP_WORDS = ("состав", "состав и заявка", "заявка", "заявка на игру", "кто идёт", "кто идет")
 GO_WORDS = ("бот", "перейти к боту", "подключиться", "старт", "начать", "личка")
-CHAT_BUTTONS = [[_cmd("Игры", "игры"), _cmd("Перейти к боту", "бот")]]
+CHAT_BUTTONS = [[_cmd("Игры", "игры")], [_cmd("Перейти к боту", "бот")]]  # длинная подпись — своим рядом
 UNKNOWN_CHAT = (
     "Эта беседа пока не подключена к Basket Assist, поэтому здесь я не отвечаю на команды "
     "и не публикую анонсы. Подключение настраивает администратор сервиса."
@@ -292,16 +292,17 @@ async def _players(
 
 async def _help_dm(session, player_id: int, is_leader: bool) -> tuple[str, list[list[Button]]]:
     """Список команд в личке и кнопки к нему: игроку — общие, руководителям — ещё свои («права» — без и. о.)."""
-    buttons = [[_cmd("Игры", "игры"), _cmd("Мои данные", "мои данные")]]
+    common = [_cmd("Игры", "игры"), _cmd("Мои данные", "мои данные")]
     if not is_leader:
-        return HELP_DM + HELP_BUTTONS_HINT, buttons
-    buttons.append([_cmd("Состав и заявка", "состав", "secondary"), _cmd("Игроки", "игроки", "secondary")])
-    last_row = [_cmd("Сопоставление", "сопоставление", "secondary")]
+        return HELP_DM + HELP_BUTTONS_HINT, [common]
+    # длинные подписи — на всю ширину, в паре только короткие (≤ PAIR_LABEL_MAX)
+    buttons = [[_cmd("Состав и заявка", "состав", "secondary")], common]
+    players_row = [_cmd("Игроки", "игроки", "secondary")]
     rights = ""
     if await leaders.is_captain_or_vice(session, player_id):
         rights = HELP_RIGHTS
-        last_row.append(_cmd("Права", "права", "secondary"))
-    buttons.append(last_row)
+        players_row.append(_cmd("Права", "права", "secondary"))
+    buttons += [players_row, [_cmd("Сопоставление", "сопоставление", "secondary")]]
     return f"{HELP_DM}\n\n{HELP_LEADER}{rights}{HELP_LEADER_TEXT}", buttons
 
 
