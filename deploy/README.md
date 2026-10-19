@@ -33,3 +33,15 @@
 - Синхронизация вручную: `runuser -u basket -- env DB_PATH=… TENANT_CONFIG=… venv/bin/python -m basket_assist --sync --show` в `/opt/basket-assist`.
 - Бэкап вне сервера: `deploy/fetch-backup.sh` → `data/backups/` (вне git). Делать хотя бы раз в неделю.
 - Восстановление: остановить службу, `gunzip -c backups/<файл>.db.gz > data/basket_assist.db`, `chown basket:basket`, запустить.
+
+## Подводные камни (встретились на RUVDS, Debian 13, 2026-10-19)
+- **Вход по ключу.** Ключ, указанный при заказе, не добавился — добавляли вручную через SSH с паролем root
+  (`~/.ssh/authorized_keys`). После `install.sh` вход по паролю закрыт; на крайний случай — консоль в панели провайдера.
+- **GRUB.** `apt upgrade` падал на `grub-pc`: в шаблоне образа прописан несуществующий диск. Лечение (сервер BIOS,
+  один диск `sda`): `echo "grub-pc grub-pc/install_devices multiselect /dev/disk/by-id/<диск sda>" | debconf-set-selections`
+  и `dpkg --configure -a`. ID диска — `ls -l /dev/disk/by-id/`.
+- **DNS.** Без IPv6 каждый запрос ждал 5 с (glibc ждёт ответ на AAAA). `install.sh` добавляет `options single-request-reopen`
+  в `/etc/resolv.conf`. Проверка: `curl -w "%{time_namelookup}\n" -o /dev/null -s https://api.vk.com` — должно быть < 0,5 с.
+- **CRLF.** На Windows `git archive` при `core.autocrlf=true` отдавал файлы с CRLF — на сервере `#!/bin/sh\r` не запускался
+  (бэкап падал с 203/EXEC). Исправлено `.gitattributes` (`eol=lf`); новые скрипты для сервера — только с LF.
+- **Два бота.** Бот на компьютере разработчика больше не запускать: два процесса на одном сообществе делят события Long Poll.

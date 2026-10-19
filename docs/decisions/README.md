@@ -26,8 +26,9 @@
 ## Реестр
 | № | Решение | Статус |
 |---|---|---|
-| [0001](0001-hosting-firstvds.md) | Хостинг MVP — FirstVDS «Прогрев» | принято |
+| [0001](0001-hosting-firstvds.md) | Хостинг MVP — FirstVDS «Прогрев» | заменено 0006 |
 | [0002](0002-mvp-channel-telegram.md) | Канал MVP — Telegram (вместо VK) | заменено 0003 |
 | [0003](0003-mvp-channel-vk-return.md) | Канал MVP — VK (возврат) | принято |
 | [0004](0004-vk-bot-admin-and-poll-format.md) | Бот VK — администратор беседы; анонс-голосование «Буду / Не буду» с именами | принято |
 | [0005](0005-mvp-stack-and-architecture.md) | Стек и архитектура MVP | принято |
+| [0006](0006-hosting-ruvds.md) | Хостинг MVP — RUVDS START HIT SSD, Debian 13 | принято |

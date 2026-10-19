@@ -150,10 +150,10 @@ class ChannelAdapter(Protocol):           # channels/base.py
 - `config/tenant.toml` (вне git): команда, выступления (ссылки АБЛ Westchester и МЛБЛ МИРЭА), peer_id беседы, VK ID капитана и заместителя. Загружается в БД при старте (идемпотентно). В целевом решении это заменит подключение через бота (сценарий 0).
 
 ## 8. Развёртывание и эксплуатация
-- VPS FirstVDS, Ubuntu LTS, Python 3.13 в venv, сервис **systemd** (автоперезапуск).
-- Бэкап: `sqlite3 .backup` по cron раз в сутки, шифрование (`age`/`gpg`), хранение 14 дней + копия вне сервера.
-- Логи: journald, без текста чужих сообщений и без ПДн сверх ID.
-- Обновление: `git pull` + миграции Alembic + перезапуск сервиса (скрипт в `deploy/`).
+- VPS **RUVDS** ([ADR 0006](decisions/0006-hosting-ruvds.md)), **Debian 13**, Python 3.13 в venv, служба **systemd** `basket-assist` (автоперезапуск, пользователь `basket` без прав root, писать можно только в `data/`, лимит памяти 400 МБ). Подробно — `deploy/README.md`.
+- Бэкап: `sqlite3 .backup` через systemd-таймер в 04:30 МСК, gzip, 14 дней на сервере (`/opt/basket-assist/backups`) + копия на компьютер владельца («Забрать бэкап.cmd», 30 копий в `data/backups/`). Шифрования нет: файлы доступны только root/basket на сервере и владельцу локально.
+- Логи: journald, без текста чужих сообщений и без ПДн сверх ID; httpx — на WARNING (в URL Long Poll есть ключ).
+- Обновление: `deploy/deploy.sh` с компьютера — код из git HEAD (`git archive`, только закоммиченное), venv, миграции (`--check`), перезапуск; предыдущая версия — `app.old` для отката.
 
 ## 9. Этапы MVP
 | Этап | Результат | Проверка |
