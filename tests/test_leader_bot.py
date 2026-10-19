@@ -1169,8 +1169,9 @@ PLAYER_COMMANDS = [[("Игры", "игры", "primary"), ("Мои данные",
 LINEUP = [("Состав и заявка", "состав", "secondary")]  # длинная подпись — своим рядом
 PLAYERS = ("Игроки", "игроки", "secondary")
 MATCHING = [("Сопоставление", "сопоставление", "secondary")]
-ACTING_COMMANDS = [LINEUP, *PLAYER_COMMANDS, [PLAYERS], MATCHING]
-CAPTAIN_COMMANDS = [LINEUP, *PLAYER_COMMANDS, [PLAYERS, ("Права", "права", "secondary")], MATCHING]
+# личные кнопки — последним рядом, после кнопок руководителя (решение владельца 2026-10-20)
+ACTING_COMMANDS = [LINEUP, [PLAYERS], MATCHING, *PLAYER_COMMANDS]
+CAPTAIN_COMMANDS = [LINEUP, [PLAYERS, ("Права", "права", "secondary")], MATCHING, *PLAYER_COMMANDS]
 
 
 def _commands(rows) -> list[list[tuple[str, str, str]]]:

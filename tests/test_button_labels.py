@@ -62,15 +62,15 @@ async def test_help_dm_pairs_fit_player_captain_acting(session, tenant_cfg):
     assert [[b.label for b in r] for r in player_rows] == [["Игры", "Мои данные"]]
     assert [[b.label for b in r] for r in captain_rows] == [
         ["Состав и заявка"],
-        ["Игры", "Мои данные"],
         ["Игроки", "Права"],
         ["Сопоставление"],
+        ["Игры", "Мои данные"],
     ]
     assert [[b.label for b in r] for r in acting_rows] == [
         ["Состав и заявка"],
-        ["Игры", "Мои данные"],
         ["Игроки"],
         ["Сопоставление"],
+        ["Игры", "Мои данные"],
     ]
 
 

@@ -295,14 +295,15 @@ async def _help_dm(session, player_id: int, is_leader: bool) -> tuple[str, list[
     common = [_cmd("Игры", "игры"), _cmd("Мои данные", "мои данные")]
     if not is_leader:
         return HELP_DM + HELP_BUTTONS_HINT, [common]
+    # сверху — кнопки руководителя, последним рядом — личные (как у игрока);
     # длинные подписи — на всю ширину, в паре только короткие (≤ PAIR_LABEL_MAX)
-    buttons = [[_cmd("Состав и заявка", "состав", "secondary")], common]
+    buttons = [[_cmd("Состав и заявка", "состав", "secondary")]]
     players_row = [_cmd("Игроки", "игроки", "secondary")]
     rights = ""
     if await leaders.is_captain_or_vice(session, player_id):
         rights = HELP_RIGHTS
         players_row.append(_cmd("Права", "права", "secondary"))
-    buttons += [players_row, [_cmd("Сопоставление", "сопоставление", "secondary")]]
+    buttons += [players_row, [_cmd("Сопоставление", "сопоставление", "secondary")], common]
     return f"{HELP_DM}\n\n{HELP_LEADER}{rights}{HELP_LEADER_TEXT}", buttons
 
 
