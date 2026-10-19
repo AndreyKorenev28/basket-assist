@@ -1,0 +1,12 @@
+[Unit]
+Description=Basket Assist — бэкап базы SQLite
+
+[Service]
+Type=oneshot
+User=basket
+Group=basket
+ExecStart=/opt/basket-assist/app/deploy/backup.sh
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/basket-assist/backups /opt/basket-assist/data

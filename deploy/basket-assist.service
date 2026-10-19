@@ -1,0 +1,29 @@
+[Unit]
+Description=Basket Assist — бот VK любительской баскетбольной команды
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=basket
+Group=basket
+# .env (секреты) читается из рабочего каталога
+WorkingDirectory=/opt/basket-assist
+Environment=DB_PATH=/opt/basket-assist/data/basket_assist.db
+Environment=TENANT_CONFIG=/opt/basket-assist/config/tenant.toml
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONIOENCODING=utf-8
+ExecStart=/opt/basket-assist/venv/bin/python -m basket_assist
+Restart=always
+RestartSec=10
+
+# Изоляция: писать можно только в data/
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/opt/basket-assist/data
+MemoryMax=400M
+
+[Install]
+WantedBy=multi-user.target

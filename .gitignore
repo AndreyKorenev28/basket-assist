@@ -22,3 +22,6 @@ spikes/**/events.jsonl
 
 # Локальная конфигурация команды (реальные имена, VK ID)
 config/tenant.toml
+
+# Адрес сервера для deploy/*.sh
+deploy/host.local

@@ -1,0 +1,10 @@
+[Unit]
+Description=Basket Assist — ежедневный бэкап базы (04:30 МСК)
+
+[Timer]
+OnCalendar=*-*-* 04:30:00 Europe/Moscow
+Persistent=true
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target
