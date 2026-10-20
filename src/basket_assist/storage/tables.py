@@ -177,6 +177,8 @@ class TeamEntry(Base):
 
 
 class Chat(Base):
+    """Беседа команды. Активна одна на команду и мессенджер; в старых бот молчит, анонсы переносятся."""
+
     __tablename__ = "chat"
     __table_args__ = (UniqueConstraint("channel", "peer_id"),)
 
@@ -185,6 +187,7 @@ class Chat(Base):
     channel: Mapped[str] = mapped_column(String(20))
     peer_id: Mapped[str] = mapped_column(String(50))
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
 
 
 class Player(Base):

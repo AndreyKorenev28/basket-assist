@@ -34,6 +34,24 @@
 - Бэкап вне сервера: `deploy/fetch-backup.sh` → `data/backups/` (вне git). Делать хотя бы раз в неделю.
 - Восстановление: остановить службу, `gunzip -c backups/<файл>.db.gz > data/basket_assist.db`, `chown basket:basket`, запустить.
 
+## Переезд беседы (тестовая → беседа команды)
+У команды одна активная беседа — та, что в `vk_chat_peer_id` (`config/tenant.toml`). При смене peer_id прежняя беседа
+гаснет (бот там не отвечает, на кнопки — «Голосование перенесено»), а открытые анонсы планировщик в течение минуты
+публикует заново в новой беседе и закрепляет; старые анонсы заменяются текстом «перенесён» без кнопок. Отметки
+привязаны к матчу и переезжают вместе с анонсом, поэтому тестовые отметки удаляют заранее (решение владельца 2026-10-20):
+1. Выложить код с переездом: `sh deploy/deploy.sh`.
+2. На сервере (от root, в `/opt/basket-assist`): остановить бота, сделать бэкап и удалить отметки будущих матчей
+   вместе с отметками о разосланных сигналах «нет в заявке на сезон»:
+   ```sh
+   systemctl stop basket-assist && systemctl start basket-assist-backup
+   sqlite3 data/basket_assist.db "
+     DELETE FROM attendance WHERE match_id IN (SELECT id FROM match WHERE start_at > datetime('now'));
+     DELETE FROM notification_log WHERE kind = 'not_in_roster'
+       AND match_id IN (SELECT id FROM match WHERE start_at > datetime('now'));"
+   ```
+3. На компьютере: `vk_chat_peer_id` = peer_id беседы команды → `sh deploy/deploy.sh --with-secrets` (бот запустится).
+4. Проверить в логе `анонс матча … перенесён` и закреплённый анонс в беседе команды; игрокам — «Начать» в личке сообщества.
+
 ## Подводные камни (встретились на RUVDS, Debian 13, 2026-10-19)
 - **Вход по ключу.** Ключ, указанный при заказе, не добавился — добавляли вручную через SSH с паролем root
   (`~/.ssh/authorized_keys`). После `install.sh` вход по паролю закрыт; на крайний случай — консоль в панели провайдера.

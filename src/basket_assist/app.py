@@ -9,10 +9,10 @@ from basket_assist.bot.handlers import handle
 from basket_assist.channels.base import ButtonPress, ChannelAdapter
 from basket_assist.channels.vk import VkChannel, VkClient
 from basket_assist.config import Settings
-from basket_assist.services import polls, scheduler
+from basket_assist.services import chats, polls, scheduler
 from basket_assist.sources.base import make_client
 from basket_assist.storage import db
-from basket_assist.storage.tables import Chat, Match, TeamEntry
+from basket_assist.storage.tables import Match, TeamEntry
 
 log = logging.getLogger(__name__)
 
@@ -75,15 +75,7 @@ async def post_poll(settings: Settings, match_id: int) -> str:
                 .scalars()
                 .first()
             )
-            chat = (
-                (
-                    await session.execute(
-                        select(Chat).filter_by(tenant_id=entry.tenant_id, channel=channel.channel)
-                    )
-                )
-                .scalars()
-                .first()
-            )
+            chat = await chats.active_chat(session, entry.tenant_id, channel.channel)
             if chat is None:
                 return "Беседа команды не задана (vk_chat_peer_id в config/tenant.toml)"
             poll = await polls.publish(session, channel, chat, match)

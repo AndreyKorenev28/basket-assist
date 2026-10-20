@@ -8,17 +8,17 @@
 import asyncio
 import logging
 from collections import defaultdict
-from datetime import UTC
+from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from basket_assist.channels.base import Button, ButtonPress, ChannelAdapter, MessageRef
+from basket_assist.channels.base import Button, ButtonPress, ChannelAdapter, ChannelError, MessageRef
 from basket_assist.domain.models import MatchStatus, Vote
-from basket_assist.services import leaders, notify, roster
+from basket_assist.services import chats, leaders, notify, roster
 from basket_assist.services.players import get_or_create_player
-from basket_assist.services.schedule import kit_hint, teams
+from basket_assist.services.schedule import FINISHED, kit_hint, teams
 from basket_assist.storage.tables import (
     Attendance,
     Chat,
@@ -140,6 +140,10 @@ async def publish(session: AsyncSession, channel: ChannelAdapter, chat: Chat, ma
     existing = await _current_poll(session, chat.tenant_id, match.id)
     if existing is not None:
         return existing
+    return await _post(session, channel, chat, match)
+
+
+async def _post(session: AsyncSession, channel: ChannelAdapter, chat: Chat, match: Match) -> PollMessage:
     text = await render(session, match, chat.tenant_id)
     ref = await channel.send(chat.peer_id, text, vote_buttons(match.id))
     poll = PollMessage(
@@ -177,6 +181,58 @@ async def refresh(session: AsyncSession, channel: ChannelAdapter, tenant_id: int
         "Этот анонс устарел — актуальный закреплён в беседе. Кнопки здесь тоже работают.",
         vote_buttons(match.id),
     )
+
+
+MOVED_TEXT = "Анонс перенесён в беседу команды — отмечайтесь там. Здесь голосование закрыто."
+
+
+async def relocate(
+    session: AsyncSession, channel: ChannelAdapter, tenant_id: int, now: datetime | None = None
+) -> int:
+    """Переезд беседы: открытые анонсы из неактивных бесед публикуются заново в активной, старые закрываются.
+
+    Отметки привязаны к матчу, а не к беседе, поэтому в новом анонсе они сохраняются.
+    При сбое VK анонс остаётся в старой беседе, и планировщик повторит попытку.
+    """
+    chat = await chats.active_chat(session, tenant_id, channel.channel)
+    if chat is None:
+        return 0
+    now = now or utcnow()
+    rows = (
+        await session.execute(
+            select(PollMessage, Match, Chat)
+            .join(Match, Match.id == PollMessage.match_id)
+            .join(Chat, Chat.id == PollMessage.chat_id)
+            .where(
+                PollMessage.tenant_id == tenant_id,
+                PollMessage.superseded_by_id.is_(None),
+                Chat.channel == channel.channel,
+                Chat.id != chat.id,
+                Match.status.not_in(FINISHED),
+                or_(Match.start_at.is_(None), Match.start_at > now),
+            )
+        )
+    ).all()
+    moved = 0
+    for old, match, old_chat in rows:
+        # попытка — не чаще раза в час: при сбое VK не долбим каждую минуту
+        if not await notify.once(
+            session, tenant_id, "poll_move_try", f"{match.id}:{chat.id}:{now:%Y-%m-%dT%H}", match_id=match.id
+        ):
+            continue
+        await session.commit()
+        try:
+            new = await _post(session, channel, chat, match)
+        except ChannelError as e:
+            log.warning("анонс матча %s не перенесён в беседу %s: %s", match.id, chat.peer_id, e)
+            continue
+        old.superseded_by_id = new.id
+        await session.commit()
+        moved += 1
+        log.info("анонс матча %s перенесён из беседы %s в %s", match.id, old_chat.peer_id, chat.peer_id)
+        # без кнопок; если VK не даст отредактировать — нажатия в неактивной беседе всё равно не учитываются
+        await channel.edit(MessageRef(old_chat.peer_id, old.message_ref), MOVED_TEXT)
+    return moved
 
 
 async def on_vote(session: AsyncSession, channel: ChannelAdapter, tenant_id: int, press: ButtonPress) -> None:

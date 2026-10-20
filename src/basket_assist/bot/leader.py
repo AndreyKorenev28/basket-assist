@@ -13,12 +13,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from basket_assist.channels.base import Button, ButtonPress, ChannelAdapter
 from basket_assist.domain.models import TimeStatus
-from basket_assist.services import digests, leaders, notify, polls, roster, weekly
+from basket_assist.services import chats, digests, leaders, notify, polls, roster, weekly
 from basket_assist.services.schedule import format_when, teams, upcoming_matches, weekend_days
 from basket_assist.services.table_image import PlayersTable, TableRow, render_players
 from basket_assist.storage.tables import (
     ApplicationEntry,
-    Chat,
     League,
     LeagueTeam,
     Match,
@@ -552,11 +551,7 @@ async def _name(session: AsyncSession, tenant_id: int, player_id: int) -> str:
 async def _announce_in_chat(
     session: AsyncSession, channel: ChannelAdapter, tenant_id: int, text: str
 ) -> None:
-    chat = (
-        (await session.execute(select(Chat).filter_by(tenant_id=tenant_id, channel=channel.channel)))
-        .scalars()
-        .first()
-    )
+    chat = await chats.active_chat(session, tenant_id, channel.channel)
     if chat is not None:
         await channel.send(chat.peer_id, text)
 

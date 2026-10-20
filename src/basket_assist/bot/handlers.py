@@ -78,6 +78,11 @@ UNKNOWN_CHAT = (
     "Эта беседа пока не подключена к Basket Assist, поэтому здесь я не отвечаю на команды "
     "и не публикую анонсы. Подключение настраивает администратор сервиса."
 )
+MOVED_CHAT = (
+    "Basket Assist переехал в другую беседу команды: анонсы и команды теперь там. "
+    "В этой беседе я больше не работаю. Личные сообщения со мной — как раньше."
+)
+MOVED_CHAT_TOAST = "Голосование перенесено в беседу команды"
 UNKNOWN_BUTTONS = [[_cmd("Помощь", "помощь", "secondary")]]
 WELCOME_DM = (
     "Привет! Вы подключены к Basket Assist.\n"
@@ -87,11 +92,16 @@ WELCOME_DM = (
 )
 
 
-async def _tenant_for_chat(session: AsyncSession, channel: ChannelAdapter, peer_id: str) -> int | None:
-    chat = (
+async def _chat(session: AsyncSession, channel: ChannelAdapter, peer_id: str) -> Chat | None:
+    return (
         await session.execute(select(Chat).filter_by(channel=channel.channel, peer_id=peer_id))
     ).scalar_one_or_none()
-    return chat.tenant_id if chat else None
+
+
+async def _tenant_for_chat(session: AsyncSession, channel: ChannelAdapter, peer_id: str) -> int | None:
+    """Команда активной беседы; в прежней беседе (после переезда) бот не работает."""
+    chat = await _chat(session, channel, peer_id)
+    return chat.tenant_id if chat and chat.active else None
 
 
 async def _tenant_for_user(session: AsyncSession, channel: ChannelAdapter, user_id: str) -> int | None:
@@ -115,7 +125,10 @@ async def handle(session: AsyncSession, channel: ChannelAdapter, event: Event) -
         case ButtonPress():
             chat_tenant = await _tenant_for_chat(session, channel, event.peer_id)
             if chat_tenant is None and event.peer_id != event.user_id:
-                return  # кнопка в неподключённой беседе (в личке peer_id = user_id) — не обрабатываем
+                # кнопка в неподключённой или прежней беседе (в личке peer_id = user_id) — не обрабатываем
+                if await _chat(session, channel, event.peer_id) is not None:
+                    await channel.answer_button(event, MOVED_CHAT_TOAST)
+                return
             tenant_id = chat_tenant or await _tenant_for_user(session, channel, event.user_id)
             if tenant_id is None:
                 return
@@ -135,7 +148,8 @@ async def handle(session: AsyncSession, channel: ChannelAdapter, event: Event) -
             if tenant_id is None:
                 if event.mentioned:  # отвечаем, чтобы молчание не выглядело поломкой; данные не сохраняем
                     log.info("обращение из неподключённой беседы %s", event.peer_id)
-                    await channel.send(event.peer_id, UNKNOWN_CHAT)
+                    old = await _chat(session, channel, event.peer_id) is not None
+                    await channel.send(event.peer_id, MOVED_CHAT if old else UNKNOWN_CHAT)
                 return
             if event.action in ("chat_invite_user", "chat_invite_user_by_link"):
                 await _new_member(session, channel, tenant_id, event)

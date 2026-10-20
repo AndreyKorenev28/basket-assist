@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from basket_assist.channels.base import ChannelAdapter, ChannelError
 from basket_assist.domain.models import ChangeKind
-from basket_assist.services import notify, polls, weekly
+from basket_assist.services import chats, notify, polls, weekly
 from basket_assist.services.schedule import FINISHED, format_when, teams
 from basket_assist.services.sync import sync_team_entry
 from basket_assist.sources import make_adapter
@@ -29,7 +29,6 @@ from basket_assist.sources.base import SourceError
 from basket_assist.storage.tables import (
     Attendance,
     ChangeEvent,
-    Chat,
     League,
     LeagueTeam,
     Match,
@@ -173,15 +172,7 @@ async def process_changes(session: AsyncSession, channel: ChannelAdapter) -> Non
             text = await _change_text(session, ev, match, entry.tenant_id)
             if text is None:
                 continue
-            chat = (
-                (
-                    await session.execute(
-                        select(Chat).filter_by(tenant_id=entry.tenant_id, channel=channel.channel)
-                    )
-                )
-                .scalars()
-                .first()
-            )
+            chat = await chats.active_chat(session, entry.tenant_id, channel.channel)
             if chat is not None:
                 try:
                     await channel.send(chat.peer_id, text)

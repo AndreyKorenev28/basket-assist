@@ -102,13 +102,18 @@ async def apply_tenant_config(session: AsyncSession, cfg: TenantConfig) -> Tenan
         )
 
     if cfg.vk_chat_peer_id is not None:
-        await _get_or_create(
+        # переезд беседы: новая — активная, прежние гаснут (анонсы переносит polls.relocate)
+        chat = await _get_or_create(
             session,
             Chat,
-            defaults={"tenant_id": tenant.id},
+            defaults={"tenant_id": tenant.id, "active": True},
             channel=Channel.VK,
             peer_id=str(cfg.vk_chat_peer_id),
         )
+        for other in (
+            await session.scalars(select(Chat).filter_by(tenant_id=tenant.id, channel=Channel.VK))
+        ).all():
+            other.active = other.id == chat.id
     if cfg.captain:
         await _ensure_leader(session, tenant, cfg.captain, Role.CAPTAIN)
     for vice in cfg.vice_captains:

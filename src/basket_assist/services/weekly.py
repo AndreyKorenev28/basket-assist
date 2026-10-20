@@ -18,11 +18,10 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from basket_assist.channels.base import Button, ChannelAdapter, ChannelError
-from basket_assist.services import digests, leaders, notify, polls, roster
+from basket_assist.services import chats, digests, leaders, notify, polls, roster
 from basket_assist.services.schedule import FINISHED, format_when, teams
 from basket_assist.storage.tables import (
     Attendance,
-    Chat,
     League,
     LeagueTeam,
     Match,
@@ -66,6 +65,10 @@ def poll_opens_at(match: Match, league: League) -> datetime:
 
 async def tick(session: AsyncSession, channel: ChannelAdapter, now: datetime | None = None) -> None:
     now_utc = (now or datetime.now(UTC)).astimezone(UTC).replace(tzinfo=None)
+    for tenant_id in (await session.scalars(select(TeamEntry.tenant_id).distinct())).all():
+        await polls.relocate(
+            session, channel, tenant_id, now_utc
+        )  # переезд беседы: до проверки «анонс уже есть»
     for entry in (await session.scalars(select(TeamEntry).order_by(TeamEntry.id))).all():
         team = await session.get(LeagueTeam, entry.league_team_id)
         league = await session.get(League, team.league_id)
@@ -141,11 +144,7 @@ async def _remind_silent(
                 no_dm.append(
                     (account.external_user_id, await polls.player_name(session, tenant_id, p, entry))
                 )
-    chat = (
-        (await session.execute(select(Chat).filter_by(tenant_id=tenant_id, channel=channel.channel)))
-        .scalars()
-        .first()
-    )
+    chat = await chats.active_chat(session, tenant_id, channel.channel)
     if not no_dm or chat is None:
         return
     # упоминаем только участников беседы: иначе из тестовой беседы потревожим настоящих игроков
@@ -204,11 +203,7 @@ async def _ensure_poll(
     ):
         return
     await session.commit()
-    chat = (
-        (await session.execute(select(Chat).filter_by(tenant_id=tenant_id, channel=channel.channel)))
-        .scalars()
-        .first()
-    )
+    chat = await chats.active_chat(session, tenant_id, channel.channel)
     if chat is None:
         log.warning("опрос по матчу %s не запущен: у команды %s нет беседы", match.id, tenant_id)
         return
