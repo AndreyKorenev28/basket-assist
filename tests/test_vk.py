@@ -370,6 +370,14 @@ def _form(call) -> dict:
     return dict(httpx.QueryParams(call.request.content.decode()))
 
 
+@pytest.fixture(autouse=True)
+def no_upload_pause(monkeypatch):
+    """Повторы загрузки картинки — без пауз в тестах."""
+    from basket_assist.channels import vk
+
+    monkeypatch.setattr(vk, "UPLOAD_RETRY_PAUSE", 0)
+
+
 def _image_routes(upload_json=None, saved=None):
     server = respx.post("https://api.vk.com/method/photos.getMessagesUploadServer").respond(
         json={"response": {"upload_url": UPLOAD_URL, "album_id": -64, "group_id": GROUP}}
@@ -437,6 +445,7 @@ async def test_send_image_upload_failure_raises(fail):
             await channel(client).send_image("5", PNG)
     assert e.value.code is None
     assert not save.called and not send.called
+    assert upload.call_count == 3  # все попытки исчерпаны
 
 
 @respx.mock
@@ -459,3 +468,22 @@ async def test_send_without_attachment_has_no_attachment_param():
     async with httpx.AsyncClient() as client:
         await channel(client).send("5", "текст")
     assert "attachment" not in _form(route.calls[0])
+
+
+@pytest.mark.parametrize("first", ["empty", "not_json"])
+@respx.mock
+async def test_send_image_retries_after_transient_upload_failure(first):
+    """Сбой сервера загрузки VK бывает разовым (лог 20–21.10): вторая попытка с новым адресом — картинка уходит."""
+    server, upload, save, send = _image_routes()
+    bad = (
+        httpx.Response(200, json={"server": 1, "photo": "[]", "hash": "h"})
+        if first == "empty"
+        else httpx.Response(502, text="<html>Bad Gateway</html>")
+    )
+    upload.side_effect = [bad, httpx.Response(200, json=UPLOADED)]
+    async with httpx.AsyncClient() as client:
+        ref = await channel(client).send_image("5", PNG, "Игроки команды: 3")
+    assert ref == MessageRef("5", "21")
+    assert server.call_count == 2 and upload.call_count == 2  # новый адрес загрузки на каждую попытку
+    assert save.call_count == 1
+    assert _form(send.calls[0])["attachment"] == f"photo-{GROUP}_457239017_k3y"

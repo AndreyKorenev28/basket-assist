@@ -27,6 +27,8 @@ log = logging.getLogger(__name__)
 
 API_URL = "https://api.vk.com/method"
 API_VERSION = "5.199"
+UPLOAD_ATTEMPTS = 3  # загрузка картинки: сбои сервера загрузки VK бывают разовыми
+UPLOAD_RETRY_PAUSE = 1.0  # с
 CHAT_PEER_BASE = 2_000_000_000
 
 
@@ -53,9 +55,14 @@ class VkClient:
         """Загрузка файла на сервер VK (адрес выдаёт метод *.get…UploadServer)."""
         try:
             r = await self._client.post(url, files={field: (filename, content, content_type)})
+        except httpx.HTTPError as e:
+            raise ChannelError(None, f"загрузка файла: {e!r}") from e
+        try:
             return r.json()
-        except (httpx.HTTPError, ValueError) as e:
-            raise ChannelError(None, f"загрузка файла: {e}") from e
+        except ValueError as e:  # сервер загрузки ответил не JSON (сбой на стороне VK)
+            raise ChannelError(
+                None, f"загрузка файла: HTTP {r.status_code}, ответ не JSON: {r.text[:120]!r}"
+            ) from e
 
 
 def keyboard(buttons: list[list[Button]] | None) -> dict | None:
@@ -229,10 +236,22 @@ class VkChannel:
 
         Ключу сообщества нужно право «photos» (dev.vk.com, photos.getMessagesUploadServer).
         """
-        server = await self._api.call("photos.getMessagesUploadServer", peer_id=peer_id)
-        up = await self._api.upload(server["upload_url"], "photo", "table.png", image, "image/png")
-        if not up.get("photo") or up["photo"] == "[]":
-            raise ChannelError(None, f"загрузка фото: сервер не принял файл ({up.get('error') or 'пусто'})")
+        # сервер загрузки VK иногда отвечает пусто или не JSON, а через минуту принимает тот же файл
+        # (лог 20–21.10) — пробуем ещё раз с новым адресом загрузки
+        for attempt in range(1, UPLOAD_ATTEMPTS + 1):
+            try:
+                server = await self._api.call("photos.getMessagesUploadServer", peer_id=peer_id)
+                up = await self._api.upload(server["upload_url"], "photo", "table.png", image, "image/png")
+                if not up.get("photo") or up["photo"] == "[]":
+                    raise ChannelError(
+                        None, f"загрузка фото: сервер не принял файл ({up.get('error') or up})"
+                    )
+                break
+            except ChannelError as e:
+                if attempt == UPLOAD_ATTEMPTS:
+                    raise
+                log.warning("загрузка картинки, попытка %s из %s: %s", attempt, UPLOAD_ATTEMPTS, e)
+                await asyncio.sleep(UPLOAD_RETRY_PAUSE)
         try:
             saved = await self._api.call(
                 "photos.saveMessagesPhoto", photo=up["photo"], server=up["server"], hash=up["hash"]
