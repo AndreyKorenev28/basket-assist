@@ -27,7 +27,6 @@ from basket_assist.services.sync import sync_team_entry
 from basket_assist.sources import make_adapter
 from basket_assist.sources.base import SourceError
 from basket_assist.storage.tables import (
-    Attendance,
     ChangeEvent,
     League,
     LeagueTeam,
@@ -46,6 +45,7 @@ HOURLY_FROM, HOURLY_TO = 9, 23
 RESULT_AFTER = timedelta(hours=3)  # через сколько после начала нашего матча забрать счёт
 RESULT_WINDOW = timedelta(hours=12)  # бот был выключен дольше — ждём ночной синхронизации
 MATCH_KINDS = (ChangeKind.RESCHEDULED, ChangeKind.TIME_CHANGED, ChangeKind.TIME_SET, ChangeKind.MATCH_ADDED)
+RESTART_KINDS = (ChangeKind.RESCHEDULED, ChangeKind.TIME_CHANGED)  # новый опрос: отметки сбрасываются
 
 
 def due_jobs(local: datetime) -> list[tuple[str, str]]:
@@ -149,13 +149,18 @@ async def tick(
             r.matches_updated,
             len(r.changes),
         )
+    await process_changes(session, channel)  # каждую минуту: и ручная смена времени руководителем
     if synced:
-        await process_changes(session, channel)
         await refresh_active_polls(session, channel, only_changed=True)
 
 
 async def process_changes(session: AsyncSession, channel: ChannelAdapter) -> None:
-    """Необработанные изменения матчей → сообщение в беседу команды. Изменения заявки на сезон не трогаем."""
+    """Необработанные изменения матчей → сообщение в беседу команды. Изменения заявки на сезон не трогаем.
+
+    Перенос даты или новое время — по сути новый опрос (решение владельца 2026-10-20): отметки
+    сбрасываются, старый анонс закрывается, новый публикует недельный цикл; всем — сообщение в беседе,
+    отметившимся — ещё и в личку с кнопками.
+    """
     events = (
         await session.scalars(
             select(ChangeEvent)
@@ -163,6 +168,7 @@ async def process_changes(session: AsyncSession, channel: ChannelAdapter) -> Non
             .order_by(ChangeEvent.id)
         )
     ).all()
+    restarted: set[tuple[int, int]] = set()  # перенос и новое время в одной синхронизации — один перезапуск
     for ev in events:
         ev.processed = True
         match = await session.get(Match, ev.match_id) if ev.match_id else None
@@ -172,40 +178,43 @@ async def process_changes(session: AsyncSession, channel: ChannelAdapter) -> Non
             text = await _change_text(session, ev, match, entry.tenant_id)
             if text is None:
                 continue
+            votes: list = []
+            reopened = False
+            if ev.kind in RESTART_KINDS and (entry.tenant_id, match.id) not in restarted:
+                restarted.add((entry.tenant_id, match.id))
+                reopened = await polls._current_poll(session, entry.tenant_id, match.id) is not None
+                votes = await polls.restart(session, channel, entry.tenant_id, match)
+                if reopened or votes:
+                    text += " Прежние отметки сброшены — отметьтесь заново в закреплённом анонсе."
             chat = await chats.active_chat(session, entry.tenant_id, channel.channel)
             if chat is not None:
                 try:
                     await channel.send(chat.peer_id, text)
                 except ChannelError as e:
                     log.warning("не удалось сообщить об изменении матча %s: %s", match.id, e)
-            if ev.kind in (ChangeKind.RESCHEDULED, ChangeKind.TIME_CHANGED):
-                await _ask_voters_to_confirm(session, channel, entry.tenant_id, ev, match, text)
+            await _ask_voters_again(session, channel, entry.tenant_id, ev, match, votes)
     await session.commit()
 
 
-async def _ask_voters_to_confirm(
-    session: AsyncSession, channel: ChannelAdapter, tenant_id: int, ev: ChangeEvent, match: Match, text: str
+async def _ask_voters_again(
+    session: AsyncSession, channel: ChannelAdapter, tenant_id: int, ev: ChangeEvent, match: Match, votes: list
 ) -> None:
-    """Перенос / новое время: отметки сохраняются (решение владельца 2026-10-18), но каждому отметившемуся —
-    личное сообщение с его ответом и просьбой проверить. Без открытой лички хватит сообщения в беседе."""
-    votes = (
-        await session.execute(
-            select(Attendance.player_id, Attendance.vote).filter_by(tenant_id=tenant_id, match_id=match.id)
-        )
-    ).all()
-    head = text.removesuffix(" Проверьте свою отметку в анонсе.")
+    """Отметившимся до переноса — личное сообщение: отметка сброшена, кнопки для нового ответа.
+    Без открытой лички хватит сообщения в беседе и напоминания молчащим."""
+    head = await _change_text(session, ev, match, tenant_id)
     for player_id, vote in votes:
         if not await notify.once(
             session, tenant_id, "match_change", f"{ev.id}:{player_id}", match_id=match.id
         ):
             continue
+        await session.commit()
         await notify.dm(
             session,
             channel,
             tenant_id,
             player_id,
-            f"{head}\nВаш ответ сохранён: «{polls.VOTE_LABELS[vote]}». "
-            "Если планы изменились — нажмите другую кнопку в анонсе в беседе команды.",
+            f"{head}\nВаша отметка «{polls.VOTE_LABELS[vote]}» сброшена. Будете в новое время?",
+            polls.vote_buttons(match.id),
         )
 
 
@@ -216,9 +225,9 @@ async def _change_text(session: AsyncSession, ev: ChangeEvent, match: Match, ten
     if ev.kind == ChangeKind.RESCHEDULED:
         was = json.loads(ev.payload or "{}").get("was", "")
         was_text = f" Было: {datetime.fromisoformat(was):%d.%m}." if was else ""
-        return f"⚠️ Перенос матча: {what} — теперь {when}.{was_text} Проверьте свою отметку в анонсе."
+        return f"⚠️ Перенос матча: {what} — теперь {when}.{was_text}"
     if ev.kind == ChangeKind.TIME_CHANGED:
-        return f"⏰ Изменилось время матча: {what} — теперь {when}. Проверьте свою отметку в анонсе."
+        return f"⏰ Изменилось время матча: {what} — теперь {when}."
     if ev.kind == ChangeKind.TIME_SET:
         return f"⏰ Назначено время матча: {what} — {when}."
     if ev.kind == ChangeKind.MATCH_ADDED:
@@ -255,15 +264,20 @@ async def refresh_active_polls(
             .join(Match, Match.id == PollMessage.match_id)
             .where(
                 PollMessage.superseded_by_id.is_(None),
+                PollMessage.closed_at.is_(None),
                 Match.status.not_in(FINISHED),
                 or_(Match.start_at.is_(None), Match.start_at > cutoff),
             )
         )
     ).all()
     done = 0
+    seen: set[tuple[int, str]] = set()  # общий анонс (несколько матчей) перерисовываем один раз
     for poll, match in rows:
         if only_changed and match.updated_at <= (poll.last_edited_at or poll.posted_at):
             continue
+        if (poll.chat_id, poll.message_ref) in seen:
+            continue
+        seen.add((poll.chat_id, poll.message_ref))
         try:
             await polls.refresh(session, channel, poll.tenant_id, match)
             done += 1

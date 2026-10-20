@@ -259,7 +259,7 @@ async def test_vote_signal_and_roster_names(session, tenant_cfg):
     await handle(session, ch, ButtonPress(CHAT, "13", chat_ref, {"m": m.id, "v": "not_going"}, "e"))
     await handle(session, ch, ButtonPress(CHAT, "13", chat_ref, {"m": m.id, "v": "going"}, "e"))
     assert len([t for peer, t, _ in ch.sent if peer == CAPTAIN]) == 1
-    assert len((await session.scalars(select(NotificationLog))).all()) == 1
+    assert len((await session.scalars(select(NotificationLog).filter_by(kind="not_in_roster"))).all()) == 1
 
 
 async def test_numbers_from_protocols(session, tenant_cfg):

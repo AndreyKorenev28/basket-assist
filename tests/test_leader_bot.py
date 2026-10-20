@@ -6,7 +6,7 @@ from datetime import timedelta
 import pytest
 from sqlalchemy import select
 
-from basket_assist.bot import leader
+from basket_assist.bot import handlers, leader
 from basket_assist.bot.handlers import (
     CHAT_BUTTONS,
     GO_WORDS,
@@ -1375,6 +1375,7 @@ async def test_chat_command_buttons_reply_in_chat_like_text(session, tenant_cfg,
     by_text, _ = await _replies(
         session, IncomingMessage(CHAT, CAPTAIN, command, is_chat=True, mentioned=True)
     )
+    handlers._last_games.clear()  # «игры»: иначе кнопка попадёт в паузу повтора (test_chat_games_pause)
     by_button, ch = await _replies(session, _cmd_press(CHAT, CAPTAIN, command))
     assert by_button == by_text
     assert [peer for peer, _, _ in by_button] == [CHAT], "ответ — в беседу, не в личку"

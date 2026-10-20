@@ -11,7 +11,7 @@ from sqlalchemy import select
 
 from basket_assist.channels.base import ChannelError
 from basket_assist.domain.models import ChangeKind, Vote
-from basket_assist.services import scheduler
+from basket_assist.services import polls, scheduler
 from basket_assist.services.sync import SyncResult
 from basket_assist.sources.base import SourceError
 from basket_assist.storage.bootstrap import apply_tenant_config
@@ -216,10 +216,9 @@ async def test_process_changes_texts_and_order(session, tenant_cfg):
     assert {p for p, _, _ in ch.sent} == {CHAT}
     when = "сб 24.10, 15:00"
     assert texts == [
-        f"⚠️ Перенос матча: Pokrasote — Westchester (АБЛ) — теперь {when}. Было: 18.10."
-        " Проверьте свою отметку в анонсе.",
-        f"⏰ Изменилось время матча: Westchester — Pokrasote (АБЛ) — теперь {when}."
-        " Проверьте свою отметку в анонсе.",
+        # анонса и отметок не было — без «Прежние отметки сброшены» (решение владельца 2026-10-20)
+        f"⚠️ Перенос матча: Pokrasote — Westchester (АБЛ) — теперь {when}. Было: 18.10.",
+        f"⏰ Изменилось время матча: Westchester — Pokrasote (АБЛ) — теперь {when}.",
         f"⏰ Назначено время матча: Westchester — Pokrasote (АБЛ) — {when}.",
         f"📅 В календаре лиги новый матч: Pokrasote — Westchester (АБЛ) — {when}.",
     ]
@@ -312,7 +311,8 @@ async def test_process_changes_tenant_isolation(session, tenant_cfg):
 
 # ---------- личка отметившимся при переносе / смене времени ----------
 
-ASK = "Если планы изменились — нажмите другую кнопку в анонсе в беседе команды."
+RESET = " Прежние отметки сброшены — отметьтесь заново в закреплённом анонсе."
+AGAIN = "сброшена. Будете в новое время?"
 
 
 async def _voter(session, tenant_id, match, name, vk, vote=None, dm=True):
@@ -375,21 +375,24 @@ async def test_process_changes_dm_voters(session, tenant_cfg, kind, payload, hea
     ch = FakeChannel()
     await scheduler.process_changes(session, ch)
     chat_texts = [txt for p, txt, _ in ch.sent if p == CHAT]
-    assert chat_texts == [f"{head} Проверьте свою отметку в анонсе."]  # беседа — как раньше
-    dms = sorted((p, txt) for p, txt, _ in ch.sent if p != CHAT)
+    assert chat_texts == [head + RESET]
+    dms = sorted(((p, txt, b) for p, txt, b in ch.sent if p != CHAT), key=lambda x: x[0])
     assert dms == [
-        ("101", f"{head}\nВаш ответ сохранён: «Буду». {ASK}"),
-        ("102", f"{head}\nВаш ответ сохранён: «Не буду». {ASK}"),
+        ("101", f"{head}\nВаша отметка «Буду» {AGAIN}", polls.vote_buttons(m.id)),
+        ("102", f"{head}\nВаша отметка «Не буду» {AGAIN}", polls.vote_buttons(m.id)),
     ]
-    assert await _votes(session) == before  # отметки не меняются
+    # отметки этого матча сброшены (новый опрос), отметка на другой матч — на месте
+    assert len(before) == 5
+    left = (await session.scalars(select(Attendance))).all()
+    assert [(a.match_id, a.vote) for a in left] == [(other_m.id, Vote.GOING)]
 
-    # то же событие снова попало в обработку — лички не дублируются (notification_log)
+    # то же событие снова попало в обработку — отметок уже нет: ни «сброшены», ни личек
     ev = (await session.scalars(select(ChangeEvent))).one()
     ev.processed = False
     await session.commit()
     ch2 = FakeChannel()
     await scheduler.process_changes(session, ch2)
-    assert [p for p, _, _ in ch2.sent] == [CHAT]
+    assert [(p, t) for p, t, _ in ch2.sent] == [(CHAT, head)]
     await scheduler.process_changes(session, ch2)  # обычный повтор — ничего
     assert len(ch2.sent) == 1
 

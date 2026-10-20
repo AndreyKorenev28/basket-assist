@@ -43,9 +43,10 @@ REMIND_AFTER_POLL = timedelta(hours=3)  # опрос запущен поздно
 
 
 def cycle_key(match: Match) -> str:
-    """Ключ журнала для напоминания и сводок: матч + дата. Перенос на другую дату — новый цикл
-    (сводки и напоминание по новой дате уходят заново), смена времени в тот же день — тот же."""
-    return f"{match.id}:{match.match_date.isoformat()}"
+    """Ключ журнала для напоминания и сводок: матч + дата + время. Перенос и смена времени — новый цикл:
+    опрос перезапущен (отметки сброшены), напоминание и сводки уходят заново (решение владельца 2026-10-20)."""
+    key = f"{match.id}:{match.match_date.isoformat()}"
+    return f"{key}T{match.start_at:%H:%M}" if match.start_at else key
 
 
 NUMBER_HINT = "Нет номера или он другой — напишите «номер Петров 23»."
@@ -199,7 +200,7 @@ async def _ensure_poll(
         return
     # попытка публикации — не чаще раза в час: при сбое VK не долбим каждую минуту
     if not await notify.once(
-        session, tenant_id, "poll_try", f"{match.id}:{now_utc:%Y-%m-%dT%H}", match_id=match.id
+        session, tenant_id, "poll_try", f"{cycle_key(match)}:{now_utc:%Y-%m-%dT%H}", match_id=match.id
     ):
         return
     await session.commit()

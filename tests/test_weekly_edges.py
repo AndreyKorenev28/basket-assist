@@ -142,6 +142,8 @@ async def test_reschedule_after_digest24_new_digests_for_new_date(session, tenan
 
 
 async def test_time_change_same_day_after_digest24_final_by_new_time(session, tenant_cfg):
+    """Время сдвинули в тот же день (12:00 → 18:00) после суточной — новый цикл (решение владельца
+    2026-10-20): по старому T−2 ч тишина, суточная по новому T−24 ч уходит снова, финальная — по новому времени."""
     _, entries = await _ready(session, tenant_cfg)
     m = await _week_match(session, entries["abl"], "g1")
     ch = FakeChannel()
@@ -149,15 +151,19 @@ async def test_time_change_same_day_after_digest24_final_by_new_time(session, te
     assert _digests(ch, CAPTAIN) == [D24]
     m.start_at, m.time_status = naive_utc(at(SAT, 18)), "time_changed"
     await session.commit()
-    await weekly.tick(session, ch, now=at(SAT, 10))  # старое T−2 ч
+    await weekly.tick(session, ch, now=at(FRI, 17, 59))  # до нового T−24 ч
     assert _digests(ch, CAPTAIN) == [D24]
+    await weekly.tick(session, ch, now=at(FRI, 18))  # новое T−24 ч
+    assert _digests(ch, CAPTAIN) == [D24, D24]
+    await weekly.tick(session, ch, now=at(SAT, 10))  # старое T−2 ч
+    assert _digests(ch, CAPTAIN) == [D24, D24]
     await weekly.tick(session, ch, now=at(SAT, 16))  # новое T−2 ч
-    assert _digests(ch, CAPTAIN) == [D24, D2]
+    assert _digests(ch, CAPTAIN) == [D24, D24, D2]
 
 
-async def test_time_change_same_day_after_digest24_no_second_daily(session, tenant_cfg):
-    """Время сдвинули в тот же день (12:00 → 18:00) после суточной: тот же цикл — суточная и напоминание
-    по новому T−24 ч / T−30 ч не повторяются, финальная — по новому времени."""
+async def test_time_change_same_day_after_digest24_second_daily_and_reminder(session, tenant_cfg):
+    """Время сдвинули в тот же день (12:00 → 18:00) после суточной: новый цикл — напоминание молчащим
+    (новое T−30 ч) и суточная (новое T−24 ч) уходят заново, ровно по разу."""
     tenant, entries = await _ready(session, tenant_cfg)
     m = await _week_match(session, entries["abl"], "g1")
     ch = FakeChannel()
@@ -169,14 +175,19 @@ async def test_time_change_same_day_after_digest24_no_second_daily(session, tena
     assert reminders > 0
     m.start_at, m.time_status = naive_utc(at(SAT, 18)), "time_changed"
     await session.commit()
-    for now in (at(FRI, 12, 1), at(FRI, 18), at(FRI, 18, 1)):  # новое T−24 ч
+    await weekly.tick(session, ch, now=at(FRI, 12, 1))  # новое T−30 ч уже наступило (12:00)
+    assert sum(t.startswith(REMIND) for _, t, _ in ch.sent) == 2 * reminders, "напоминание — заново"
+    assert _digests(ch, CAPTAIN) == [D24], "до нового T−24 ч суточной нет"
+    for now in (at(FRI, 18), at(FRI, 18, 1), at(FRI, 20)):  # новое T−24 ч и повторы
         await weekly.tick(session, ch, now=now)
-    assert _digests(ch, CAPTAIN) == [D24], "суточная по тому же дню не повторяется"
-    assert sum(t.startswith(REMIND) for _, t, _ in ch.sent) == reminders, "напоминание тоже"
-    keys = (await session.scalars(select(NotificationLog.dedup_key).filter_by(kind="digest24"))).all()
-    assert keys == [weekly.cycle_key(m)] == [f"{m.id}:{SAT.isoformat()}"]
+    assert _digests(ch, CAPTAIN) == [D24, D24], "суточная по новому времени — один раз"
+    assert sum(t.startswith(REMIND) for _, t, _ in ch.sent) == 2 * reminders
+    keys = sorted((await session.scalars(select(NotificationLog.dedup_key).filter_by(kind="digest24"))).all())
+    # ключ цикла — матч + дата + время начала (UTC): 12:00 МСК = 09:00 UTC, 18:00 МСК = 15:00 UTC
+    assert keys == [f"{m.id}:{SAT.isoformat()}T09:00", f"{m.id}:{SAT.isoformat()}T15:00"]
+    assert weekly.cycle_key(m) == keys[1]
     await weekly.tick(session, ch, now=at(SAT, 16))
-    assert _digests(ch, CAPTAIN) == [D24, D2]
+    assert _digests(ch, CAPTAIN) == [D24, D24, D2]
 
 
 async def test_reschedule_new_cycle_reminds_again(session, tenant_cfg):
@@ -196,7 +207,15 @@ async def test_reschedule_new_cycle_reminds_again(session, tenant_cfg):
     await weekly.tick(session, ch, now=at(date(2026, 10, 30), 6))
     assert sum(t.startswith(REMIND) for _, t, _ in ch.sent) == 2 * first
     keys = sorted((await session.scalars(select(NotificationLog.dedup_key).filter_by(kind="remind30"))).all())
-    assert keys == [f"{m.id}:2026-10-24", f"{m.id}:2026-10-31"]
+    assert keys == [f"{m.id}:2026-10-24T09:00", f"{m.id}:2026-10-31T09:00"]
+
+
+def test_cycle_key_without_time():
+    """Без времени ключ цикла — матч + дата (как до 2026-10-20); со временем — ещё и время начала."""
+    m = Match(id=7, match_date=SAT, start_at=None)
+    assert weekly.cycle_key(m) == f"7:{SAT.isoformat()}"
+    m.start_at = datetime(2026, 10, 24, 9, 0)
+    assert weekly.cycle_key(m) == f"7:{SAT.isoformat()}T09:00"
 
 
 # ---------- перезапуск процесса ----------

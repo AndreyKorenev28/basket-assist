@@ -1,5 +1,8 @@
 """Анонс-голосование «Буду / Не буду» (ADR 0004).
 
+Игры одной недели — в одном закреплённом сообщении (общий анонс, решение владельца 2026-10-20):
+у каждой игры свои кнопки и списки. Технически — несколько PollMessage с одним message_ref.
+
 Анонс в беседе показывает имена отметившихся по каждому варианту и обновляется при каждом
 нажатии вплоть до начала матча. Если VK не даёт отредактировать старый анонс, бот публикует
 новый, закрепляет его, а старый помечает «устарел» — нажатия на старом продолжают учитываться.
@@ -11,10 +14,17 @@ from collections import defaultdict
 from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import or_, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from basket_assist.channels.base import Button, ButtonPress, ChannelAdapter, ChannelError, MessageRef
+from basket_assist.channels.base import (
+    PAIR_LABEL_MAX,
+    Button,
+    ButtonPress,
+    ChannelAdapter,
+    ChannelError,
+    MessageRef,
+)
 from basket_assist.domain.models import MatchStatus, Vote
 from basket_assist.services import chats, leaders, notify, roster
 from basket_assist.services.players import get_or_create_player
@@ -37,6 +47,9 @@ log = logging.getLogger(__name__)
 WEEKDAYS = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"]
 VOTE_LABELS = {Vote.GOING: "Буду", Vote.NOT_GOING: "Не буду"}
 _locks: defaultdict[int, asyncio.Lock] = defaultdict(asyncio.Lock)
+_msg_locks: defaultdict[tuple[int, str], asyncio.Lock] = defaultdict(asyncio.Lock)  # сообщение-анонс
+GROUP_DAYS = 6  # в общий анонс — игры одной недели
+MAX_IN_ANNOUNCE = 5  # VK: до 10 кнопок — по паре на игру
 
 
 class PollError(Exception):
@@ -78,7 +91,8 @@ async def player_name(session: AsyncSession, tenant_id: int, player: Player, ent
     return f"{r.last_name} {r.first_name}" if r else player.display_name
 
 
-async def render(session: AsyncSession, match: Match, tenant_id: int) -> str:
+async def _block(session: AsyncSession, match: Match, tenant_id: int) -> tuple[list[str], list[str]]:
+    """Матч в анонсе: (шапка — лига, команды, когда, зал, форма; строки «Буду / Не буду» с именами)."""
     league, ours, rival, entry = await _context(session, match, tenant_id)
     tz = ZoneInfo(league.timezone)
     if match.start_at:
@@ -100,21 +114,83 @@ async def render(session: AsyncSession, match: Match, tenant_id: int) -> str:
     for vote, player in rows:
         by_vote[vote].append(await player_name(session, tenant_id, player, entry))
 
-    lines = [
+    head = [
         f"🏀 {league.name}: {teams(match, ours, rival)}",
         f"📅 {when}",
         f"📍 {place}",
         kit_hint(match, ours),
-        "",
-        "Кто идёт? Отметьтесь кнопкой, ответ можно поменять до начала игры.",
-        "",
     ]
+    if match.status == MatchStatus.RESCHEDULED:
+        head.insert(1, "⚠️ Матч перенесён — отметьтесь заново.")
+    votes = []
     for vote, label in VOTE_LABELS.items():
         names = by_vote[vote]
-        lines.append(f"{label} ({len(names)}): {', '.join(names) if names else '—'}")
-    if match.status == MatchStatus.RESCHEDULED:
-        lines.insert(1, "⚠️ Матч перенесён — проверьте дату и время.")
-    return "\n".join(lines)
+        votes.append(f"{label} ({len(names)}): {', '.join(names) if names else '—'}")
+    return head, votes
+
+
+async def render(session: AsyncSession, match: Match, tenant_id: int) -> str:
+    """Анонс одного матча."""
+    head, votes = await _block(session, match, tenant_id)
+    return "\n".join(
+        [*head, "", "Кто идёт? Отметьтесь кнопкой, ответ можно поменять до начала игры.", "", *votes]
+    )
+
+
+def _open_for_votes(match: Match, now: datetime) -> bool:
+    return match.status not in FINISHED and (match.start_at is None or match.start_at > now)
+
+
+async def _tags(session: AsyncSession, matches: list[Match]) -> list[str]:
+    """Метка игры на кнопках общего анонса: лига («МЛБЛ»), при двух играх одной лиги — дата."""
+    leagues = []
+    for m in matches:
+        tournament = await session.get(Tournament, m.tournament_id)
+        leagues.append((await session.get(League, tournament.league_id)).name)
+    if len(set(leagues)) == len(leagues):
+        return leagues
+    return [f"{m.match_date:%d.%m}" for m in matches]
+
+
+def _numbered(tags: list[str]) -> bool:
+    """Длинные метки (каждая кнопка своим рядом) не влезают в 6 рядов VK — нумеруем игры («Буду 1»)."""
+    return any(len(f"Не буду {t}") > PAIR_LABEL_MAX for t in tags) and len(tags) > 3
+
+
+async def render_announce(session: AsyncSession, tenant_id: int, matches: list[Match]) -> str:
+    """Анонс: один матч — как раньше; несколько — общий анонс недели, у каждой игры свои отметки."""
+    if len(matches) == 1:
+        return await render(session, matches[0], tenant_id)
+    numbered = _numbered(await _tags(session, matches))
+    parts = ["📌 Игры недели. Отметьтесь кнопками по каждой игре, ответ можно поменять до её начала."]
+    for i, m in enumerate(matches):
+        head, votes = await _block(session, m, tenant_id)
+        if numbered:
+            head[0] = f"{i + 1}. {head[0]}"
+        parts.append("\n".join([*head, *votes]))
+    return "\n\n".join(parts)
+
+
+async def announce_buttons(session: AsyncSession, matches: list[Match]) -> list[list[Button]]:
+    """Кнопки анонса: один матч — «Буду / Не буду»; несколько — пара на каждую ещё не начавшуюся игру.
+    VK: inline — до 10 кнопок и 6 рядов; подпись в паре — до PAIR_LABEL_MAX символов."""
+    if len(matches) == 1:  # как раньше: начавшийся матч отклоняет голос в on_vote
+        return vote_buttons(matches[0].id)
+    now = utcnow()
+    tags = await _tags(session, matches)
+    if _numbered(tags):
+        tags = [str(i + 1) for i in range(len(matches))]
+    rows: list[list[Button]] = []
+    for m, tag in zip(matches, tags, strict=True):
+        if not _open_for_votes(m, now):
+            continue
+        going = Button(f"Буду {tag}", {"m": m.id, "v": Vote.GOING.value}, "positive")
+        not_going = Button(f"Не буду {tag}", {"m": m.id, "v": Vote.NOT_GOING.value}, "negative")
+        if len(not_going.label) <= PAIR_LABEL_MAX:
+            rows.append([going, not_going])
+        else:  # длинная метка — каждая кнопка своим рядом
+            rows += [[going], [not_going]]
+    return rows[:6]
 
 
 async def _current_poll(session: AsyncSession, tenant_id: int, match_id: int) -> PollMessage | None:
@@ -126,6 +202,7 @@ async def _current_poll(session: AsyncSession, tenant_id: int, match_id: int) ->
                     PollMessage.tenant_id == tenant_id,
                     PollMessage.match_id == match_id,
                     PollMessage.superseded_by_id.is_(None),
+                    PollMessage.closed_at.is_(None),
                 )
                 .order_by(PollMessage.id.desc())
             )
@@ -135,52 +212,137 @@ async def _current_poll(session: AsyncSession, tenant_id: int, match_id: int) ->
     )
 
 
+async def _announce_rows(
+    session: AsyncSession, chat_id: int, message_ref: str
+) -> list[tuple[PollMessage, Match]]:
+    """Действующие опросы одного сообщения-анонса (общий анонс — несколько матчей), по времени игры."""
+    result = await session.execute(
+        select(PollMessage, Match)
+        .join(Match, Match.id == PollMessage.match_id)
+        .where(
+            PollMessage.chat_id == chat_id,
+            PollMessage.message_ref == message_ref,
+            PollMessage.superseded_by_id.is_(None),
+            PollMessage.closed_at.is_(None),
+        )
+        .order_by(Match.match_date, Match.start_at, Match.id)
+    )
+    return [(p, m) for p, m in result.all()]
+
+
+async def _open_announce(session: AsyncSession, chat: Chat, match: Match) -> str | None:
+    """Сообщение-анонс в беседе, к которому добавить матч: в нём есть ещё не начавшиеся игры той же недели."""
+    rows = (
+        await session.execute(
+            select(PollMessage, Match)
+            .join(Match, Match.id == PollMessage.match_id)
+            .where(
+                PollMessage.chat_id == chat.id,
+                PollMessage.superseded_by_id.is_(None),
+                PollMessage.closed_at.is_(None),
+            )
+            .order_by(PollMessage.id.desc())
+        )
+    ).all()
+    now = utcnow()
+    groups: dict[str, list[Match]] = {}
+    for p, m in rows:
+        groups.setdefault(p.message_ref, []).append(m)
+    for ref, ms in groups.items():  # от последнего опубликованного
+        same_week = all(abs((m.match_date - match.match_date).days) <= GROUP_DAYS for m in ms)
+        if same_week and any(_open_for_votes(m, now) for m in ms) and len(ms) < MAX_IN_ANNOUNCE:
+            return ref
+    return None
+
+
 async def publish(session: AsyncSession, channel: ChannelAdapter, chat: Chat, match: Match) -> PollMessage:
-    """Опубликовать анонс-голосование в беседе и закрепить. Повторный вызов вернёт существующий."""
+    """Опубликовать анонс-голосование и закрепить. Если в беседе уже есть анонс игр этой недели —
+    матч добавляется в него (общий анонс), а в беседу уходит короткое сообщение. Повторный вызов
+    вернёт существующий."""
     existing = await _current_poll(session, chat.tenant_id, match.id)
     if existing is not None:
         return existing
-    return await _post(session, channel, chat, match)
+    ref = await _open_announce(session, chat, match)
+    if ref is None:
+        return (await _post(session, channel, chat, [match]))[0]
+    session.add(PollMessage(tenant_id=chat.tenant_id, match_id=match.id, chat_id=chat.id, message_ref=ref))
+    await session.commit()
+    edited = await _refresh_message(session, channel, chat, ref)
+    log.info("матч %s добавлен в анонс %s", match.id, ref)
+    # уведомление: правка сообщения его не даёт. Одно на матч — после перезапуска опроса беседа уже знает
+    if edited and await notify.once(session, chat.tenant_id, "poll_added", str(match.id), match_id=match.id):
+        await session.commit()
+        league, ours, rival, _ = await _context(session, match, chat.tenant_id)
+        try:
+            await channel.send(
+                chat.peer_id,
+                f"📌 В закреплённый анонс добавлена игра: {teams(match, ours, rival)} ({league.name}). "
+                "Отметьтесь — «Буду» или «Не буду».",
+            )
+        except ChannelError as e:
+            log.warning("не удалось сообщить о добавлении матча %s в анонс: %s", match.id, e)
+    return await _current_poll(session, chat.tenant_id, match.id)
 
 
-async def _post(session: AsyncSession, channel: ChannelAdapter, chat: Chat, match: Match) -> PollMessage:
-    text = await render(session, match, chat.tenant_id)
-    ref = await channel.send(chat.peer_id, text, vote_buttons(match.id))
-    poll = PollMessage(
-        tenant_id=chat.tenant_id, match_id=match.id, chat_id=chat.id, message_ref=ref.message_id
-    )
-    session.add(poll)
+async def _post(
+    session: AsyncSession, channel: ChannelAdapter, chat: Chat, matches: list[Match]
+) -> list[PollMessage]:
+    """Новое сообщение-анонс с этими матчами (закрепляется). Возвращает опросы в порядке matches."""
+    text = await render_announce(session, chat.tenant_id, matches)
+    ref = await channel.send(chat.peer_id, text, await announce_buttons(session, matches) or None)
+    created = [
+        PollMessage(tenant_id=chat.tenant_id, match_id=m.id, chat_id=chat.id, message_ref=ref.message_id)
+        for m in matches
+    ]
+    session.add_all(created)
+    for m in matches:  # сообщение о публикации и есть уведомление — «добавлена игра» для них не нужно
+        await notify.once(session, chat.tenant_id, "poll_added", str(m.id), match_id=m.id)
     await session.commit()
     await channel.pin(ref)
-    return poll
+    return created
+
+
+STALE_TEXT = "Этот анонс устарел — актуальный закреплён в беседе. Кнопки здесь тоже работают."
+
+
+async def _refresh_message(
+    session: AsyncSession, channel: ChannelAdapter, chat: Chat, message_ref: str
+) -> bool:
+    """Перерисовать сообщение-анонс; если VK не даёт отредактировать — переопубликовать все его матчи.
+    True — отредактировано на месте."""
+    async with _msg_locks[(chat.id, message_ref)]:
+        rows = await _announce_rows(session, chat.id, message_ref)
+        if not rows:
+            return False
+        matches = [m for _, m in rows]
+        text = await render_announce(session, chat.tenant_id, matches)
+        buttons = await announce_buttons(session, matches) or None
+        msg = MessageRef(chat.peer_id, message_ref)
+        if await channel.edit(msg, text, buttons):
+            for p, _ in rows:
+                p.last_edited_at = utcnow()
+            await session.commit()
+            return True
+        new_ref = await channel.send(chat.peer_id, text, buttons)
+        for p, m in rows:
+            new = PollMessage(
+                tenant_id=p.tenant_id, match_id=m.id, chat_id=chat.id, message_ref=new_ref.message_id
+            )
+            session.add(new)
+            await session.flush()
+            p.superseded_by_id = new.id
+        await session.commit()
+    await channel.pin(new_ref)
+    await channel.edit(msg, STALE_TEXT, buttons)
+    return False
 
 
 async def refresh(session: AsyncSession, channel: ChannelAdapter, tenant_id: int, match: Match) -> None:
-    """Обновить анонс; если старый не редактируется — переопубликовать."""
+    """Обновить анонс матча (весь общий анонс, если матч в нём); не редактируется — переопубликовать."""
     poll = await _current_poll(session, tenant_id, match.id)
     if poll is None:
         return
-    chat = await session.get(Chat, poll.chat_id)
-    text = await render(session, match, tenant_id)
-    msg = MessageRef(chat.peer_id, poll.message_ref)
-    if await channel.edit(msg, text, vote_buttons(match.id)):
-        poll.last_edited_at = utcnow()
-        await session.commit()
-        return
-    new_ref = await channel.send(chat.peer_id, text, vote_buttons(match.id))
-    new_poll = PollMessage(
-        tenant_id=tenant_id, match_id=match.id, chat_id=chat.id, message_ref=new_ref.message_id
-    )
-    session.add(new_poll)
-    await session.flush()
-    poll.superseded_by_id = new_poll.id
-    await session.commit()
-    await channel.pin(new_ref)
-    await channel.edit(
-        msg,
-        "Этот анонс устарел — актуальный закреплён в беседе. Кнопки здесь тоже работают.",
-        vote_buttons(match.id),
-    )
+    await _refresh_message(session, channel, await session.get(Chat, poll.chat_id), poll.message_ref)
 
 
 MOVED_TEXT = "Анонс перенесён в беседу команды — отмечайтесь там. Здесь голосование закрыто."
@@ -191,8 +353,9 @@ async def relocate(
 ) -> int:
     """Переезд беседы: открытые анонсы из неактивных бесед публикуются заново в активной, старые закрываются.
 
-    Отметки привязаны к матчу, а не к беседе, поэтому в новом анонсе они сохраняются.
-    При сбое VK анонс остаётся в старой беседе, и планировщик повторит попытку.
+    Общий анонс переезжает целиком, одним сообщением. Отметки привязаны к матчу, а не к беседе,
+    поэтому в новом анонсе они сохраняются. При сбое VK анонс остаётся в старой беседе, и планировщик
+    повторит попытку. Возвращает число перенесённых опросов (матчей).
     """
     chat = await chats.active_chat(session, tenant_id, channel.channel)
     if chat is None:
@@ -206,33 +369,104 @@ async def relocate(
             .where(
                 PollMessage.tenant_id == tenant_id,
                 PollMessage.superseded_by_id.is_(None),
+                PollMessage.closed_at.is_(None),
                 Chat.channel == channel.channel,
                 Chat.id != chat.id,
                 Match.status.not_in(FINISHED),
                 or_(Match.start_at.is_(None), Match.start_at > now),
             )
+            .order_by(Match.match_date, Match.start_at, Match.id)
         )
     ).all()
-    moved = 0
+    groups: dict[tuple[int, str], list] = {}
     for old, match, old_chat in rows:
+        groups.setdefault((old_chat.id, old.message_ref), []).append((old, match, old_chat))
+    moved = 0
+    for (_, ref), items in groups.items():
+        first = items[0][1]
         # попытка — не чаще раза в час: при сбое VK не долбим каждую минуту
         if not await notify.once(
-            session, tenant_id, "poll_move_try", f"{match.id}:{chat.id}:{now:%Y-%m-%dT%H}", match_id=match.id
+            session, tenant_id, "poll_move_try", f"{first.id}:{chat.id}:{now:%Y-%m-%dT%H}", match_id=first.id
         ):
             continue
         await session.commit()
         try:
-            new = await _post(session, channel, chat, match)
+            new = await _post(session, channel, chat, [m for _, m, _ in items])
         except ChannelError as e:
-            log.warning("анонс матча %s не перенесён в беседу %s: %s", match.id, chat.peer_id, e)
+            log.warning("анонс матча %s не перенесён в беседу %s: %s", first.id, chat.peer_id, e)
             continue
-        old.superseded_by_id = new.id
+        by_match = {p.match_id: p for p in new}
+        for old, m, _ in items:
+            old.superseded_by_id = by_match[m.id].id
         await session.commit()
-        moved += 1
-        log.info("анонс матча %s перенесён из беседы %s в %s", match.id, old_chat.peer_id, chat.peer_id)
+        moved += len(items)
+        old_chat = items[0][2]
+        for _, m, _ in items:
+            log.info("анонс матча %s перенесён из беседы %s в %s", m.id, old_chat.peer_id, chat.peer_id)
         # без кнопок; если VK не даст отредактировать — нажатия в неактивной беседе всё равно не учитываются
-        await channel.edit(MessageRef(old_chat.peer_id, old.message_ref), MOVED_TEXT)
+        await channel.edit(MessageRef(old_chat.peer_id, ref), MOVED_TEXT)
     return moved
+
+
+CLOSED_TEXT = "Время матча изменилось — голосование перезапущено. Отмечайтесь в новом анонсе, он закреплён."
+CLOSED_TOAST = "Опрос перезапущен — отмечайтесь в новом анонсе"
+
+
+async def restart(session: AsyncSession, channel: ChannelAdapter, tenant_id: int, match: Match) -> list:
+    """Перенос / новое время: прежние отметки сбрасываются, опрос матча закрывается — на всех его
+    сообщениях, включая переопубликованные (нажатия на них больше не засчитываются).
+
+    Из общего анонса матч убирается (остальные игры остаются), одиночный анонс закрывается.
+    Новый опрос публикует недельный цикл (weekly._ensure_poll) — в ближайшую минуту или в день опроса,
+    если матч перенесли далеко. Возвращает сброшенные отметки [(player_id, vote)] — им пишут в личку.
+    """
+    async with _locks[match.id]:
+        votes = (
+            await session.execute(
+                select(Attendance.player_id, Attendance.vote).filter_by(
+                    tenant_id=tenant_id, match_id=match.id
+                )
+            )
+        ).all()
+        await session.execute(delete(Attendance).filter_by(tenant_id=tenant_id, match_id=match.id))
+        current = await _current_poll(session, tenant_id, match.id)
+        now = utcnow()
+        for p in (
+            await session.scalars(
+                select(PollMessage).where(
+                    PollMessage.tenant_id == tenant_id,
+                    PollMessage.match_id == match.id,
+                    PollMessage.closed_at.is_(None),
+                )
+            )
+        ).all():
+            p.closed_at = now
+        await session.commit()
+    if current is not None:
+        chat = await session.get(Chat, current.chat_id)
+        if await _announce_rows(session, chat.id, current.message_ref):
+            await _refresh_message(session, channel, chat, current.message_ref)  # остальные игры недели
+        else:
+            # если VK не даст отредактировать (анонс старше суток) — нажатия на нём всё равно не засчитаются
+            await channel.edit(MessageRef(chat.peer_id, current.message_ref), CLOSED_TEXT)
+        log.info("опрос по матчу %s перезапущен: сброшено отметок %s", match.id, len(votes))
+    return [(player_id, Vote(vote)) for player_id, vote in votes]
+
+
+async def _closed_poll(session: AsyncSession, msg: MessageRef, match_id: int) -> bool:
+    """Нажатие пришло с сообщения, где опрос этого матча закрыт (перезапущен после переноса)."""
+    found = (
+        await session.scalars(
+            select(PollMessage)
+            .join(Chat, Chat.id == PollMessage.chat_id)
+            .where(
+                Chat.peer_id == msg.peer_id,
+                PollMessage.message_ref == msg.message_id,
+                PollMessage.match_id == match_id,
+            )
+        )
+    ).all()
+    return bool(found) and all(p.closed_at is not None for p in found)
 
 
 async def on_vote(session: AsyncSession, channel: ChannelAdapter, tenant_id: int, press: ButtonPress) -> None:
@@ -249,6 +483,9 @@ async def on_vote(session: AsyncSession, channel: ChannelAdapter, tenant_id: int
         match.start_at is not None and match.start_at <= utcnow()
     ):
         await channel.answer_button(press, "Голосование закрыто — матч уже начался")
+        return
+    if await _closed_poll(session, press.message, match_id):
+        await channel.answer_button(press, CLOSED_TOAST)
         return
 
     async with _locks[match_id]:

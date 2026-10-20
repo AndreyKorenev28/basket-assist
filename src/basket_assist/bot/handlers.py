@@ -5,6 +5,7 @@
 """
 
 import logging
+from datetime import datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,7 +23,7 @@ from basket_assist.channels.base import (
 from basket_assist.services import leaders, notify, polls, roster
 from basket_assist.services.players import get_or_create_player, set_dm_allowed
 from basket_assist.services.schedule import upcoming_text
-from basket_assist.storage.tables import Chat, MessengerAccount, TeamEntry, Tenant
+from basket_assist.storage.tables import Chat, MessengerAccount, TeamEntry, Tenant, utcnow
 
 log = logging.getLogger(__name__)
 
@@ -82,6 +83,9 @@ MOVED_CHAT = (
     "Basket Assist переехал в другую беседу команды: анонсы и команды теперь там. "
     "В этой беседе я больше не работаю. Личные сообщения со мной — как раньше."
 )
+GAMES_REPEAT = timedelta(minutes=5)  # «игры» в беседе: тот же ответ чаще — не дублируем
+GAMES_ABOVE = "Расписание и голосование — в сообщении выше"
+_last_games: dict[str, tuple[datetime, str]] = {}  # беседа → (когда, текст) последнего ответа «игры»
 MOVED_CHAT_TOAST = "Голосование перенесено в беседу команды"
 UNKNOWN_BUTTONS = [[_cmd("Помощь", "помощь", "secondary")]]
 WELCOME_DM = (
@@ -187,12 +191,33 @@ async def _chat_command(session, channel: ChannelAdapter, tenant_id: int, event:
     await _chat_reply(session, channel, tenant_id, event.peer_id, event.text)
 
 
-async def _chat_reply(session, channel: ChannelAdapter, tenant_id: int, peer_id: str, text: str) -> None:
-    """Команда в беседе — из обращения к боту или с кнопки."""
+async def _chat_reply(
+    session,
+    channel: ChannelAdapter,
+    tenant_id: int,
+    peer_id: str,
+    text: str,
+    press: ButtonPress | None = None,
+) -> None:
+    """Команда в беседе — из обращения к боту или с кнопки (press: ответить на нажатие)."""
     cmd = text.lower().strip(" .!?")
     if cmd in ("игры", "матчи", "расписание"):
-        await channel.send(peer_id, await upcoming_text(session, tenant_id))
-    elif cmd in GO_WORDS:
+        reply = await upcoming_text(session, tenant_id)
+        now = utcnow()
+        last = _last_games.get(peer_id)
+        if last is not None and last[1] == reply and now - last[0] < GAMES_REPEAT:
+            # тот же ответ только что был в беседе — не дублируем; нажавшему — подсказка, видна только ему
+            if press is not None:
+                await channel.answer_button(press, GAMES_ABOVE)
+            return
+        if press is not None:
+            await channel.answer_button(press, "")
+        await channel.send(peer_id, reply)
+        _last_games[peer_id] = (now, reply)
+        return
+    if press is not None:
+        await channel.answer_button(press, "")
+    if cmd in GO_WORDS:
         await channel.send(
             peer_id,
             f"Личка с ботом — напоминания об играх и ваши команды. Откройте ссылку "
@@ -329,10 +354,10 @@ async def _command_button(
     if in_chat and command in GO_WORDS:
         await _go_to_bot(session, channel, tenant_id, press)
         return
-    await channel.answer_button(press, "")
     if in_chat:
-        await _chat_reply(session, channel, tenant_id, press.peer_id, command)
+        await _chat_reply(session, channel, tenant_id, press.peer_id, command, press)
     else:
+        await channel.answer_button(press, "")
         await _dm_command(session, channel, tenant_id, press.peer_id, press.user_id, command)
 
 

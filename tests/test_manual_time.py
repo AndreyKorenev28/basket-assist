@@ -62,7 +62,9 @@ async def test_manual_time_can_be_corrected(session, tenant_cfg):
     tenant, _, m = await _no_time_match(session, tenant_cfg)
     await leader.time_command(session, tenant.id, _cmd(m, "18:30"))
     text, _ = await leader.time_command(session, tenant.id, _cmd(m, "19:00"))
-    assert text.startswith("Время записано")
+    # смена уже заданного времени — новый опрос (ADR 0007)
+    assert text.startswith("Время изменено:") and "19:00" in text
+    assert "Опрос перезапускается: прежние отметки сброшены" in text
     await session.refresh(m)
     assert m.start_at == _utc(m, 19, 0) and m.time_source == "manual"
 

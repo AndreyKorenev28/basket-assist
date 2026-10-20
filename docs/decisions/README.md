@@ -32,3 +32,4 @@
 | [0004](0004-vk-bot-admin-and-poll-format.md) | Бот VK — администратор беседы; анонс-голосование «Буду / Не буду» с именами | принято |
 | [0005](0005-mvp-stack-and-architecture.md) | Стек и архитектура MVP | принято |
 | [0006](0006-hosting-ruvds.md) | Хостинг MVP — RUVDS START HIT SSD, Debian 13 | принято |
+| [0007](0007-weekly-combined-announce.md) | Общий анонс игр недели; перенос — новый опрос | принято |

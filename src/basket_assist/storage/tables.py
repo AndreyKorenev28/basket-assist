@@ -274,7 +274,8 @@ class ApplicationEntry(Base):
 
 
 class PollMessage(Base):
-    """Анонс-голосование в беседе. superseded_by — если анонс пришлось переопубликовать."""
+    """Анонс-голосование в беседе. superseded_by — если анонс пришлось переопубликовать;
+    closed_at — опрос закрыт (перенос / новое время: отметки сброшены, опрос запускается заново)."""
 
     __tablename__ = "poll_message"
 
@@ -286,6 +287,7 @@ class PollMessage(Base):
     posted_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     last_edited_at: Mapped[datetime | None] = mapped_column(DateTime)
     superseded_by_id: Mapped[int | None] = mapped_column(ForeignKey("poll_message.id"))
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime)
 
 
 class NotificationLog(Base):

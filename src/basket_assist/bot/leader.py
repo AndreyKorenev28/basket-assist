@@ -4,6 +4,7 @@
 Ограничения VK для inline-клавиатуры: ≤ 10 кнопок, ≤ 6 рядов, подпись ≤ 40 символов.
 """
 
+import json
 import re
 from datetime import UTC, datetime, time, timedelta
 from zoneinfo import ZoneInfo
@@ -12,12 +13,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from basket_assist.channels.base import Button, ButtonPress, ChannelAdapter
-from basket_assist.domain.models import TimeStatus
+from basket_assist.domain.models import ChangeKind, TimeStatus
 from basket_assist.services import chats, digests, leaders, notify, polls, roster, weekly
 from basket_assist.services.schedule import format_when, teams, upcoming_matches, weekend_days
 from basket_assist.services.table_image import PlayersTable, TableRow, render_players
 from basket_assist.storage.tables import (
     ApplicationEntry,
+    ChangeEvent,
     League,
     LeagueTeam,
     Match,
@@ -244,9 +246,22 @@ async def set_manual_time(
         match.match_date, match.date_is_estimate = day, False
     hh, mm = (int(x) for x in hm.split(":"))
     local = datetime.combine(match.match_date, time(hh, mm), ZoneInfo(league.timezone))
-    match.start_at = local.astimezone(UTC).replace(tzinfo=None)
+    was, match.start_at = match.start_at, local.astimezone(UTC).replace(tzinfo=None)
+    if was is not None and was != match.start_at:  # руководитель поменял своё же время — новый опрос
+        session.add(
+            ChangeEvent(
+                kind=ChangeKind.TIME_CHANGED,
+                match_id=match.id,
+                payload=json.dumps({"was": was, "now": match.start_at, "source": "manual"}, default=str),
+            )
+        )
     match.time_status, match.time_source = TimeStatus.TIME_SET, "manual"
     await session.commit()
+    if was is not None and was != match.start_at:
+        return (
+            f"Время изменено: {teams(match, ours, rival)} ({league.name}) — {format_when(match, league)}.\n"
+            "Опрос перезапускается: прежние отметки сброшены, игроков попрошу отметиться заново."
+        )
     return (
         f"Время записано: {teams(match, ours, rival)} ({league.name}) — {format_when(match, league)}.\n"
         "Опрос запустится сам (в день опроса, а если он уже прошёл — в ближайшую минуту). "

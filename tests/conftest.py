@@ -58,3 +58,13 @@ def poll_posted_at_follows_tick(monkeypatch):
     event.listen(PollMessage, "before_insert", stamp)
     yield
     event.remove(PollMessage, "before_insert", stamp)
+
+
+@pytest.fixture(autouse=True)
+def reset_games_pause():
+    """Пауза на «игры» в беседе (handlers._last_games) — состояние процесса: между тестами не переносится."""
+    from basket_assist.bot import handlers
+
+    handlers._last_games.clear()
+    yield
+    handlers._last_games.clear()
