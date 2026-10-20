@@ -6,7 +6,7 @@ echo "== пакеты"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -q
 apt-get upgrade -y -q
-apt-get install -y -q python3-venv sqlite3 ufw unattended-upgrades
+apt-get install -y -q python3-venv sqlite3 ufw unattended-upgrades fonts-dejavu-core
 
 echo "== автоустановка обновлений безопасности"
 dpkg-reconfigure -f noninteractive unattended-upgrades
