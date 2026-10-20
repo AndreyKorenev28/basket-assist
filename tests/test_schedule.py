@@ -97,9 +97,10 @@ async def test_upcoming_text_one_nearest_per_league(session, tenant_cfg):
     assert text == (
         "Ближайшие игры:\n\n"
         f"🏀 АБЛ: Соперник near — Westchester\n📅 {schedule.format_when(near, abl)}\n"
-        "📍 Зал Тестовый, ул. Примерная, 1\n👕 Наша форма: тёмная\n\n"
-        f"🏀 МЛБЛ: Соперник m2 — МИРЭА\n📅 {schedule.format_when(m2, mlbl)}\n📍 зал пока не указан\n"
-        "👕 Наша форма: тёмная"
+        "Зал Тестовый, ул. Примерная, 1\n🟣 Наша форма: тёмная\n"
+        "Таблица лиги пока не опубликована\nМы vs они: ещё не играли\n\n"
+        f"🏀 МЛБЛ: Соперник m2 — МИРЭА\n📅 {schedule.format_when(m2, mlbl)}\nзал пока не указан\n"
+        "🟣 Наша форма: тёмная\nТаблица лиги пока не опубликована\nМы vs они: ещё не играли"
     )
     assert "Соперник late" not in text
     assert "время пока не назначено" in text
@@ -115,9 +116,9 @@ async def test_upcoming_text_league_without_matches_shown(session, tenant_cfg):
     assert blocks[0] == "Ближайшие игры:"
     assert blocks[1] == "🏀 АБЛ: Westchester\nБлижайших матчей на сайте лиги пока нет."
     assert blocks[2].startswith("🏀 МЛБЛ: Соперник m2 — МИРЭА\n📅 ") and blocks[2].endswith(
-        "\n📍 Зал Тестовый\n👕 Наша форма: тёмная"
+        "\nЗал Тестовый\n🟣 Наша форма: тёмная\nТаблица лиги пока не опубликована\nМы vs они: ещё не играли"
     )
-    assert "👕" not in blocks[1]  # у лиги без матчей подсказки о форме нет
+    assert "Наша форма" not in blocks[1]  # у лиги без матчей подсказки о форме нет
 
 
 async def test_upcoming_text_no_matches_anywhere(session, tenant_cfg):

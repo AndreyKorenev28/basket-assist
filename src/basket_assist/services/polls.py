@@ -117,7 +117,7 @@ async def _block(session: AsyncSession, match: Match, tenant_id: int) -> tuple[l
     head = [
         f"🏀 {league.name}: {teams(match, ours, rival)}",
         f"📅 {when}",
-        f"📍 {place}",
+        place,
         kit_hint(match, ours),
     ]
     if match.status == MatchStatus.RESCHEDULED:

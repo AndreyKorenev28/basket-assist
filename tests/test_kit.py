@@ -15,8 +15,8 @@ from tests.test_roster import CAPTAIN, CHAT, VICE, _player
 
 # (home, заголовок матча АБЛ, подсказка о форме)
 CASES = [
-    (True, "Westchester — Соперник g1", "👕 Наша форма: светлая"),
-    (False, "Соперник g1 — Westchester", "👕 Наша форма: тёмная"),
+    (True, "Westchester — Соперник g1", "⚪ Наша форма: светлая"),
+    (False, "Соперник g1 — Westchester", "🟣 Наша форма: тёмная"),
 ]
 IDS = ["мы хозяева", "мы гости"]
 
@@ -42,8 +42,10 @@ async def test_upcoming_text_order_and_kit(session, tenant_cfg, home, title, kit
     assert blocks[1].split("\n") == [
         f"🏀 АБЛ: {title}",
         f"📅 {schedule.format_when(m, await _league_of(session, m))}",
-        "📍 Зал Тестовый",
+        "Зал Тестовый",
         kit,
+        "Таблица лиги пока не опубликована",
+        "Мы vs они: ещё не играли",
     ]
     # МЛБЛ без матчей — без подсказки о форме
     assert blocks[2] == "🏀 МЛБЛ: МИРЭА\nБлижайших матчей на сайте лиги пока нет."
@@ -60,7 +62,7 @@ async def test_lineup_order_and_kit(session, tenant_cfg, home, title, kit):
         kit,
     ]
     assert mlbl == "МЛБЛ: МИРЭА\nБлижайших матчей на сайте лиги пока нет."
-    assert "👕" not in mlbl
+    assert "Наша форма" not in mlbl
 
 
 @pytest.mark.parametrize(("home", "title", "kit"), CASES, ids=IDS)
@@ -69,8 +71,10 @@ async def test_poll_render_order_and_kit(session, tenant_cfg, home, title, kit):
     m = await _match(session, entries["abl"], "g1", home=home)
     lines = (await polls.render(session, m, tenant.id)).split("\n")
     assert lines[0] == f"🏀 АБЛ: {title}"
-    assert lines[2].startswith("📍 ") and lines[3] == kit
+    assert lines[2] == "зал не указан" and lines[3] == kit
     assert lines[4] == ""
+    # справка по сопернику — только в «Играх», не в анонсе
+    assert not any(line.startswith(("Мы:", "Мы vs они", "Таблица лиги")) for line in lines)
 
 
 @pytest.mark.parametrize(("home", "title", "kit"), CASES, ids=IDS)

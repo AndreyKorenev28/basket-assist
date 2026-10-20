@@ -99,12 +99,12 @@ async def test_no_time_and_no_poll(session, tenant_cfg):
     assert abl.split("\n") == [
         "🏀 АБЛ: Соперник g1 — Westchester",
         f"📅 {digests.format_when(m, await _league(session, entries['abl']))}",
-        "👕 Наша форма: тёмная",
+        "🟣 Наша форма: тёмная",
         "Время не назначено — опрос не запускается, свяжитесь с лигой.",
     ]
     assert "время пока не назначено" in abl.split("\n")[1]
     assert mlbl.split("\n")[0] == "МЛБЛ: Соперник g2 — МИРЭА"
-    assert mlbl.split("\n")[2:] == ["👕 Наша форма: тёмная", "Опрос ещё не запущен."]
+    assert mlbl.split("\n")[2:] == ["🟣 Наша форма: тёмная", "Опрос ещё не запущен."]
     assert "Буду" not in abl + mlbl
 
 
@@ -116,7 +116,7 @@ async def test_nearest_match_per_entry(session, tenant_cfg):
     await _match(session, entries["abl"], "near", days=1)
     abl = await _lines(session, tenant)
     assert abl[0] == "🏀 АБЛ: Соперник near — Westchester"
-    assert abl[2:] == ["👕 Наша форма: тёмная", "Опрос ещё не запущен."]
+    assert abl[2:] == ["🟣 Наша форма: тёмная", "Опрос ещё не запущен."]
     assert "Соперник late" not in await digests.lineup_text(session, tenant.id)
 
 
@@ -182,7 +182,7 @@ async def test_full_block(session, tenant_cfg):
     assert await _lines(session, tenant) == [
         "🏀 АБЛ: Соперник g1 — Westchester",
         f"📅 {digests.format_when(m, await _league(session, entries['abl']))}",
-        "👕 Наша форма: тёмная",
+        "🟣 Наша форма: тёмная",
         "",
         "Буду (6):",
         "  № ? Ёлкин Пётр",  # «ё» сортируется как «е»; без номера — «№ ?»
