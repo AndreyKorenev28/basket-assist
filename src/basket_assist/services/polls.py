@@ -302,7 +302,13 @@ async def _post(
     return created
 
 
-STALE_TEXT = "Этот анонс устарел — актуальный закреплён в беседе. Кнопки здесь тоже работают."
+STALE_TEXT = "Этот анонс устарел — актуальный закреплён в беседе."
+
+
+async def _retire(channel: ChannelAdapter, msg: MessageRef, text: str) -> None:
+    """Убрать старый анонс: удалить для всех; не вышло — пометить текстом без кнопок."""
+    if not await channel.delete(msg):
+        await channel.edit(msg, text)
 
 
 async def _refresh_message(
@@ -333,7 +339,7 @@ async def _refresh_message(
             p.superseded_by_id = new.id
         await session.commit()
     await channel.pin(new_ref)
-    await channel.edit(msg, STALE_TEXT, buttons)
+    await _retire(channel, msg, STALE_TEXT)
     return False
 
 
@@ -412,13 +418,24 @@ CLOSED_TEXT = "Время матча изменилось — голосован
 CLOSED_TOAST = "Опрос перезапущен — отмечайтесь в новом анонсе"
 
 
-async def restart(session: AsyncSession, channel: ChannelAdapter, tenant_id: int, match: Match) -> list:
-    """Перенос / новое время: прежние отметки сбрасываются, опрос матча закрывается — на всех его
-    сообщениях, включая переопубликованные (нажатия на них больше не засчитываются).
+async def _poll_open(session: AsyncSession, match: Match, now: datetime) -> bool:
+    """Опрос по матчу уже открыт: есть время, матч не начался, наступил день опроса (weekly.poll_opens_at)."""
+    from basket_assist.services.weekly import poll_opens_at  # weekly импортирует polls
 
-    Из общего анонса матч убирается (остальные игры остаются), одиночный анонс закрывается.
-    Новый опрос публикует недельный цикл (weekly._ensure_poll) — в ближайшую минуту или в день опроса,
-    если матч перенесли далеко. Возвращает сброшенные отметки [(player_id, vote)] — им пишут в личку.
+    if match.start_at is None or match.date_is_estimate or not _open_for_votes(match, now):
+        return False
+    tournament = await session.get(Tournament, match.tournament_id)
+    return now >= poll_opens_at(match, await session.get(League, tournament.league_id))
+
+
+async def restart(session: AsyncSession, channel: ChannelAdapter, tenant_id: int, match: Match) -> list:
+    """Перенос / новое время: прежние отметки сбрасываются, опрос матча закрывается на всех его
+    сообщениях (нажатия на них больше не засчитываются), анонс публикуется заново.
+
+    Новый анонс — все игры недели этого анонса (у перенесённой списки пустые, у остальных отметки
+    сохраняются) внизу ленты, закрепляется; старый удаляется для всех (не вышло — пометка без кнопок).
+    Если матч перенесли далеко (опрос ещё не открыт), его анонс позже опубликует недельный цикл.
+    Возвращает сброшенные отметки [(player_id, vote)] — им пишут в личку.
     """
     async with _locks[match.id]:
         votes = (
@@ -430,6 +447,13 @@ async def restart(session: AsyncSession, channel: ChannelAdapter, tenant_id: int
         ).all()
         await session.execute(delete(Attendance).filter_by(tenant_id=tenant_id, match_id=match.id))
         current = await _current_poll(session, tenant_id, match.id)
+        siblings = []
+        if current is not None:
+            siblings = [
+                (p, m)
+                for p, m in await _announce_rows(session, current.chat_id, current.message_ref)
+                if m.id != match.id
+            ]
         now = utcnow()
         for p in (
             await session.scalars(
@@ -442,15 +466,34 @@ async def restart(session: AsyncSession, channel: ChannelAdapter, tenant_id: int
         ).all():
             p.closed_at = now
         await session.commit()
-    if current is not None:
-        chat = await session.get(Chat, current.chat_id)
-        if await _announce_rows(session, chat.id, current.message_ref):
-            await _refresh_message(session, channel, chat, current.message_ref)  # остальные игры недели
-        else:
-            # если VK не даст отредактировать (анонс старше суток) — нажатия на нём всё равно не засчитаются
-            await channel.edit(MessageRef(chat.peer_id, current.message_ref), CLOSED_TEXT)
-        log.info("опрос по матчу %s перезапущен: сброшено отметок %s", match.id, len(votes))
-    return [(player_id, Vote(vote)) for player_id, vote in votes]
+    result = [(player_id, Vote(vote)) for player_id, vote in votes]
+    if current is None:
+        return result
+    old_chat = await session.get(Chat, current.chat_id)
+    old_msg = MessageRef(old_chat.peer_id, current.message_ref)
+    chat = await chats.active_chat(session, tenant_id, channel.channel) or old_chat
+    matches = [m for _, m in siblings]
+    same_week = all(abs((m.match_date - match.match_date).days) <= GROUP_DAYS for m in matches)
+    if same_week and await _poll_open(session, match, now):  # иначе — отдельный анонс недельным циклом
+        matches.append(match)
+    matches.sort(key=lambda m: (m.match_date, m.start_at or datetime.max, m.id))
+    if matches:
+        try:
+            new = await _post(session, channel, chat, matches)
+        except ChannelError as e:
+            log.warning("анонс после перезапуска матча %s не опубликован: %s", match.id, e)
+            if siblings:  # убрать матч из старого анонса; вернёт его недельный цикл
+                await _refresh_message(session, channel, old_chat, current.message_ref)
+            else:
+                await channel.edit(old_msg, CLOSED_TEXT)
+            return result
+        by_match = {p.match_id: p for p in new}
+        for p, m in siblings:
+            p.superseded_by_id = by_match[m.id].id
+        await session.commit()
+    await _retire(channel, old_msg, CLOSED_TEXT)
+    log.info("опрос по матчу %s перезапущен: сброшено отметок %s", match.id, len(votes))
+    return result
 
 
 async def _closed_poll(session: AsyncSession, msg: MessageRef, match_id: int) -> bool:

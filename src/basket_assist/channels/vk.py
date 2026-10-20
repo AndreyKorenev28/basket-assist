@@ -268,6 +268,17 @@ class VkChannel:
             return False
         return True
 
+    async def delete(self, msg: MessageRef) -> bool:
+        # проверено 2026-10-20: бот-администратор удаляет свои сообщения в беседе и старше суток, без заглушки
+        try:
+            await self._api.call(
+                "messages.delete", peer_id=msg.peer_id, cmids=msg.message_id, delete_for_all=1
+            )
+        except ChannelError as e:
+            log.warning("не удалось удалить %s: %s", msg, e)
+            return False
+        return True
+
     async def answer_button(self, press: ButtonPress, toast: str, link: str | None = None) -> None:
         if link:
             event_data = {"type": "open_link", "link": link}

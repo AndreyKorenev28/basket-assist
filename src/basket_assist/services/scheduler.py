@@ -27,6 +27,7 @@ from basket_assist.services.sync import sync_team_entry
 from basket_assist.sources import make_adapter
 from basket_assist.sources.base import SourceError
 from basket_assist.storage.tables import (
+    Attendance,
     ChangeEvent,
     League,
     LeagueTeam,
@@ -178,20 +179,25 @@ async def process_changes(session: AsyncSession, channel: ChannelAdapter) -> Non
             text = await _change_text(session, ev, match, entry.tenant_id)
             if text is None:
                 continue
-            votes: list = []
-            reopened = False
-            if ev.kind in RESTART_KINDS and (entry.tenant_id, match.id) not in restarted:
+            restart = ev.kind in RESTART_KINDS and (entry.tenant_id, match.id) not in restarted
+            if restart:
                 restarted.add((entry.tenant_id, match.id))
-                reopened = await polls._current_poll(session, entry.tenant_id, match.id) is not None
-                votes = await polls.restart(session, channel, entry.tenant_id, match)
-                if reopened or votes:
-                    text += " Прежние отметки сброшены — отметьтесь заново в закреплённом анонсе."
+                had_poll = await polls._current_poll(session, entry.tenant_id, match.id) is not None
+                had_votes = (
+                    await session.scalars(
+                        select(Attendance.id).filter_by(tenant_id=entry.tenant_id, match_id=match.id).limit(1)
+                    )
+                ).first() is not None
+                if had_poll or had_votes:
+                    text += " Прежние отметки сброшены — отметьтесь заново в новом анонсе."
+            # сначала сообщение о переносе, ниже — новый анонс (его публикует restart)
             chat = await chats.active_chat(session, entry.tenant_id, channel.channel)
             if chat is not None:
                 try:
                     await channel.send(chat.peer_id, text)
                 except ChannelError as e:
                     log.warning("не удалось сообщить об изменении матча %s: %s", match.id, e)
+            votes = await polls.restart(session, channel, entry.tenant_id, match) if restart else []
             await _ask_voters_again(session, channel, entry.tenant_id, ev, match, votes)
     await session.commit()
 

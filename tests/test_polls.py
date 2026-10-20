@@ -2,6 +2,7 @@
 
 from datetime import timedelta
 
+import pytest
 from sqlalchemy import func, select
 
 from basket_assist.bot.handlers import UNKNOWN_CHAT, handle
@@ -90,22 +91,29 @@ async def test_votes_change_and_names(session, tenant_cfg):
     assert len((await session.scalars(select(Attendance))).all()) == 2
 
 
-async def test_republish_when_edit_fails(session, tenant_cfg):
+@pytest.mark.parametrize("deletable", [True, False], ids=["deleted", "not_deleted"])
+async def test_republish_when_edit_fails(session, tenant_cfg, deletable):
+    """VK не дал отредактировать анонс: новый анонс + закрепление, старый удаляется для всех;
+    не удалось удалить — пометка «устарел» без кнопок (ADR 0007, «Дополнение»)."""
     chat, m = await _setup(session, tenant_cfg)
     ch = FakeChannel(names={"10": "Иван Петров"})
+    ch.deletable = deletable
     await polls.publish(session, ch, chat, m)
     ch.editable = False  # VK не даёт отредактировать старый анонс (ошибка 909)
 
     await handle(session, ch, press(m.id, "10", "going"))
     assert len(ch.sent) == 2 and "Буду (1): Иван Петров" in ch.sent[1][1]
     assert ch.pins[-1] == MessageRef(CHAT, "102")
-    assert "устарел" in ch.messages[(CHAT, "101")]
     current = (await session.scalars(select(PollMessage).where(PollMessage.superseded_by_id.is_(None)))).one()
     assert current.message_ref == "102"
-
-    # кнопка на старом анонсе продолжает работать и обновляет новый
-    await handle(session, ch, press(m.id, "10", "not_going", cmid="101"))
-    assert "Не буду (1): Иван Петров" in ch.messages[(CHAT, "102")]
+    old = MessageRef(CHAT, "101")
+    if deletable:
+        assert ch.deleted == [old] and (CHAT, "101") not in ch.messages
+        assert all(ref != old for ref, _ in ch.edits), "удалённое сообщение не редактируется"
+    else:
+        assert ch.deleted == []
+        assert ch.messages[(CHAT, "101")] == polls.STALE_TEXT
+        assert ch.buttons[(CHAT, "101")] is None, "на устаревшем анонсе кнопок нет"
 
 
 async def test_voting_closed_after_start(session, tenant_cfg):

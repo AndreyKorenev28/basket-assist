@@ -24,6 +24,8 @@ class FakeChannel:
         self.sent: list[tuple[str, str, list | None]] = []
         self.edits: list[tuple[MessageRef, str]] = []
         self.pins: list[MessageRef] = []
+        self.deleted: list[MessageRef] = []
+        self.deletable = True  # False — delete() не удаётся (запасной вариант: пометка текстом)
         self.toasts: list[str] = []
         self.links: list[str | None] = []  # ссылка в ответе на нажатие (open_link), параллельно toasts
         self.messages: dict[tuple[str, str], str] = {}
@@ -75,6 +77,14 @@ class FakeChannel:
 
     async def pin(self, msg: MessageRef) -> bool:
         self.pins.append(msg)
+        return True
+
+    async def delete(self, msg: MessageRef) -> bool:
+        if not self.deletable:
+            return False
+        self.deleted.append(msg)
+        self.messages.pop((msg.peer_id, msg.message_id), None)
+        self.buttons.pop((msg.peer_id, msg.message_id), None)
         return True
 
     async def answer_button(self, press: ButtonPress, toast: str, link: str | None = None) -> None:

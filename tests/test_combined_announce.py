@@ -1,11 +1,13 @@
 """Общий анонс игр недели (ADR 0007): несколько матчей в одном закреплённом сообщении, у каждого своя пара
 кнопок и свои списки; добавление, голосование, переопубликация, перезапуск, переезд беседы. Вымышленные имена."""
 
+from datetime import datetime
+
 import pytest
 from sqlalchemy import select
 
 from basket_assist.bot.handlers import handle
-from basket_assist.channels.base import ButtonPress, MessageRef
+from basket_assist.channels.base import ButtonPress, ChannelError, MessageRef
 from basket_assist.services import polls, scheduler, weekly
 from basket_assist.storage.tables import Attendance, Chat, PollMessage, utcnow
 from tests.fakes import FakeChannel
@@ -182,10 +184,13 @@ async def test_vote_on_second_match_counted_for_its_match(session, tenant_cfg):
 # ---------- переопубликация ----------
 
 
-async def test_edit_failed_republishes_whole_announce(session, tenant_cfg):
+@pytest.mark.parametrize("deletable", [True, False], ids=["deleted", "not_deleted"])
+async def test_edit_failed_republishes_whole_announce(session, tenant_cfg, deletable):
     ch = FakeChannel()
+    ch.deletable = deletable
     tenant, _, m1, m2, p1, p2 = await _two(session, tenant_cfg, ch)
     old_ref = p1.message_ref
+    edits_before = len(ch.edits)
     ch.editable = False
     await polls.refresh(session, ch, tenant.id, m1)
     await session.refresh(p1)
@@ -200,30 +205,42 @@ async def test_edit_failed_republishes_whole_announce(session, tenant_cfg):
     text, buttons = _announces(ch)[-1]
     assert "🏀 АБЛ:" in text and "🏀 МЛБЛ:" in text and len(buttons) == 2
     assert ch.pins[-1] == MessageRef(CHAT, new[m1.id].message_ref)
-    assert ch.messages[(CHAT, old_ref)] == polls.STALE_TEXT
+    old = MessageRef(CHAT, old_ref)
+    if deletable:
+        assert ch.deleted == [old] and (CHAT, old_ref) not in ch.messages
+        assert all(ref != old for ref, _ in ch.edits[edits_before:]), (
+            "STALE не редактируется — сообщение удалено"
+        )
+    else:
+        assert ch.messages[(CHAT, old_ref)] == polls.STALE_TEXT
+        assert ch.buttons[(CHAT, old_ref)] is None
 
 
 # ---------- перезапуск опроса одного матча ----------
 
 
-@pytest.mark.parametrize(
-    "which",
-    [
-        "added",
-        "first",
-    ],
-)
-async def test_restart_one_match_of_combined_announce(session, tenant_cfg, which):
-    """Перезапуск одной игры общего анонса: другая остаётся с отметками; недельный цикл возвращает игру
-    в тот же анонс без повторного «добавлена игра», и кнопки этой игры снова работают.
-    which: «added» — игра, дописанная в анонс; «first» — игра, с которой анонс был опубликован."""
+def _opens(monkeypatch, is_open: bool) -> None:
+    """День опроса (weekly.poll_opens_at) уже наступил / ещё нет — не зависим от дня недели запуска тестов."""
+    monkeypatch.setattr(weekly, "poll_opens_at", lambda m, lg: datetime.min if is_open else datetime.max)
+
+
+def _current(rows) -> dict[int, PollMessage]:
+    return {p.match_id: p for p in rows if p.closed_at is None and p.superseded_by_id is None}
+
+
+@pytest.mark.parametrize("which", ["added", "first"])
+async def test_restart_one_match_of_combined_announce(session, tenant_cfg, monkeypatch, which):
+    """Перезапуск одной игры общего анонса (её опрос открыт): новое сообщение с обеими играми внизу
+    ленты, закреплено; у перенесённой — пустые списки, отметки другой сохранены; старое удалено;
+    «добавлена игра» не отправляется. which: «added» — игра, дописанная в анонс; «first» — первая."""
+    _opens(monkeypatch, True)
     ch = FakeChannel()
-    tenant, _, m1, m2, p1, _ = await _two(session, tenant_cfg, ch)
+    tenant, _, m1, m2, p1, p2 = await _two(session, tenant_cfg, ch)
     (m, lg), (other, other_lg) = (
         ((m2, "МЛБЛ"), (m1, "АБЛ")) if which == "added" else ((m1, "АБЛ"), (m2, "МЛБЛ"))
     )
-    ref = p1.message_ref
-    added_before = len(_added(ch))
+    old_ref = p1.message_ref
+    added_before, announces_before = len(_added(ch)), len(_announces(ch))
     petrov, sidorov = await _player(session, tenant, PETROV), await _player(session, tenant, SIDOROV)
     await _vote(session, tenant.id, m, petrov, "going")
     await _vote(session, tenant.id, other, sidorov, "going")
@@ -231,45 +248,98 @@ async def test_restart_one_match_of_combined_announce(session, tenant_cfg, which
     assert await polls.restart(session, ch, tenant.id, m) == [(petrov.id, "going")]
     left = (await session.scalars(select(Attendance))).all()
     assert [(a.match_id, a.player_id) for a in left] == [(other.id, sidorov.id)], "отметки другой игры целы"
-    assert ch.edits[-1][0] == MessageRef(CHAT, ref)
-    text = ch.messages[(CHAT, ref)]
-    assert f"🏀 {lg}:" not in text and f"🏀 {other_lg}:" in text and "Буду (1)" in text
-    assert ch.buttons[(CHAT, ref)] == polls.vote_buttons(other.id)
-    assert await polls._current_poll(session, tenant.id, m.id) is None
 
-    # нажатие на кнопку закрытого опроса — не засчитывается
-    press = ButtonPress(CHAT, PETROV, MessageRef(CHAT, ref), {"m": m.id, "v": "going"}, "e1")
-    await handle(session, ch, press)
-    assert ch.toasts[-1] == polls.CLOSED_TOAST
-    assert len((await session.scalars(select(Attendance))).all()) == 1
+    assert len(_announces(ch)) == announces_before + 1, "ровно одно новое сообщение"
+    text, buttons = _announces(ch)[-1]
+    assert text.index("🏀 АБЛ:") < text.index("🏀 МЛБЛ:"), "порядок по дате"
+    assert "Буду (1)" in _block(text, other_lg) and "Буду (0)" in _block(text, lg)
+    assert len(buttons) == 2
+    cur = _current((await session.scalars(select(PollMessage))).all())
+    assert set(cur) == {m1.id, m2.id}
+    new_ref = cur[m.id].message_ref
+    assert cur[other.id].message_ref == new_ref != old_ref
+    assert ch.pins[-1] == MessageRef(CHAT, new_ref)
+    await session.refresh(p1)
+    await session.refresh(p2)
+    old_m, old_other = (p2, p1) if which == "added" else (p1, p2)
+    assert old_m.closed_at is not None
+    assert old_other.closed_at is None and old_other.superseded_by_id == cur[other.id].id
+    assert ch.deleted == [MessageRef(CHAT, old_ref)]
+    assert len(_added(ch)) == added_before, "«добавлена игра» после перезапуска не шлётся"
 
-    # недельный цикл возвращает матч в тот же общий анонс
+    # недельный цикл ничего не публикует — текущий опрос уже есть
+    sent = len(ch.sent)
     await weekly._ensure_poll(session, ch, tenant.id, m, utcnow())
-    back = await polls._current_poll(session, tenant.id, m.id)
-    assert back is not None and back.message_ref == ref
-    assert len(_announces(ch)) == 1 and len(ch.pins) == 1
-    text = ch.messages[(CHAT, ref)]
-    assert "🏀 АБЛ:" in text and "🏀 МЛБЛ:" in text and len(ch.buttons[(CHAT, ref)]) == 2
+    assert len(ch.sent) == sent
 
-    # теперь голос на кнопке этой игры снова засчитывается
-    press = ButtonPress(CHAT, PETROV, MessageRef(CHAT, ref), {"m": m.id, "v": "not_going"}, "e2")
+    # голос на новом сообщении засчитывается перенесённой игре
+    press = ButtonPress(CHAT, PETROV, MessageRef(CHAT, new_ref), {"m": m.id, "v": "not_going"}, "e2")
     await handle(session, ch, press)
     assert ch.toasts[-1] == "Отмечено: Не буду"
     votes = {(a.match_id, a.vote) for a in (await session.scalars(select(Attendance))).all()}
     assert votes == {(m.id, "not_going"), (other.id, "going")}
 
-    # беседа уже знает о перезапуске («отметьтесь заново в закреплённом анонсе») — «добавлена игра» не нужно
-    assert len(_added(ch)) == added_before
 
-
-async def test_restart_last_match_closes_announce(session, tenant_cfg):
-    """Обе игры перезапущены — на сообщении CLOSED_TEXT без кнопок."""
+async def test_restart_one_match_poll_not_open_announce_without_it(session, tenant_cfg, monkeypatch):
+    """Игру перенесли далеко (её опрос не открыт): в новом анонсе только другая игра, старый удалён."""
+    _opens(monkeypatch, False)
     ch = FakeChannel()
     tenant, _, m1, m2, p1, _ = await _two(session, tenant_cfg, ch)
-    await polls.restart(session, ch, tenant.id, m1)
     await polls.restart(session, ch, tenant.id, m2)
-    assert ch.messages[(CHAT, p1.message_ref)] == polls.CLOSED_TEXT
-    assert ch.buttons[(CHAT, p1.message_ref)] is None
+    text, buttons = _announces(ch)[-1]
+    assert "🏀 АБЛ:" in text and "🏀 МЛБЛ:" not in text
+    assert buttons == polls.vote_buttons(m1.id)
+    cur = _current((await session.scalars(select(PollMessage))).all())
+    assert set(cur) == {m1.id} and cur[m1.id].message_ref != p1.message_ref
+    assert ch.deleted == [MessageRef(CHAT, p1.message_ref)]
+
+
+@pytest.mark.parametrize("deletable", [True, False], ids=["deleted", "not_deleted"])
+async def test_restart_both_matches_poll_not_open(session, tenant_cfg, monkeypatch, deletable):
+    """Обе игры перенесены далеко: после второго перезапуска текущих анонсов нет; старые сообщения удалены,
+    а если удалить не вышло — CLOSED_TEXT без кнопок."""
+    _opens(monkeypatch, False)
+    ch = FakeChannel()
+    ch.deletable = deletable
+    tenant, _, m1, m2, p1, _ = await _two(session, tenant_cfg, ch)
+    await polls.restart(session, ch, tenant.id, m1)
+    mid = _current((await session.scalars(select(PollMessage))).all())[m2.id].message_ref
+    await polls.restart(session, ch, tenant.id, m2)
+    assert _current((await session.scalars(select(PollMessage))).all()) == {}
+    assert len(_announces(ch)) == 2, "после второго перезапуска нового сообщения нет"
+    refs = [p1.message_ref, mid]
+    if deletable:
+        assert ch.deleted == [MessageRef(CHAT, r) for r in refs]
+    else:
+        for r in refs:
+            assert ch.messages[(CHAT, r)] == polls.CLOSED_TEXT and ch.buttons[(CHAT, r)] is None
+
+
+class _FailingSend(FakeChannel):
+    """Публикация в беседу падает (VK недоступен), правка работает."""
+
+    fail = False
+
+    async def send(self, peer_id, text, buttons=None):
+        if self.fail:
+            raise ChannelError(10, "internal error")
+        return await super().send(peer_id, text, buttons)
+
+
+async def test_restart_post_failed_falls_back_to_edit(session, tenant_cfg, monkeypatch):
+    """Новый анонс не опубликован: старый правится на месте — перенесённая игра исчезает, другая остаётся."""
+    _opens(monkeypatch, True)
+    ch = _FailingSend()
+    tenant, _, m1, m2, p1, _ = await _two(session, tenant_cfg, ch)
+    ch.fail = True
+    await polls.restart(session, ch, tenant.id, m2)
+    ref = p1.message_ref
+    assert ch.deleted == []
+    text = ch.messages[(CHAT, ref)]
+    assert "🏀 АБЛ:" in text and "🏀 МЛБЛ:" not in text
+    assert ch.buttons[(CHAT, ref)] == polls.vote_buttons(m1.id)
+    cur = _current((await session.scalars(select(PollMessage))).all())
+    assert set(cur) == {m1.id} and cur[m1.id].message_ref == ref
 
 
 # ---------- переезд беседы и обновление анонсов ----------
