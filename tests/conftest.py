@@ -1,3 +1,4 @@
+import shutil
 from datetime import UTC
 from pathlib import Path
 
@@ -13,11 +14,20 @@ ROOT = Path(__file__).resolve().parents[1]
 EXAMPLE_TENANT = ROOT / "config" / "tenant.example.toml"
 
 
+@pytest.fixture(scope="session")
+def migrated_db(tmp_path_factory) -> Path:
+    """База со всеми миграциями — один раз на прогон (миграции на каждый тест занимали ~2/3 времени)."""
+    path = tmp_path_factory.mktemp("template") / "template.db"
+    db.upgrade(f"sqlite+aiosqlite:///{path.as_posix()}")
+    return path
+
+
 @pytest.fixture
-def db_url(tmp_path: Path) -> str:
-    url = f"sqlite+aiosqlite:///{(tmp_path / 'test.db').as_posix()}"
-    db.upgrade(url)
-    return url
+def db_url(tmp_path: Path, migrated_db: Path) -> str:
+    """Своя база на каждый тест — копия готовой (изоляция та же, без повторных миграций)."""
+    path = tmp_path / "test.db"
+    shutil.copyfile(migrated_db, path)
+    return f"sqlite+aiosqlite:///{path.as_posix()}"
 
 
 @pytest.fixture

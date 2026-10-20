@@ -84,7 +84,7 @@
 ## Команды
 Все — из корня проекта, в venv `.venv` (PowerShell: `.venv\Scripts\Activate.ps1`; Git Bash: `.venv/Scripts/python`).
 - Установка: `py -3.13 -m venv .venv` → `python -m pip install -e ".[dev]"`
-- Тесты: `python -m pytest -q`
+- Тесты: `python -m pytest -q -n auto` (параллельно, ~20–30 с; без `-n auto` — ~1,5 мин)
 - Линтер и формат: `python -m ruff check src tests scripts` и `python -m ruff format src tests scripts`
 - Проверка конфига и БД: `python -m basket_assist --check`
 - Синхронизация с лигами и просмотр: `python -m basket_assist --sync --show`
