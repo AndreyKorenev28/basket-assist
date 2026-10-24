@@ -5,9 +5,9 @@
 """
 
 from basket_assist.bot import leader
-from basket_assist.bot.handlers import CHAT_BUTTONS, _help_dm
+from basket_assist.bot.handlers import _help_dm
 from basket_assist.channels.base import PAIR_LABEL_MAX, Button
-from basket_assist.services import leaders, roster, weekly
+from basket_assist.services import leaders, polls, roster, weekly
 from tests.fakes import assert_pair_labels
 from tests.test_application import _abl
 from tests.test_leader_bot import PETROV, SIDOROV, _big_roster, _ready
@@ -74,9 +74,10 @@ async def test_help_dm_pairs_fit_player_captain_acting(session, tenant_cfg):
     ]
 
 
-def test_chat_buttons_pairs_fit():
-    _pairs_fit(CHAT_BUTTONS)
-    assert [[b.label for b in r] for r in CHAT_BUTTONS] == [["Игры"], ["Перейти к боту"]]
+def test_bot_button_fits_own_row():
+    """ADR 0008: «💬 Бот в личке» — последним рядом анонса, одна в ряду; открывает личку («бот»)."""
+    _pairs_fit([*polls.vote_buttons(1), [polls.BOT_BUTTON]])
+    assert polls.BOT_BUTTON.payload == {"c": "бот"}
 
 
 async def test_matching_card_pairs_fit_and_has_legend(session, tenant_cfg):

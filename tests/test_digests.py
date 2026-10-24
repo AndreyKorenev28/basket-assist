@@ -185,14 +185,15 @@ async def test_full_block(session, tenant_cfg):
         "🟣 Наша форма: тёмная",
         "",
         "Буду (6):",
-        "  № ? Ёлкин Пётр",  # «ё» сортируется как «е»; без номера — «№ ?»
-        "  №1 Капитанов Иван",
-        "  №77 Петров Александр",  # правка руководителя важнее №7 из заявки на сезон
-        "  ⚠️ Denis Petrovich — не играет в этой лиге",
-        "  ⚠️ Друг Команды — нет в заявке на сезон",
-        "  ⚠️ Заместитель — не сопоставлен с заявкой на сезон",
+        # ADR 0008: в сводке — фамилии; не сопоставлен в этой лиге — фамилия из VK со звёздочкой
+        "  № ? Ёлкин",  # «ё» сортируется как «е»; без номера — «№ ?»
+        "  №1 Капитанов",
+        "  №77 Петров",  # правка руководителя важнее №7 из заявки на сезон
+        "  ⚠️ Petrovich* — не играет в этой лиге",
+        "  ⚠️ Заместитель* — не сопоставлен с заявкой на сезон",
+        "  ⚠️ Команды* — нет в заявке на сезон",
         "В заявку на игру: 3 (нужно 2–3) ✅",
-        "Не буду (1): Сидоров Евгений",
+        "Не буду (1): Сидоров",
         "Не ответили (0): —",
     ]
 
@@ -202,7 +203,7 @@ async def test_number_from_season_roster_without_override(session, tenant_cfg):
     petrov = await _player(session, tenant, PETROV)
     (await roster._link(session, tenant.id, petrov.id, entries["abl"].id)).number_override = None
     await session.commit()
-    assert "  №7 Петров Александр" in await _lines(session, tenant)
+    assert "  №7 Петров" in await _lines(session, tenant)
 
 
 async def test_size_too_many_and_too_few(session, tenant_cfg):
@@ -261,13 +262,13 @@ async def test_silent_only_active_in_roster_with_dm_mark(session, tenant_cfg):
     await _publish(session, m)
     lines = await _lines(session, tenant)
     # Заместитель, Друг Команды, Denis Petrovich не сопоставлены в АБЛ — их не ждём
-    assert lines[-1] == "Не ответили (1): Капитанов Иван 🔕"
+    assert lines[-1] == "Не ответили (1): Капитанов 🔕"
     assert "Буду (0):" in lines and "Не буду (0): —" in lines
 
     # в МЛБЛ Петров заявлен и не ответил, личка открыта — без 🔕
     m2 = await _match(session, entries["mlbl"], "g2")
     await _publish(session, m2)
-    assert (await _lines(session, tenant, 1))[-1] == "Не ответили (1): Петров Александр"
+    assert (await _lines(session, tenant, 1))[-1] == "Не ответили (1): Петров"
 
 
 async def test_voters_not_in_silent(session, tenant_cfg):
@@ -276,8 +277,8 @@ async def test_voters_not_in_silent(session, tenant_cfg):
     await _publish(session, m)
     await _vote(session, tenant, m, await _player(session, tenant, PETROV), "not_going")
     lines = await _lines(session, tenant)
-    assert "Не буду (1): Петров Александр" in lines
-    assert lines[-1] == "Не ответили (2): Капитанов Иван, Сидоров Евгений"
+    assert "Не буду (1): Петров" in lines
+    assert lines[-1] == "Не ответили (2): Капитанов, Сидоров"
 
 
 # ---------- мультитенантность ----------
@@ -294,7 +295,7 @@ async def test_isolated_between_tenants(session, tenant_cfg):
     a_text = await digests.lineup_text(session, tenant.id)
     for name in (*B_NAMES, "Громов"):
         assert name not in a_text
-    assert "Буду (1):" in a_text and "  №7 Петров Александр" in a_text
+    assert "Буду (1):" in a_text and "  №7 Петров\n" in a_text
 
     b_text = await digests.lineup_text(session, b.id)
     b_blocks = _blocks(b_text)

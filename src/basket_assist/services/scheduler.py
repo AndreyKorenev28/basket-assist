@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from basket_assist.channels.base import ChannelAdapter, ChannelError
 from basket_assist.domain.models import ChangeKind
-from basket_assist.services import chats, notify, polls, weekly
+from basket_assist.services import chats, notify, polls, quiet, weekly
 from basket_assist.services.schedule import FINISHED, format_when, teams
 from basket_assist.services.sync import sync_team_entry
 from basket_assist.sources import make_adapter
@@ -159,7 +159,9 @@ async def tick(
             r.matches_updated,
             len(r.changes),
         )
-    await process_changes(session, channel)  # каждую минуту: и ручная смена времени руководителем
+    if not quiet.is_quiet(now):  # ночью найденный перенос ждёт 10:00 (ADR 0008); анонсы правятся сразу
+        await process_changes(session, channel)  # каждую минуту: и ручная смена времени руководителем
+    await polls.hide_played(session, channel)
     if synced:
         await refresh_active_polls(session, channel, only_changed=True)
 
@@ -198,8 +200,8 @@ async def process_changes(session: AsyncSession, channel: ChannelAdapter) -> Non
                     )
                 ).first() is not None
                 if had_poll or had_votes:
-                    text += " Прежние отметки сброшены — отметьтесь заново в новом анонсе."
-            # сначала сообщение о переносе, ниже — новый анонс (его публикует restart)
+                    text += " Прежние отметки сброшены — отметьтесь заново в закреплённом анонсе."
+            # сначала сообщение о переносе, затем restart: анонс правится на месте (или новый — ADR 0008)
             chat = await chats.active_chat(session, entry.tenant_id, channel.channel)
             if chat is not None:
                 try:

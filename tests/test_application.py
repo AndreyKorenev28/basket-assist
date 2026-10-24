@@ -179,16 +179,17 @@ async def test_digest_block_with_removed_and_added(session, tenant_cfg):
     lines = (await digests.match_digest(session, tenant.id, m, "T")).split("\n")
     i = lines.index("Буду (2):")
     assert set(lines[i + 1 : i + 3]) == {
-        "  ⚠️ Друг Команды — нет в заявке на сезон",
-        "  ✖️ Петров Александр — убран из заявки руководителем",
+        "  ⚠️ Команды* — нет в заявке на сезон",  # ADR 0008: в сводке — фамилии
+        "  ✖️ Петров — убран из заявки руководителем",
     }
     assert lines[i + 3 : i + 8] == [
         "Добавлены руководителем (1):",
-        "  №11 Сидоров Евгений",
+        "  №11 Сидоров",
         digests._size_note(1, league.min_players, league.max_players),
         "Не буду (0): —",  # добавленный в «Не буду» не дублируется
-        "Не ответили (1): Капитанов Иван",
+        "Не ответили (1): Капитанов",
     ]
+    # текст для копирования в заявку на игру — по-прежнему номер и ФИО
     assert await digests.application_text(session, tenant.id, m) == "11 Сидоров Евгений"
 
 
@@ -197,9 +198,9 @@ async def test_digest_block_added_silent_not_duplicated(session, tenant_cfg):
     await _vote(session, tenant.id, m, await _player(session, tenant, PETROV))
     await _edit(session, tenant.id, m, await _player(session, tenant, CAPTAIN), removed=False)
     text = await digests.match_digest(session, tenant.id, m, "T")
-    assert "Буду (1):\n  №7 Петров Александр\nДобавлены руководителем (1):\n  №1 Капитанов Иван\n" in text
+    assert "Буду (1):\n  №7 Петров\nДобавлены руководителем (1):\n  №1 Капитанов\n" in text
     assert "В заявку на игру: 2 " in text
-    assert "Не ответили (1): Сидоров Евгений" in text
+    assert "Не ответили (1): Сидоров\n" in text
 
 
 async def test_digest_message_number_hint(session, tenant_cfg):
@@ -257,7 +258,7 @@ async def test_add_pages_and_pick(session, tenant_cfg):
     await handle(session, ch, _bp(CAPTAIN, {"a": "aa1", **ref, "p": sidorov.id}))
     assert ch.toasts[-1] == "Добавлен в заявку"
     assert ch.messages[(CAPTAIN, "500")].startswith("📋 Сводка за сутки до игры")
-    assert "Добавлены руководителем (1):\n  №11 Сидоров Евгений" in ch.messages[(CAPTAIN, "500")]
+    assert "Добавлены руководителем (1):\n  №11 Сидоров\n" in ch.messages[(CAPTAIN, "500")]
     row = (await session.execute(select(ApplicationEntry))).scalar_one()
     assert (row.tenant_id, row.match_id, row.player_id) == (tenant.id, m.id, sidorov.id)
     assert row.source == "captain" and not row.removed_by_captain and row.changed_by_player_id == captain.id
@@ -281,7 +282,7 @@ async def test_remove_then_add_again_and_vote_does_not_return(session, tenant_cf
     await handle(session, ch, _bp(CAPTAIN, {"a": "ar1", **ref, "p": petrov.id}))
     assert ch.toasts[-1] == "Убран из заявки"
     assert ch.messages[(CAPTAIN, "500")].startswith("📋 Финальная сводка")
-    assert "✖️ Петров Александр — убран из заявки руководителем" in ch.messages[(CAPTAIN, "500")]
+    assert "✖️ Петров — убран из заявки руководителем" in ch.messages[(CAPTAIN, "500")]
     assert await digests.application(session, tenant.id, m) == []
 
     # Петров снова жмёт «Буду» в анонсе — правка руководителя сильнее
@@ -383,7 +384,7 @@ async def test_number_command_single_sets_override(session, tenant_cfg):
     assert await _override(session, tenant, PETROV, entries["abl"]) == "23"
     assert await _override(session, tenant, PETROV, entries["mlbl"]) is None, "только в своей лиге"
     assert _app(await digests.application(session, tenant.id, m)) == [("Петров Александр", "23", False)]
-    assert "  №23 Петров Александр" in await digests.match_digest(session, tenant.id, m, "T")
+    assert "  №23 Петров\n" in await digests.match_digest(session, tenant.id, m, "T")
     assert await digests.application_text(session, tenant.id, m) == "23 Петров Александр"
 
 
@@ -542,7 +543,11 @@ async def test_remind_window_once_dm_with_vote_buttons(session, tenant_cfg):
     await weekly.tick(session, ch, now=START - timedelta(hours=30, minutes=1))
     assert _reminders(ch) == {} and len(_to(ch, CHAT)) == 1, "анонс есть, напоминания ещё нет"
 
-    await weekly.tick(session, ch, now=START - timedelta(hours=30))
+    # T − 30 ч = пт 06:00 МСК — тихие часы (ADR 0008): напоминание ждёт 10:00
+    for now in (START - timedelta(hours=30), START - timedelta(hours=26, minutes=1)):
+        await weekly.tick(session, ch, now=now)
+        assert _reminders(ch) == {}, now
+    await weekly.tick(session, ch, now=START - timedelta(hours=26))  # пт 10:00 МСК
     rem = _reminders(ch)
     # только заявленные на сезон и активные: Заместитель (не сопоставлен) и Друг — нет
     assert set(rem) == {CAPTAIN, SIDOROV}
@@ -554,7 +559,7 @@ async def test_remind_window_once_dm_with_vote_buttons(session, tenant_cfg):
     )
     assert ch.mention_sent == [], "у всех открыта личка — в беседу ничего"
     n = len(ch.sent)
-    for now in (START - timedelta(hours=29), START - timedelta(hours=24), START - timedelta(hours=3)):
+    for now in (START - timedelta(hours=25), START - timedelta(hours=24), START - timedelta(hours=3)):
         await weekly.tick(session, ch, now=now)
     assert len([1 for _, t, _ in ch.sent if t.startswith(REMIND)]) == 2, "один раз"
     assert len(ch.sent) > n  # сводка за 24 ч ушла, напоминание — нет
@@ -806,7 +811,7 @@ async def test_ap_button_sends_card_then_edit_keeps_app_title(session, tenant_cf
     await handle(session, ch, ButtonPress(CAPTAIN, CAPTAIN, card, {"a": "aa1", **ref, "p": sidorov.id}, "e"))
     assert ch.toasts[-1] == "Добавлен в заявку"
     redrawn = ch.messages[(CAPTAIN, card_id)]
-    assert redrawn.startswith(weekly.APP_TITLE) and "Сидоров Евгений" in redrawn
+    assert redrawn.startswith(weekly.APP_TITLE) and "№11 Сидоров" in redrawn
     assert _plain(ch.buttons[(CAPTAIN, card_id)]) == _app_buttons(m)
     assert len(ch.sent) == 1, "правка — тем же сообщением"
 

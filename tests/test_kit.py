@@ -72,9 +72,9 @@ async def test_poll_render_order_and_kit(session, tenant_cfg, home, title, kit):
     lines = (await polls.render(session, m, tenant.id)).split("\n")
     assert lines[0] == f"🏀 АБЛ: {title}"
     assert lines[2] == "зал не указан" and lines[3] == kit
-    assert lines[4] == ""
-    # справка по сопернику — только в «Играх», не в анонсе
-    assert not any(line.startswith(("Мы:", "Мы vs они", "Таблица лиги")) for line in lines)
+    # ADR 0008: после цвета формы — справка по сопернику, как в «Играх»; затем пустая строка
+    assert lines[4] == "Таблица лиги пока не опубликована" and lines[5].startswith("Мы vs они")
+    assert lines[6] == ""
 
 
 @pytest.mark.parametrize(("home", "title", "kit"), CASES, ids=IDS)

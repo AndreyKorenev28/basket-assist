@@ -8,10 +8,10 @@ from sqlalchemy import select
 
 from basket_assist.bot import handlers, leader
 from basket_assist.bot.handlers import (
-    CHAT_BUTTONS,
+    ANSWERED_IN_DM,
+    DM_ONLY,
     GO_WORDS,
     HELP_BUTTONS_HINT,
-    HELP_CHAT,
     HELP_DM,
     HELP_LEADER,
     HELP_LEADER_TEXT,
@@ -1199,7 +1199,8 @@ def _assert_help_matches_buttons(text: str, rows) -> None:
     assert rest, "нет раздела «Кнопками ниже»"
     buttons_section, _, text_only = rest.partition("✍️ Только текстом")
     assert text_only, "нет раздела «✍️ Только текстом»"
-    listed = set(_help_bullets(buttons_section))
+    # «• в беседе команды «@бот игры» — …» — пояснение про беседу (ADR 0008), а не команда с кнопкой
+    listed = {c for c in _help_bullets(buttons_section) if c != "в"}
     common = set(_help_bullets(HELP_DM))  # игры, мои данные — в общей части, кнопки у всех
     assert pressed - common <= listed, pressed - common - listed
     assert listed <= pressed, listed - pressed  # в разделе «Кнопками ниже» нет команд без кнопки
@@ -1290,13 +1291,79 @@ async def test_dm_leader_commands_unknown_for_player(session, tenant_cfg, cmd):
 
 @pytest.mark.parametrize("cmd", ["помощь", "Команды", "help", "?", ""])
 async def test_chat_help(session, tenant_cfg, cmd):
+    """ADR 0008: «помощь» в беседе — ответ в личку (меню по роли), в беседу ничего."""
     await _ready(session, tenant_cfg)
     ch = FakeChannel()
     await handle(session, ch, IncomingMessage(CHAT, SIDOROV, cmd, is_chat=True, mentioned=True))
-    assert ch.sent == [(CHAT, HELP_CHAT, CHAT_BUTTONS)]
-    assert _commands(CHAT_BUTTONS) == [[("Игры", "игры", "primary")], [("Перейти к боту", "бот", "primary")]]
-    assert "в личке" in HELP_CHAT and HELP_LEADER not in HELP_CHAT
-    assert "• бот — перейти в личку" in HELP_CHAT and "подключиться" not in HELP_CHAT
+    [(peer, text, buttons)] = ch.sent
+    assert peer == SIDOROV and HELP_DM in text and HELP_LEADER not in text
+    assert _commands(buttons) == PLAYER_COMMANDS
+
+
+async def _close_dm(session, vk: str) -> None:
+    acc = (await session.execute(select(MessengerAccount).filter_by(external_user_id=vk))).scalar_one()
+    acc.dm_allowed = False
+    await session.commit()
+
+
+@pytest.mark.parametrize("cmd", ["помощь", "бот", "что-то странное", "игры"])
+async def test_chat_command_dm_closed_short_link_in_chat(session, tenant_cfg, cmd):
+    """Личка не открыта — в беседу короткое DM_ONLY со ссылкой (и на «игры» от рядового игрока)."""
+    await _ready(session, tenant_cfg)
+    await _close_dm(session, SIDOROV)
+    ch = FakeChannel()
+    await handle(session, ch, IncomingMessage(CHAT, SIDOROV, cmd, is_chat=True, mentioned=True))
+    assert ch.sent == [(CHAT, DM_ONLY.format(link=LINK), None)]
+
+
+async def test_chat_command_button_dm_closed_opens_dm_silently(session, tenant_cfg):
+    """Нажатие кнопки-команды в беседе без открытой лички — answer_button со ссылкой, в беседе ничего."""
+    await _ready(session, tenant_cfg)
+    await _close_dm(session, SIDOROV)
+    for command in ("игры", "помощь"):
+        sent, ch = await _replies(session, _cmd_press(CHAT, SIDOROV, command))
+        assert sent == [] and ch.toasts == [""] and ch.links == [LINK]
+
+
+async def test_chat_reply_dm_error_falls_back_to_link(session, tenant_cfg, caplog):
+    """Личка «открыта», но VK отказал (событие запрета пропущено) — в беседу ссылка, ошибка в логе."""
+    await _ready(session, tenant_cfg)
+    ch = _DmDenied()
+    await handle(session, ch, IncomingMessage(CHAT, SIDOROV, "помощь", is_chat=True, mentioned=True))
+    assert ch.sent == [(CHAT, DM_ONLY.format(link=LINK), None)]
+    assert "901" in caplog.text
+
+
+async def test_chat_games_from_player_goes_to_dm(session, tenant_cfg):
+    """«@бот игры» от рядового игрока с открытой личкой — ответ в личку, в беседу ничего."""
+    await _ready(session, tenant_cfg)
+    sent, ch = await _replies(session, IncomingMessage(CHAT, SIDOROV, "игры", is_chat=True, mentioned=True))
+    [(peer, text, _)] = sent
+    assert peer == SIDOROV and "АБЛ" in text
+    sent, ch = await _replies(session, _cmd_press(CHAT, SIDOROV, "игры"))
+    assert [p for p, _, _ in sent] == [SIDOROV] and ch.toasts == [ANSWERED_IN_DM]
+
+
+@pytest.mark.parametrize("who", [CAPTAIN, VICE, "acting", "admin"])
+async def test_chat_games_from_leader_or_admin_in_chat(session, tenant_cfg, who):
+    """Руководитель (капитан, зам, и. о.) и администратор сервиса на «@бот игры» — ответ в беседу."""
+    from basket_assist.services import notify
+
+    tenant, _ = await _ready(session, tenant_cfg)
+    if who == "acting":
+        captain = await _player(session, tenant, CAPTAIN)
+        petrov = await _player(session, tenant, PETROV)
+        await leaders.grant_acting(session, tenant.id, captain.id, petrov.id, None)
+        who = PETROV
+    elif who == "admin":
+        notify.set_admin(SIDOROV)
+        who = SIDOROV
+    try:
+        sent, _ = await _replies(session, IncomingMessage(CHAT, who, "игры", is_chat=True, mentioned=True))
+    finally:
+        notify.set_admin(None)
+    [(peer, text, _)] = sent
+    assert peer == CHAT and "АБЛ" in text
 
 
 def _cmd_press(peer: str, user: str, command: str) -> ButtonPress:
@@ -1368,26 +1435,30 @@ async def test_forged_command_button_from_player_is_unknown(session, tenant_cfg,
     assert ch.toasts == [""]
 
 
-@pytest.mark.parametrize("command", ["игры", "помощь", "мои данные", "игроки", "состав"])
-async def test_chat_command_buttons_reply_in_chat_like_text(session, tenant_cfg, command):
-    """Кнопки из подсказки беседы (и «Помощь» под «Не понял») отвечают в беседу, как обращение к боту."""
+@pytest.mark.parametrize("command", ["помощь", "мои данные", "игроки", "состав"])
+async def test_chat_command_buttons_reply_in_dm_like_text(session, tenant_cfg, command):
+    """ADR 0008: команды в беседе (кроме «игры» от руководителя) — ответ в личку, кнопкой так же, как текстом."""
     await _ready(session, tenant_cfg)
     by_text, _ = await _replies(
         session, IncomingMessage(CHAT, CAPTAIN, command, is_chat=True, mentioned=True)
     )
-    handlers._last_games.clear()  # «игры»: иначе кнопка попадёт в паузу повтора (test_chat_games_pause)
     by_button, ch = await _replies(session, _cmd_press(CHAT, CAPTAIN, command))
     assert by_button == by_text
-    assert [peer for peer, _, _ in by_button] == [CHAT], "ответ — в беседу, не в личку"
-    assert ch.toasts == [""] and ch.edits == []
-    if command in (
-        "мои данные",
-        "игроки",
-        "состав",
-    ):  # личные и руководительские данные в беседу не выводятся
-        assert by_button == [(CHAT, UNKNOWN, UNKNOWN_BUTTONS)]
+    assert {peer for peer, _, _ in by_button} == {CAPTAIN}, "ответ — в личку, не в беседу"
+    assert ch.toasts == [ANSWERED_IN_DM] and ch.edits == []
+    if command in ("мои данные", "игроки", "состав"):  # выполняются в личке, как если бы их написали туда
+        assert all(text != UNKNOWN for _, text, _ in by_button)
     if command == "помощь":
-        assert by_button == [(CHAT, HELP_CHAT, CHAT_BUTTONS)]
+        assert HELP_DM in by_button[0][1]
+
+
+async def test_chat_games_button_from_captain_in_chat_like_text(session, tenant_cfg):
+    await _ready(session, tenant_cfg)
+    by_text, _ = await _replies(session, IncomingMessage(CHAT, CAPTAIN, "игры", is_chat=True, mentioned=True))
+    handlers._last_games.clear()  # иначе кнопка попадёт в паузу повтора (test_chat_games_pause)
+    by_button, ch = await _replies(session, _cmd_press(CHAT, CAPTAIN, "игры"))
+    assert by_button == by_text and [p for p, _, _ in by_button] == [CHAT]
+    assert ch.toasts == [""] and ch.edits == []
 
 
 async def test_vote_and_leader_buttons_not_treated_as_commands(session, tenant_cfg):
@@ -1413,10 +1484,10 @@ async def test_chat_unknown_and_unaddressed(session, tenant_cfg):
     await _ready(session, tenant_cfg)
     ch = FakeChannel()
     await handle(session, ch, IncomingMessage(CHAT, SIDOROV, "что-то странное", is_chat=True, mentioned=True))
-    assert ch.sent == [(CHAT, UNKNOWN, UNKNOWN_BUTTONS)]
+    assert ch.sent == [(SIDOROV, UNKNOWN, UNKNOWN_BUTTONS)], "ADR 0008: ответ — в личку"
     for text in ("помощь", "игры", "что-то странное", "?"):
         await handle(session, ch, IncomingMessage(CHAT, SIDOROV, text, is_chat=True, mentioned=False))
-    assert _dms(ch, CHAT) == [UNKNOWN], "без обращения к боту сообщения беседы игнорируются"
+    assert len(ch.sent) == 1, "без обращения к боту сообщения беседы игнорируются"
 
 
 async def test_players_list_long_split(session, tenant_cfg):
@@ -1656,7 +1727,7 @@ async def test_lineup_old_refresh_button_sends_new_messages(session, tenant_cfg)
     new = ch.sent[sent_before:]
     expected = await leader.lineup(session, tenant.id)
     assert new == [(CAPTAIN, t, btn) for t, btn in expected] and len(new) == 2
-    assert "Буду (1):" in new[0][1] and "  №11 Сидоров Евгений" in new[0][1]
+    assert "Буду (1):" in new[0][1] and "  №11 Сидоров\n" in new[0][1]
     assert _lineup_buttons(new[0][2]) == _card_buttons(m)
 
 
@@ -1692,7 +1763,8 @@ async def test_lineup_not_in_chat_even_for_captain(session, tenant_cfg):
     await _ready(session, tenant_cfg)
     for cmd in ("состав", "кто идёт"):
         sent, _ = await _replies(session, IncomingMessage(CHAT, CAPTAIN, cmd, is_chat=True, mentioned=True))
-        assert sent == [(CHAT, UNKNOWN, UNKNOWN_BUTTONS)]
+        assert sent and all(peer == CAPTAIN for peer, _, _ in sent), "в беседу состав не выводится"
+        assert all(text != UNKNOWN for _, text, _ in sent), "команда выполняется в личке"
 
 
 # ---------- «Перейти к боту» из беседы ----------
@@ -1701,13 +1773,17 @@ LINK = "https://vk.me/club1?ref=chat"
 
 
 @pytest.mark.parametrize("cmd", GO_WORDS)
-async def test_chat_go_words_text_reply_with_link(session, tenant_cfg, cmd):
-    """Текстовая команда в беседе — ответ в беседу со ссылкой на личку (ref=chat)."""
+async def test_chat_go_words_text_reply(session, tenant_cfg, cmd):
+    """ADR 0008: «@бот бот» — меню в личку, если она открыта; иначе в беседу ссылка на личку (ref=chat)."""
     await _ready(session, tenant_cfg)
+    sent, ch = await _replies(session, IncomingMessage(CHAT, SIDOROV, cmd, is_chat=True, mentioned=True))
+    [(peer, _, buttons)] = sent
+    assert peer == SIDOROV and _commands(buttons) == PLAYER_COMMANDS
+    assert ch.toasts == []
+    await _close_dm(session, SIDOROV)
     sent, ch = await _replies(session, IncomingMessage(CHAT, SIDOROV, cmd, is_chat=True, mentioned=True))
     [(peer, text, _)] = sent
     assert peer == CHAT and LINK in text
-    assert ch.toasts == []
 
 
 @pytest.mark.parametrize(

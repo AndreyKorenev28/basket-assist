@@ -154,10 +154,22 @@ async def test_upcoming_text_contains_rival_lines(session, tenant_cfg):
     ]
 
 
-async def test_poll_has_no_rival_lines(session, tenant_cfg):
+async def test_poll_has_rival_lines(session, tenant_cfg):
+    """ADR 0008: в анонсе та же справка, что в «Играх» — после цвета формы, до «Кто идёт?»."""
     tenant, m, ours, rival = await _setup(session, tenant_cfg)
     session.add_all([_standing(m, ours, 2, 5, 1, 480, 400), _standing(m, rival, 4, 3, 3, 420, 430)])
     await session.commit()
     await _played(session, m, rival, ours, 61, 72, days_ago=21)
+    lines = (await polls.render(session, m, tenant.id)).split("\n")
+    expected = await schedule.rival_lines(session, m, ours, rival)
+    assert expected and expected[0].startswith("Мы:") and expected[-1].startswith("Мы vs они")
+    i = lines.index(expected[0])
+    assert "Наша форма" in lines[i - 1]
+    assert lines[i : i + len(expected)] == expected
+    assert lines[i + len(expected)] == "" and NO_TABLE not in lines
+
+
+async def test_poll_rival_lines_without_table(session, tenant_cfg):
+    tenant, m, _, _ = await _setup(session, tenant_cfg)
     text = await polls.render(session, m, tenant.id)
-    assert "Мы:" not in text and "Мы vs они" not in text and NO_TABLE not in text
+    assert NO_TABLE in text and NO_GAMES in text

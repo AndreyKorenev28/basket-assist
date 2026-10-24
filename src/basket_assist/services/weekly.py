@@ -4,10 +4,10 @@
 выполняется один раз — ключ в notification_log, поэтому перезапуск бота ничего не дублирует.
 - Опрос: с «среды перед игрой» (League.poll_weekday / poll_time, по умолчанию ср 10:00 по времени лиги),
   только если время известно. Время появилось позже — опрос сразу, на ближайшей минуте.
-- Без времени опроса нет: руководителям «время не назначено — свяжитесь с лигой», раз в сутки.
+- Без времени опроса нет: руководителям «время не назначено — свяжитесь с лигой» — один раз и накануне игры, если время так и не появилось.
 - Сводки за 24 ч и за 2 ч до начала: состав на матч + заявка на игру отдельным сообщением для копирования.
 - За 30 ч — напоминание не ответившим: в личку с кнопками или упоминанием в беседе.
-- После сводки за 24 ч каждое изменение ответа — короткое сообщение руководителям (`vote_changed`).
+- Тихие часы 22:00–10:00 МСК (ADR 0008): опрос, напоминание, «время не назначено» ждут утра.
 """
 
 import logging
@@ -18,7 +18,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from basket_assist.channels.base import Button, ChannelAdapter, ChannelError
-from basket_assist.services import chats, digests, leaders, notify, polls, roster
+from basket_assist.services import chats, digests, leaders, notify, polls, quiet, roster
 from basket_assist.services.schedule import FINISHED, format_when, teams
 from basket_assist.storage.tables import (
     Attendance,
@@ -91,11 +91,15 @@ async def tick(session: AsyncSession, channel: ChannelAdapter, now: datetime | N
         for match in matches:
             if now_utc < poll_opens_at(match, league):
                 continue
+            # тихие часы (ADR 0008): анонс, напоминание и «время не назначено» ждут 10:00; сводки — по расписанию
+            quiet_now = quiet.is_quiet(now_utc)
             if match.start_at is None:
-                await _warn_no_time(session, channel, entry.tenant_id, match, league, today, now_utc)
+                if not quiet_now:
+                    await _warn_no_time(session, channel, entry.tenant_id, match, league, today, now_utc)
             else:
-                await _ensure_poll(session, channel, entry.tenant_id, match, now_utc)
-                await _remind_silent(session, channel, entry, match, now_utc)
+                if not quiet_now:
+                    await _ensure_poll(session, channel, entry.tenant_id, match, now_utc)
+                    await _remind_silent(session, channel, entry, match, now_utc)
                 await _send_digests(session, channel, entry.tenant_id, match, now_utc)
 
 
@@ -178,7 +182,16 @@ async def _warn_no_time(
     hh, mm = (int(x) for x in league.poll_time.split(":"))
     if now_utc.replace(tzinfo=UTC).astimezone(ZoneInfo(league.timezone)).time() < time(hh, mm):
         return
-    if not await notify.once(session, tenant_id, "no_time", f"{match.id}:{today}", match_id=match.id):
+    # один раз и накануне игры, если время так и не появилось (решение владельца 2026-10-24, ADR 0008);
+    # совпали (первое — уже накануне) — одно сообщение
+    eve = today == match.match_date - timedelta(days=1)
+    keys = ["first", "eve"] if eve else ["first"]
+    new = [
+        k
+        for k in keys
+        if await notify.once(session, tenant_id, "no_time", f"{match.id}:{k}", match_id=match.id)
+    ]
+    if not new:
         return
     await session.commit()
     _, ours, rival, _ = await polls._context(session, match, tenant_id)
@@ -187,7 +200,7 @@ async def _warn_no_time(
         f"⏰ Время матча не назначено: {teams(match, ours, rival)} ({league.name}), {format_when(match, league)}.\n"
         "Опрос не запускается, пока у матча нет времени. Свяжитесь с лигой. "
         f"Если лига сообщила время, а на сайте его нет — напишите «{example}» "
-        "(со своим временем). Напомню завтра, если ничего не изменится."
+        "(со своим временем)." + ("" if eve else " Напомню накануне игры, если время так и не появится.")
     )
     for lead in await leaders.digest_recipients(session, tenant_id):
         await notify.dm(session, channel, tenant_id, lead.id, text)
@@ -275,23 +288,3 @@ async def digest_message(
             Button(COPY_BUTTON, {"a": "ac", "m": match.id}, "secondary"),
         ],
     ]
-
-
-async def vote_changed(
-    session: AsyncSession, channel: ChannelAdapter, tenant_id: int, match: Match, player: Player, label: str
-) -> None:
-    """После сводки за 24 ч — каждое изменение ответа руководителям (кроме самого проголосовавшего)."""
-    key = cycle_key(match)
-    if not (
-        await notify.was_sent(session, tenant_id, "digest24", key)
-        or await notify.was_sent(session, tenant_id, "digest2", key)  # суточной не было — после финальной
-    ):
-        return
-    if match.start_at is None or match.start_at <= datetime.now(UTC).replace(tzinfo=None):
-        return
-    league, ours, rival, entry = await polls._context(session, match, tenant_id)
-    name = await polls.player_name(session, tenant_id, player, entry)
-    text = f"Изменение в составе: {name} — «{label}» ({teams(match, ours, rival)}, {league.name})."
-    for lead in await leaders.digest_recipients(session, tenant_id):
-        if lead.id != player.id:
-            await notify.dm(session, channel, tenant_id, lead.id, text)

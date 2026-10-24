@@ -72,15 +72,15 @@ async def test_final_digest_marks_votes_and_edits_after_digest24(session, tenant
         f"{CHANGED}4 (отмечены 🆕)",
         "",
         "Буду (5):",
-        "  №1 Капитанов Иван",
-        "  ⚠️ Denis Petrovich — не играет в этой лиге",
-        f"  {NEW}⚠️ Друг Команды — нет в заявке на сезон",  # порядок по фамилии не сбит отметкой
-        "  ⚠️ Заместитель — не сопоставлен с заявкой на сезон",
-        f"  {NEW}✖️ Петров Александр — убран из заявки руководителем",
+        "  №1 Капитанов",
+        "  ⚠️ Petrovich* — не играет в этой лиге",
+        "  ⚠️ Заместитель* — не сопоставлен с заявкой на сезон",
+        f"  {NEW}⚠️ Команды* — нет в заявке на сезон",  # порядок по фамилии не сбит отметкой
+        f"  {NEW}✖️ Петров — убран из заявки руководителем",
         "Добавлены руководителем (1):",
-        f"  {NEW}№11 Сидоров Евгений",
+        f"  {NEW}№11 Сидоров",
         "В заявку на игру: 2 (нужно 2–3) ✅",
-        f"Не буду (1): {NEW}Ёлкин Пётр",
+        f"Не буду (1): {NEW}Ёлкин",
         "Не ответили (0): —",
     ]
 
@@ -98,8 +98,8 @@ async def test_final_digest_marks_voted_row_and_keeps_order(session, tenant_cfg)
 
     lines = _body((await weekly.digest_message(session, tenant.id, m, "digest2"))[0])
     assert lines[4] == f"{CHANGED}3 (отмечены 🆕)"
-    assert lines[7:9] == ["  №1 Капитанов Иван", f"  {NEW}№77 Петров Александр"]
-    assert lines[-2] == f"Не буду (2): {NEW}Ёлкин Пётр, {NEW}Сидоров Евгений"
+    assert lines[7:9] == ["  №1 Капитанов", f"  {NEW}№77 Петров"]
+    assert lines[-2] == f"Не буду (2): {NEW}Ёлкин, {NEW}Сидоров"
 
 
 async def test_final_digest_zero_changes(session, tenant_cfg):
@@ -162,8 +162,8 @@ async def test_tick_final_digest_marks_change_after_daily(session, tenant_cfg):
     final = _to(ch, CAPTAIN)[2][0]
     assert final.startswith(D2)
     assert f"{CHANGED}1 (отмечены 🆕)" in final
-    assert f"Не буду (1): {NEW}Сидоров Евгений" in final
-    assert "  №7 Петров Александр" in final
+    assert f"Не буду (1): {NEW}Сидоров" in final
+    assert "  №7 Петров\n" in final
 
 
 async def test_woke_up_late_final_digest_without_changes_line(session, tenant_cfg):

@@ -29,15 +29,6 @@ log = logging.getLogger(__name__)
 
 HELP_WORDS = ("помощь", "команды", "help", "")  # "" — сообщение из одних «?»/«!»
 UNKNOWN = "Не понял. Напишите «помощь» — покажу, что умею."
-HELP_CHAT = (
-    "Я помогаю команде: анонсы матчей с голосованием «Буду / Не буду», напоминания, "
-    "заявка на игру для капитана.\n\n"
-    "Обратитесь ко мне:\n"
-    "• игры — ближайшие матчи\n"
-    "• бот — перейти в личку с ботом: напоминания и ваши команды\n"
-    "• помощь — этот список\n\n"
-    "Остальные команды — в личке со мной."
-)
 HELP_DM = (
     "Что я умею:\n\n"
     "• игры — ближайшие матчи: дата, время, зал, соперник\n"
@@ -63,7 +54,9 @@ HELP_LEADER_TEXT = (  # команды с параметрами — кнопо�
     "• исправить Петров — изменить привязку игрока (по имени или фамилии)\n"
     "• номер Петров 23 — номер для заявки на игру вместо номера из заявки на сезон\n"
     "• время 25.10 18:30 — время матча, если лига сообщила его, а на сайте пока нет\n\n"
-    "Сводки за сутки и за 2 часа до игры приходят сюда сами, с теми же кнопками правки заявки."
+    "Сводки за сутки и за 2 часа до игры приходят сюда сами, с теми же кнопками правки заявки.\n\n"
+    "В беседе команды напишите «@бот игры» — бот покажет всем игры недели с отметками "
+    "(остальным игрокам он отвечает в личке)."
 )
 HELP_BUTTONS_HINT = "\n\nКоманду можно нажать кнопкой ниже или написать сообщением."
 
@@ -76,7 +69,6 @@ def _cmd(label: str, command: str, color: str = "primary") -> Button:
 # «Состав и заявка» — одна команда (до 20.10 были отдельные «состав» и «заявка»)
 LINEUP_WORDS = ("состав", "состав и заявка", "заявка", "заявка на игру", "кто идёт", "кто идет")
 GO_WORDS = ("бот", "перейти к боту", "подключиться", "старт", "начать", "личка")
-CHAT_BUTTONS = [[_cmd("Игры", "игры")], [_cmd("Перейти к боту", "бот")]]  # длинная подпись — своим рядом
 UNKNOWN_CHAT = (
     "Эта беседа пока не подключена к Basket Assist, поэтому здесь я не отвечаю на команды "
     "и не публикую анонсы. Подключение настраивает администратор сервиса."
@@ -190,7 +182,34 @@ async def _new_member(session, channel: ChannelAdapter, tenant_id: int, event: I
 
 
 async def _chat_command(session, channel: ChannelAdapter, tenant_id: int, event: IncomingMessage) -> None:
-    await _chat_reply(session, channel, tenant_id, event.peer_id, event.text)
+    await _chat_reply(session, channel, tenant_id, event.peer_id, event.text, user_id=event.user_id)
+
+
+GAMES_WORDS = ("игры", "матчи", "расписание")
+DM_ONLY = (
+    "Отвечаю в личке, чтобы не засорять беседу. Откройте её по ссылке (в первый раз нажмите «Начать»): {link}"
+)
+ANSWERED_IN_DM = "Ответил вам в личке"
+
+
+async def _account(session, channel: ChannelAdapter, tenant_id: int, user_id: str) -> MessengerAccount | None:
+    return (
+        await session.execute(
+            select(MessengerAccount).filter_by(
+                tenant_id=tenant_id, channel=channel.channel, external_user_id=user_id
+            )
+        )
+    ).scalar_one_or_none()
+
+
+async def _can_post_to_chat(session, channel: ChannelAdapter, tenant_id: int, user_id: str | None) -> bool:
+    """В беседу по команде отвечает только руководителям и администратору сервиса (ADR 0008)."""
+    if user_id is None:
+        return False
+    if notify.is_admin(user_id):
+        return True
+    account = await _account(session, channel, tenant_id, user_id)
+    return account is not None and await leaders.is_leader(session, tenant_id, account.player_id)
 
 
 async def _chat_reply(
@@ -200,11 +219,18 @@ async def _chat_reply(
     peer_id: str,
     text: str,
     press: ButtonPress | None = None,
+    user_id: str | None = None,
 ) -> None:
-    """Команда в беседе — из обращения к боту или с кнопки (press: ответить на нажатие)."""
+    """Команда в беседе — из обращения к боту или с кнопки (press: ответить на нажатие).
+
+    ADR 0008: ответ — в личку спросившему; беседу не засоряем. Нет открытой лички — короткая ссылка
+    на неё (на нажатие — сразу открываем личку, в беседе ничего). Руководителю и администратору на
+    «игры» — ответ в беседу: игры недели с отметками, чтобы показать всем.
+    """
+    user_id = user_id or (press.user_id if press else None)
     cmd = text.lower().strip(" .!?")
-    if cmd in ("игры", "матчи", "расписание"):
-        reply = await upcoming_text(session, tenant_id)
+    if cmd in GAMES_WORDS and await _can_post_to_chat(session, channel, tenant_id, user_id):
+        reply = await polls.week_text(session, channel, tenant_id) or await upcoming_text(session, tenant_id)
         now = utcnow()
         last = _last_games.get(peer_id)
         if last is not None and last[1] == reply and now - last[0] < GAMES_REPEAT:
@@ -217,18 +243,22 @@ async def _chat_reply(
         await channel.send(peer_id, reply)
         _last_games[peer_id] = (now, reply)
         return
+    account = await _account(session, channel, tenant_id, user_id) if user_id else None
+    if account is not None and account.dm_allowed:
+        # команда выполняется в личке так же, как если бы её написали туда («@бот мои данные» и т. п.)
+        dm_cmd = "помощь" if cmd in GO_WORDS else text.strip()
+        try:
+            await _dm_command(session, channel, tenant_id, user_id, user_id, dm_cmd)
+            if press is not None:
+                await channel.answer_button(press, ANSWERED_IN_DM)
+            return
+        except ChannelError as e:  # запретил сообщения, а событие message_deny мы пропустили
+            log.warning("ответ в личку не доставлен: %s", e)
+    link = channel.connect_link("chat")
     if press is not None:
-        await channel.answer_button(press, "")
-    if cmd in GO_WORDS:
-        await channel.send(
-            peer_id,
-            f"Личка с ботом — напоминания об играх и ваши команды. Откройте ссылку "
-            f"(в первый раз нажмите «Начать»): {channel.connect_link('chat')}",
-        )
-    elif cmd in HELP_WORDS:
-        await channel.send(peer_id, HELP_CHAT, CHAT_BUTTONS)
+        await channel.answer_button(press, "", link=link)  # откроется личка, в беседе ничего
     else:
-        await channel.send(peer_id, UNKNOWN, UNKNOWN_BUTTONS)
+        await channel.send(peer_id, DM_ONLY.format(link=link))
 
 
 async def _my_data(session, channel: ChannelAdapter, tenant_id: int, player_id: int) -> tuple[str, list]:

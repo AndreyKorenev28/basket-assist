@@ -248,11 +248,12 @@ async def test_vote_signal_and_roster_names(session, tenant_cfg):
 
     chat = (await session.execute(select(Chat))).scalar_one()
     await polls.publish(session, ch, chat, m)
-    # Петров сопоставлен → в анонсе ФИО из заявки; «Друг Команды» не сопоставлен → сигнал
+    # Петров сопоставлен → в анонсе фамилия из заявки; «Друг Команды» не сопоставлен → фамилия из VK
+    # со звёздочкой (ADR 0008) и сигнал
     await handle(session, ch, ButtonPress(CHAT, "10", chat_ref, {"m": m.id, "v": "going"}, "e"))
     await handle(session, ch, ButtonPress(CHAT, "13", chat_ref, {"m": m.id, "v": "going"}, "e"))
     text = ch.messages[(CHAT, "101")]
-    assert "Буду (2): Петров Александр, Друг Команды" in text
+    assert "✅ Буду (2):\nПетров\nКоманды*\n" in text
     alerts = [t for peer, t, _ in ch.sent if peer == CAPTAIN]
     assert len(alerts) == 1 and "Друг Команды" in alerts[0] and "не сопоставлен" in alerts[0]
     # повторное «Буду» после «Не буду» — сигнал не дублируется

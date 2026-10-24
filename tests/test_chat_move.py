@@ -137,14 +137,14 @@ async def test_relocate_moves_poll_with_votes_and_closes_old(session, tenant_cfg
 
     assert await polls.relocate(session, ch, tenant.id) == 1
     [text] = _to(ch, NEW)
-    assert "Буду (1): Петров" in text, "отметки привязаны к матчу и переезжают вместе с анонсом"
+    assert "✅ Буду (1):\nПетров\n" in text, "отметки привязаны к матчу и переезжают вместе с анонсом"
     [new] = await _current(session)
     new_chat = await _chat(session, NEW)
     assert new.chat_id == new_chat.id and new.match_id == m.id
     await session.refresh(old)
     assert old.superseded_by_id == new.id
     assert ch.pins[-1] == MessageRef(NEW, new.message_ref)
-    assert ch.buttons[(NEW, new.message_ref)] == polls.vote_buttons(m.id)
+    assert ch.buttons[(NEW, new.message_ref)] == [*polls.vote_buttons(m.id), [polls.BOT_BUTTON]]
     # старый анонс — без кнопок, с пояснением
     assert ch.messages[(CHAT, old.message_ref)] == polls.MOVED_TEXT
     assert ch.buttons[(CHAT, old.message_ref)] is None
@@ -365,7 +365,8 @@ async def test_old_chat_mention_gets_moved_text(session, tenant_cfg):
     assert ch.sent[-1] == (UNKNOWN_PEER, UNKNOWN_CHAT, None), "незнакомая беседа — прежний ответ"
     assert await _row_counts(session) == before
 
-    await handle(session, ch, IncomingMessage(NEW, PETROV, "игры", is_chat=True, mentioned=True))
+    # «игры» в беседу — руководителю (ADR 0008); игроку ответ ушёл бы в личку
+    await handle(session, ch, IncomingMessage(NEW, CAPTAIN, "игры", is_chat=True, mentioned=True))
     assert ch.sent[-1][0] == NEW and ch.sent[-1][1] not in (MOVED_CHAT, UNKNOWN_CHAT), "новая беседа работает"
 
 

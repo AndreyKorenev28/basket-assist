@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 
 from basket_assist.bot.handlers import UNKNOWN_CHAT, handle
 from basket_assist.channels.base import ButtonPress, IncomingMessage, MessageRef
-from basket_assist.services import polls
+from basket_assist.services import notify, polls
 from basket_assist.storage.bootstrap import apply_tenant_config
 from basket_assist.storage.tables import (
     Attendance,
@@ -64,9 +64,12 @@ async def test_publish_render_and_pin(session, tenant_cfg):
     assert poll.message_ref == "101" and ch.pins == [MessageRef(CHAT, "101")]
     text = ch.sent[0][1]
     assert "АБЛ: Westchester — Pokrasote" in text and "Шелепиха" in text
-    assert "Буду (0): —" in text and "Не буду (0): —" in text
+    assert "✅ Буду (0):\n—\n\n❌ Не буду (0):\n—" in text
     assert "Под вопросом" not in text
     assert [b.label for b in ch.sent[0][2][0]] == ["Буду", "Не буду"]
+    assert ch.sent[0][2] == [*polls.vote_buttons(m.id), [polls.BOT_BUTTON]], (
+        "ADR 0008: «Бот в личке» последним"
+    )
     # повторная публикация не дублирует анонс
     await polls.publish(session, ch, chat, m)
     assert len(ch.sent) == 1
@@ -81,8 +84,9 @@ async def test_votes_change_and_names(session, tenant_cfg):
     await handle(session, ch, press(m.id, "11", "going"))
     await handle(session, ch, press(m.id, "10", "not_going"))  # передумал
     text = ch.messages[(CHAT, "101")]
-    assert "Буду (1): Олег Сидоров" in text
-    assert "Не буду (1): Иван Петров" in text
+    # ADR 0008: фамилии в столбик; не сопоставлен с заявкой на сезон — фамилия из VK со звёздочкой
+    assert "✅ Буду (1):\nСидоров*\n\n❌ Не буду (1):\nПетров*\n" in text
+    assert "Олег" not in text and "Иван" not in text
     assert ch.toasts == ["Отмечено: Буду", "Отмечено: Буду", "Отмечено: Не буду"]
 
     edits_before = len(ch.edits)
@@ -102,7 +106,7 @@ async def test_republish_when_edit_fails(session, tenant_cfg, deletable):
     ch.editable = False  # VK не даёт отредактировать старый анонс (ошибка 909)
 
     await handle(session, ch, press(m.id, "10", "going"))
-    assert len(ch.sent) == 2 and "Буду (1): Иван Петров" in ch.sent[1][1]
+    assert len(ch.sent) == 2 and "✅ Буду (1):\nПетров*\n" in ch.sent[1][1]
     assert ch.pins[-1] == MessageRef(CHAT, "102")
     current = (await session.scalars(select(PollMessage).where(PollMessage.superseded_by_id.is_(None)))).one()
     assert current.message_ref == "102"
@@ -131,8 +135,15 @@ async def test_chat_messages_without_mention_are_ignored(session, tenant_cfg):
         session, ch, IncomingMessage(CHAT, "10", "обсуждаем тренировку", is_chat=True, mentioned=False)
     )
     assert ch.sent == []
+    # ADR 0008: на «игры» в беседу отвечает только руководителю/администратору; остальным — ссылка на личку
     await handle(session, ch, IncomingMessage(CHAT, "10", "игры", is_chat=True, mentioned=True))
-    assert "Westchester — Pokrasote" in ch.sent[0][1]
+    assert ch.sent[0][0] == CHAT and "vk.me" in ch.sent[0][1] and "Pokrasote" not in ch.sent[0][1]
+    notify.set_admin("10")
+    try:
+        await handle(session, ch, IncomingMessage(CHAT, "10", "игры", is_chat=True, mentioned=True))
+    finally:
+        notify.set_admin(None)
+    assert ch.sent[1][0] == CHAT and "Westchester — Pokrasote" in ch.sent[1][1]
 
 
 UNKNOWN_PEER = "2000000099"  # беседа, не подключённая ни к одной команде

@@ -19,6 +19,7 @@ from tests.test_weekly import (
     NO_TIME,
     REMIND,
     SAT,
+    SUN,
     THU,
     WED,
     _league,
@@ -59,14 +60,16 @@ async def test_monday_match_without_time_warns_from_previous_wednesday(session, 
     await _week_match(session, entries["abl"], "g1", day=MON, hhmm=None)
     ch = FakeChannel()
     await weekly.tick(session, ch, now=at(WED, 10))
-    for d in (THU, SAT, MON):
-        await weekly.tick(session, ch, now=at(d, 9))  # повтор — не раньше 10:00 по времени лиги
-    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 1
-    for d in (THU, SAT, MON):
+    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 1, "первое — в среду предыдущей недели"
+    for d in (THU, FRI, SAT):
         await weekly.tick(session, ch, now=at(d, 10))
-    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 4
-    await weekly.tick(session, ch, now=at(TUE, 10))  # день игры прошёл
-    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 4
+    await weekly.tick(session, ch, now=at(SUN, 9, 59))  # канун, но до 10:00
+    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 1
+    await weekly.tick(session, ch, now=at(SUN, 10))  # накануне игры (вс перед пн)
+    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 2
+    for d in (MON, TUE):  # день игры и после — повторов нет
+        await weekly.tick(session, ch, now=at(d, 10))
+    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 2
 
 
 # ---------- время появилось позже среды ----------
@@ -196,15 +199,17 @@ async def test_reschedule_new_cycle_reminds_again(session, tenant_cfg):
     m = await _week_match(session, entries["abl"], "g1")
     ch = FakeChannel()
     await weekly.tick(session, ch, now=at(WED, 10))
-    await weekly.tick(session, ch, now=at(FRI, 6))
+    await weekly.tick(session, ch, now=at(FRI, 10))  # T−30 ч = пт 06:00 — тихие часы, напоминание в 10:00
     first = sum(t.startswith(REMIND) for _, t, _ in ch.sent)
     assert first > 0
     new_day = date(2026, 10, 31)
     m.match_date, m.start_at, m.status = new_day, naive_utc(at(new_day, 12)), "rescheduled"
     await session.commit()
-    await weekly.tick(session, ch, now=at(FRI, 7))
+    await weekly.tick(session, ch, now=at(FRI, 11))
     assert sum(t.startswith(REMIND) for _, t, _ in ch.sent) == first, "до нового T−30 ч — тишина"
     await weekly.tick(session, ch, now=at(date(2026, 10, 30), 6))
+    assert sum(t.startswith(REMIND) for _, t, _ in ch.sent) == first, "новое T−30 ч — ночью, ждём 10:00"
+    await weekly.tick(session, ch, now=at(date(2026, 10, 30), 10))
     assert sum(t.startswith(REMIND) for _, t, _ in ch.sent) == 2 * first
     keys = sorted((await session.scalars(select(NotificationLog.dedup_key).filter_by(kind="remind30"))).all())
     assert keys == [f"{m.id}:2026-10-24T09:00", f"{m.id}:2026-10-31T09:00"]
@@ -223,7 +228,7 @@ def test_cycle_key_without_time():
 
 async def test_restart_does_not_duplicate(db_url, tenant_cfg):
     """Каждый прогон — новый процесс: свой движок, сессия и канал; общее — только БД."""
-    moments = [at(WED, 10), at(FRI, 6), at(FRI, 12), at(SAT, 10)]
+    moments = [at(WED, 10), at(FRI, 10), at(FRI, 12), at(SAT, 10)]  # пт 10:00 — напоминание после тихих часов
     sent: list[list] = []
     engine = db.make_engine(db_url)
     async with db.make_sessionmaker(engine)() as s:
@@ -245,7 +250,7 @@ async def test_restart_does_not_duplicate(db_url, tenant_cfg):
     flat = [t for batch in first for p, t, _ in batch if p == CAPTAIN]
     assert sum(t.startswith(D24) for t in flat) == 1 and sum(t.startswith(D2) for t in flat) == 1
     assert sum(t.startswith(REMIND) for t in flat) == 1
-    assert sum(t.startswith(NO_TIME) for t in flat) == 3, "ср, пт, сб — по разу в сутки"
+    assert sum(t.startswith(NO_TIME) for t in flat) == 2, "первое (ср) и накануне игры (пт)"
     assert sum(p == CHAT for batch in first for p, _, _ in batch) == 1, "один анонс (g1)"
 
 
@@ -253,26 +258,24 @@ async def test_restart_does_not_duplicate(db_url, tenant_cfg):
 
 
 async def test_no_time_day_boundary_in_league_timezone(session, tenant_cfg):
+    """Время опроса и «канун» — по времени лиги; тихие часы — по Москве (ADR 0008)."""
     _, entries = await _ready(session, tenant_cfg)
     league = await _league(session, entries["abl"])
     league.timezone = "Asia/Vladivostok"  # UTC+10
     await session.commit()
     await _week_match(session, entries["abl"], "g1", hhmm=None)
     ch = FakeChannel()
-    await weekly.tick(session, ch, now=datetime(2026, 10, 21, 0, 0, tzinfo=UTC))  # ср 10:00 Владивосток
+    await weekly.tick(session, ch, now=datetime(2026, 10, 21, 0, 0, tzinfo=UTC))  # ср 10:00 там, 03:00 МСК
+    assert _texts(ch, CAPTAIN, NO_TIME) == [], "тихие часы по Москве"
+    await weekly.tick(session, ch, now=datetime(2026, 10, 21, 7, 0, tzinfo=UTC))  # ср 17:00 там, 10:00 МСК
     assert len(_texts(ch, CAPTAIN, NO_TIME)) == 1
-    await weekly.tick(session, ch, now=datetime(2026, 10, 21, 13, 59, tzinfo=UTC))  # ср 23:59
-    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 1
-    await weekly.tick(session, ch, now=datetime(2026, 10, 21, 14, 0, tzinfo=UTC))  # чт 00:00 там, ср по UTC
-    await weekly.tick(session, ch, now=datetime(2026, 10, 21, 23, 59, tzinfo=UTC))  # чт 09:59 там
-    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 1, "новые сутки лиги, но до 10:00 по её времени — не будим"
-    await weekly.tick(session, ch, now=datetime(2026, 10, 22, 0, 0, tzinfo=UTC))  # чт 10:00 там
+    await weekly.tick(session, ch, now=datetime(2026, 10, 22, 7, 0, tzinfo=UTC))  # чт
+    await weekly.tick(session, ch, now=datetime(2026, 10, 22, 14, 0, tzinfo=UTC))  # пт 00:00 там, 17:00 МСК
+    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 1, "канун по времени лиги, но там ещё ночь — до 10:00 ждём"
+    await weekly.tick(session, ch, now=datetime(2026, 10, 23, 0, 0, tzinfo=UTC))  # пт 10:00 там, 03:00 МСК
+    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 1, "тихие часы по Москве"
+    await weekly.tick(session, ch, now=datetime(2026, 10, 23, 7, 0, tzinfo=UTC))  # пт 17:00 там, 10:00 МСК
     assert len(_texts(ch, CAPTAIN, NO_TIME)) == 2
-    keys = (await session.scalars(select(NotificationLog.dedup_key).filter_by(kind="no_time"))).all()
-    assert sorted(k.split(":")[1] for k in keys) == ["2026-10-21", "2026-10-22"]
-    await weekly.tick(session, ch, now=datetime(2026, 10, 24, 14, 0, tzinfo=UTC))  # вс 00:00 там
-    await weekly.tick(session, ch, now=datetime(2026, 10, 25, 0, 0, tzinfo=UTC))  # вс 10:00 там
-    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 2, "вс по времени лиги — матч прошёл"
 
 
 async def test_poll_opens_across_dst_in_league_timezone(session, tenant_cfg):

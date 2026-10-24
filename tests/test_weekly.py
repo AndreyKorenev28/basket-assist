@@ -177,7 +177,12 @@ async def test_poll_respects_league_timezone(session, tenant_cfg):
     ch = FakeChannel()
     await weekly.tick(session, ch, now=datetime(2026, 10, 20, 23, 59, tzinfo=UTC))
     assert ch.sent == []
-    await weekly.tick(session, ch, now=datetime(2026, 10, 21, 0, 0, tzinfo=UTC))  # ср 10:00 Владивосток
+    # ср 10:00 Владивосток — опрос открыт, но в Москве 03:00: тихие часы (ADR 0008, по МСК) — ждём 10:00 МСК
+    await weekly.tick(session, ch, now=datetime(2026, 10, 21, 0, 0, tzinfo=UTC))
+    assert ch.sent == []
+    await weekly.tick(session, ch, now=datetime(2026, 10, 21, 6, 59, tzinfo=UTC))
+    assert ch.sent == []
+    await weekly.tick(session, ch, now=datetime(2026, 10, 21, 7, 0, tzinfo=UTC))  # ср 10:00 МСК
     assert len(_to(ch, CHAT)) == 1
 
 
@@ -234,9 +239,13 @@ async def test_no_chat_is_not_an_error(session, tenant_cfg):
 # ---------- время не назначено ----------
 
 
-async def test_no_time_warning_daily(session, tenant_cfg):
+EVE_HINT = "Напомню накануне игры, если время так и не появится."
+
+
+async def test_no_time_warning_once_and_on_eve(session, tenant_cfg):
+    """«Время не назначено» — один раз (с обещанием напомнить) и накануне игры (решение владельца 24.10)."""
     _, entries = await _ready(session, tenant_cfg)
-    await _week_match(session, entries["abl"], "g1", hhmm=None)
+    m = await _week_match(session, entries["abl"], "g1", hhmm=None)
     ch = FakeChannel()
     await weekly.tick(session, ch, now=at(WED, 9, 59))
     assert ch.sent == [], "до среды 10:00 — тишина"
@@ -245,28 +254,52 @@ async def test_no_time_warning_daily(session, tenant_cfg):
     for peer in (CAPTAIN, VICE):
         [text] = _texts(ch, peer)
         assert text.startswith(NO_TIME) and "Соперник g1 — Westchester (АБЛ)" in text
-        assert "Свяжитесь с лигой" in text
+        assert "Свяжитесь с лигой" in text and text.endswith(EVE_HINT)
     assert _texts(ch, PETROV) == [] and _to(ch, CHAT) == []
 
-    for now in (at(WED, 10, 1), at(WED, 23, 59)):
+    for now in (at(WED, 10, 1), at(WED, 21, 59), at(THU, 10), at(THU, 15), at(FRI, 9, 59)):
         await weekly.tick(session, ch, now=now)
-    assert len(_texts(ch, CAPTAIN)) == 1, "второе предупреждение в тот же день не уходит"
+    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 1, "до кануна игры повторов нет"
 
-    for now in (at(THU, 0, 0), at(THU, 9, 59)):  # новый день, но ещё не время опроса — не будим ночью
+    await weekly.tick(session, ch, now=at(FRI, 10))  # накануне игры
+    for peer in (CAPTAIN, VICE):
+        texts = _texts(ch, peer, NO_TIME)
+        assert len(texts) == 2 and EVE_HINT not in texts[1], "накануне — без обещания напомнить"
+    for now in (at(FRI, 10, 1), at(FRI, 18), at(SAT, 10), at(SUN, 10)):
         await weekly.tick(session, ch, now=now)
-    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 1
-    await weekly.tick(session, ch, now=at(THU, 10))  # повтор — во время опроса лиги
-    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 2 and len(_texts(ch, VICE, NO_TIME)) == 2
-    await weekly.tick(session, ch, now=at(THU, 23, 59))
     assert len(_texts(ch, CAPTAIN, NO_TIME)) == 2
-    for now in (at(FRI, 9), at(FRI, 10), at(SAT, 9, 59)):
-        await weekly.tick(session, ch, now=now)
-    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 3
-    await weekly.tick(session, ch, now=at(SAT, 10))  # день матча — тоже с 10:00
-    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 4
-    await weekly.tick(session, ch, now=at(SUN, 10))  # день матча прошёл
-    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 4
     assert _to(ch, CHAT) == [] and ch.pins == []
+    keys = sorted((await session.scalars(select(NotificationLog.dedup_key).filter_by(kind="no_time"))).all())
+    assert keys == [f"{m.id}:eve", f"{m.id}:first"]
+
+
+async def test_no_time_first_on_eve_is_single_message(session, tenant_cfg):
+    """Первое предупреждение выпало на канун игры (матч появился в пятницу) — одно сообщение, без обещания."""
+    _, entries = await _ready(session, tenant_cfg)
+    m = await _week_match(session, entries["abl"], "g1", hhmm=None)
+    ch = FakeChannel()
+    for now in (at(FRI, 10), at(FRI, 10, 1), at(FRI, 20), at(SAT, 10)):
+        await weekly.tick(session, ch, now=now)
+    for peer in (CAPTAIN, VICE):
+        [text] = _texts(ch, peer, NO_TIME)
+        assert EVE_HINT not in text
+    keys = sorted((await session.scalars(select(NotificationLog.dedup_key).filter_by(kind="no_time"))).all())
+    assert keys == [f"{m.id}:eve", f"{m.id}:first"], "оба ключа — повтора накануне не будет"
+
+
+async def test_no_time_waits_for_quiet_hours_end(session, tenant_cfg):
+    """Время опроса лиги раньше 10:00 МСК — «время не назначено» всё равно ждёт конца тихих часов."""
+    _, entries = await _ready(session, tenant_cfg)
+    league = await _league(session, entries["abl"])
+    league.poll_time = "08:00"
+    await session.commit()
+    await _week_match(session, entries["abl"], "g1", hhmm=None)
+    ch = FakeChannel()
+    for now in (at(WED, 8), at(WED, 9, 59)):
+        await weekly.tick(session, ch, now=now)
+    assert ch.sent == [], "тихие часы"
+    await weekly.tick(session, ch, now=at(WED, 10))
+    assert len(_texts(ch, CAPTAIN, NO_TIME)) == 1
 
 
 async def test_no_time_recipient_without_dm_and_muted_grantor(session, tenant_cfg):
@@ -316,7 +349,7 @@ async def test_digest24_and_digest2_once_each(session, tenant_cfg):
     for peer in (CAPTAIN, VICE):
         [(digest, buttons), (application, app_buttons)] = _to(ch, peer)
         assert digest.startswith(f"{D24}\n\n🏀 АБЛ: Соперник g1 — Westchester")
-        assert "  №7 Петров Александр" in digest
+        assert "  №7 Петров\n" in digest  # ADR 0008: в сводке фамилия; ФИО — в тексте для копирования
         assert digest.endswith(f"\n\n{weekly.NUMBER_HINT}\n\n{weekly.APPLICATION_HINT}")
         assert buttons == _dg_buttons(m, "digest24")
         assert application == "7 Петров Александр" and app_buttons is None
@@ -370,7 +403,7 @@ async def test_digest_without_going_has_no_application(session, tenant_cfg):
     ch = FakeChannel()
     await weekly.tick(session, ch, now=START - timedelta(hours=24))
     [(digest, _)] = _to(ch, CAPTAIN)
-    assert "Не буду (1): Сидоров Евгений" in digest
+    assert "Не буду (1): Сидоров\n" in digest
     assert weekly.APPLICATION_HINT not in digest
 
 
@@ -395,63 +428,28 @@ async def test_application_text_none_when_nobody(session, tenant_cfg):
 
 # ---------- изменения после сводки за 24 ч ----------
 
-CHANGE = "Изменение в составе: "
-
-
-async def test_vote_changed_only_after_digest24(session, tenant_cfg):
-    tenant, entries = await _ready(session, tenant_cfg)
-    m = await _rel_match(session, entries["abl"], "g1", days=1)
-    petrov = await _player(session, tenant, PETROV)
-    ch = FakeChannel()
-    await weekly.vote_changed(session, ch, tenant.id, m, petrov, "Буду")
-    assert ch.sent == []
-
-    await notify.once(session, tenant.id, "digest24", weekly.cycle_key(m), match_id=m.id)
-    await session.commit()
-    await weekly.vote_changed(session, ch, tenant.id, m, petrov, "Буду")
-    for peer in (CAPTAIN, VICE):
-        assert _texts(ch, peer) == [f"{CHANGE}Петров Александр — «Буду» (Соперник g1 — Westchester, АБЛ)."]
-    assert _texts(ch, PETROV) == []
-
-    captain = await _player(session, tenant, CAPTAIN)
-    await weekly.vote_changed(session, ch, tenant.id, m, captain, "Не буду")
-    assert len(_texts(ch, CAPTAIN)) == 1, "о своём голосе руководителю не пишем"
-    assert _texts(ch, VICE)[-1].startswith(f"{CHANGE}Капитанов Иван — «Не буду»")
-
-
-async def test_vote_changed_silent_after_start(session, tenant_cfg):
-    tenant, entries = await _ready(session, tenant_cfg)
-    m = await _rel_match(session, entries["abl"], "g1", days=-0.01)
-    await notify.once(session, tenant.id, "digest24", weekly.cycle_key(m), match_id=m.id)
-    await session.commit()
-    ch = FakeChannel()
-    await weekly.vote_changed(session, ch, tenant.id, m, await _player(session, tenant, PETROV), "Буду")
-    assert ch.sent == []
-
 
 def _press(m: Match, user: str, vote: str) -> ButtonPress:
     return ButtonPress(CHAT, user, MessageRef(CHAT, "101"), {"m": m.id, "v": vote}, event_id="e")
 
 
-async def test_vote_changed_via_on_vote(session, tenant_cfg):
+async def test_vote_after_digest24_no_message_to_leaders(session, tenant_cfg):
+    """ADR 0008: «Изменение в составе» отменено — после сводки за 24 ч нажатия руководителям не пишутся
+    (изменения отмечены 🆕 в финальной сводке)."""
+    assert not hasattr(weekly, "vote_changed")
     tenant, entries = await _ready(session, tenant_cfg)
     m = await _rel_match(session, entries["abl"], "g1", days=1)
     await _publish(session, m)
-    ch = FakeChannel()
-    await handle(session, ch, _press(m, PETROV, "going"))
-    assert _texts(ch, CAPTAIN) == [], "до сводки за 24 ч — тишина"
-
     await notify.once(session, tenant.id, "digest24", weekly.cycle_key(m), match_id=m.id)
     await session.commit()
+    ch = FakeChannel()
+    await handle(session, ch, _press(m, PETROV, "going"))
     await handle(session, ch, _press(m, PETROV, "not_going"))
-    await handle(session, ch, _press(m, PETROV, "not_going"))  # повторное нажатие — не изменение
     await handle(session, ch, _press(m, SIDOROV, "going"))
-    for peer in (CAPTAIN, VICE):
-        assert _texts(ch, peer, CHANGE) == [
-            f"{CHANGE}Петров Александр — «Не буду» (Соперник g1 — Westchester, АБЛ).",
-            f"{CHANGE}Сидоров Евгений — «Буду» (Соперник g1 — Westchester, АБЛ).",
-        ]
-    assert _texts(ch, PETROV, CHANGE) == [] and _texts(ch, SIDOROV, CHANGE) == []
+    await handle(session, ch, _press(m, CAPTAIN, "not_going"))
+    assert ch.toasts == ["Отмечено: Буду", "Отмечено: Не буду", "Отмечено: Буду", "Отмечено: Не буду"]
+    assert [p for p, _, _ in ch.sent] == [], "ни руководителям, ни игрокам — только правка анонса"
+    assert ch.edits and all(ref == MessageRef(CHAT, "101") for ref, _ in ch.edits)
 
 
 # ---------- кнопка «Обновить» под сводкой ----------

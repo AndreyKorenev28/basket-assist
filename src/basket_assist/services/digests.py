@@ -108,6 +108,17 @@ async def _match_block(
         ).all()
     )
     players = (await session.scalars(select(Player).filter_by(tenant_id=tenant_id))).all()
+    # ADR 0008: в сводке — фамилии; номер и ФИО — только в тексте для копирования в заявку на игру
+    short = dict(
+        zip(
+            [p.id for p in players],
+            await polls.surnames(session, tenant_id, list(players), entry),
+            strict=True,
+        )
+    )
+
+    def app_line(row: "AppRow") -> str:
+        return f"{'№' + row.number if row.number else '№ ?'} {short.get(row.player_id, row.name)}"
 
     app = await application(session, tenant_id, match)
     in_app = {row.player_id for row in app}
@@ -123,7 +134,7 @@ async def _match_block(
         if p.id in in_app:
             continue  # в заявке на игру — выводится ниже из `app`
         status = await roster.roster_status(session, tenant_id, p.id, entry.id)
-        name = await polls.player_name(session, tenant_id, p, entry)
+        name = short[p.id]
         new = mark(p.id)  # 🆕 всегда в начале строки
         vote = votes.get(p.id)
         if vote == Vote.GOING:
@@ -146,11 +157,11 @@ async def _match_block(
             "",
         ]
     lines.append(f"Буду ({len(voted) + len(going_bad) + len(going_removed)}):")
-    lines += [f"  {mark(row.player_id)}{row.line_with_sign()}" for row in voted]
+    lines += [f"  {mark(row.player_id)}{app_line(row)}" for row in voted]
     lines += [f"  {line}" for line in sorted(going_bad + going_removed, key=_sort_key)]
     if added:
         lines.append(f"Добавлены руководителем ({len(added)}):")
-        lines += [f"  {mark(row.player_id)}{row.line_with_sign()}" for row in added]
+        lines += [f"  {mark(row.player_id)}{app_line(row)}" for row in added]
     lines.append(_size_note(len(app), league.min_players, league.max_players))
     lines.append(f"Не буду ({len(not_going)}): " + (", ".join(sorted(not_going, key=_sort_key)) or "—"))
     lines.append(f"Не ответили ({len(silent)}): " + (", ".join(sorted(silent, key=_sort_key)) or "—"))

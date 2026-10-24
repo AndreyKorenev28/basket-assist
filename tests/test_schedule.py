@@ -11,7 +11,7 @@ from basket_assist.storage.tables import Match
 from tests.fakes import FakeChannel
 from tests.test_digests import _league, _match
 from tests.test_leader_bot import SIDOROV, _ready
-from tests.test_roster import CHAT
+from tests.test_roster import CAPTAIN, CHAT
 
 HOUR = 1 / 24
 
@@ -147,6 +147,12 @@ async def test_games_command_in_chat_uses_upcoming_text(session, tenant_cfg):
     tenant, entries = await _ready(session, tenant_cfg)
     await _match(session, entries["abl"], "near", days=1)
     ch = FakeChannel()
+    # ADR 0008: игроку с открытой личкой — ответ в личку
     await handle(session, ch, IncomingMessage(CHAT, SIDOROV, "игры", is_chat=True, mentioned=True))
+    [(peer, text, _)] = ch.sent
+    assert (peer, text) == (SIDOROV, await schedule.upcoming_text(session, tenant.id))
+    # капитану — в беседу; действующего анонса нет — тот же текст «Ближайших игр»
+    ch = FakeChannel()
+    await handle(session, ch, IncomingMessage(CHAT, CAPTAIN, "игры", is_chat=True, mentioned=True))
     [(peer, text, _)] = ch.sent
     assert (peer, text) == (CHAT, await schedule.upcoming_text(session, tenant.id))

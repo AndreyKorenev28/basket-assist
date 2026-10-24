@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import event
 
 from basket_assist.config import load_tenant_config
-from basket_assist.services import weekly
+from basket_assist.services import polls, weekly
 from basket_assist.storage import db
 from basket_assist.storage.tables import PollMessage
 
@@ -54,11 +54,17 @@ def poll_posted_at_follows_tick(monkeypatch):
     tick = weekly.tick
 
     async def tick_with_clock(session, channel, now=None):
+        # ADR 0008: анонс скрывает игры через 2 ч после начала по polls.utcnow — на время tick часы polls
+        # тоже идут по now теста, иначе к дню запуска тестов игры недели 21–25.10.2026 уже «сыграны»
         clock[0] = now
+        prev = polls.utcnow
+        if now is not None:
+            polls.utcnow = lambda: now.astimezone(UTC).replace(tzinfo=None)
         try:
             return await tick(session, channel, now)
         finally:
             clock[0] = None
+            polls.utcnow = prev
 
     def stamp(_mapper, _conn, target):
         if clock[0] is not None and target.posted_at is None:

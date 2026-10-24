@@ -22,6 +22,10 @@ def set_admin(user_id: str | None) -> None:
     _admin_user_id = user_id
 
 
+def is_admin(user_id: str | None) -> bool:
+    return bool(_admin_user_id) and user_id == _admin_user_id
+
+
 async def admin(channel: ChannelAdapter, text: str) -> bool:
     """Сообщение администратору сервиса. Не задан или личка закрыта — только в лог."""
     if not _admin_user_id:

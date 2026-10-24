@@ -1,5 +1,7 @@
-"""Решения владельца 2026-10-20: пауза на «игры» в беседе и перезапуск опроса при переносе / смене времени
-(отметки сбрасываются, публикуется новый анонс, старый удаляется — ADR 0007, «Дополнение»). Вымышленные имена."""
+"""Решения владельца 2026-10-20: пауза на «игры» в беседе и перезапуск опроса при переносе / смене времени.
+ADR 0008 (дополнение 24.10): игра осталась на той же неделе, беседа та же, опрос открыт — анонс правится на месте
+(отметки сброшены, счётчики с нуля, без нового сообщения и закрепа); иначе — новый анонс, старый удаляется
+(ADR 0007, «Дополнение»). «Игры» в беседу — только руководителям и администратору. Вымышленные имена."""
 
 import json
 from datetime import date, datetime, timedelta
@@ -8,19 +10,20 @@ import pytest
 from sqlalchemy import event, select
 
 from basket_assist.bot import handlers, leader
-from basket_assist.bot.handlers import GAMES_ABOVE, GAMES_REPEAT, handle
+from basket_assist.bot.handlers import ANSWERED_IN_DM, GAMES_ABOVE, GAMES_REPEAT, handle
 from basket_assist.channels.base import ButtonPress, ChannelError, IncomingMessage, MessageRef
 from basket_assist.domain.models import ChangeKind, Vote
 from basket_assist.services import polls, scheduler, weekly
 from basket_assist.storage.tables import Attendance, ChangeEvent, Chat, PollMessage, utcnow
 from tests.fakes import FakeChannel
+from tests.test_chat_move import NEW, _move
 from tests.test_digests import _match as _rel_match
 from tests.test_leader_bot import PETROV, SIDOROV, _cmd_press, _ready
-from tests.test_roster import CAPTAIN, CHAT, _player
+from tests.test_roster import CAPTAIN, CHAT, VICE, _player
 from tests.test_weekly import REMIND, SAT, WED, _vote, _week_match, at, naive_utc
 
 FRI = date(2026, 10, 23)
-RESET = "Прежние отметки сброшены — отметьтесь заново в новом анонсе."
+RESET = "Прежние отметки сброшены — отметьтесь заново в закреплённом анонсе."
 AGAIN = "Будете в новое время?"
 
 
@@ -50,7 +53,7 @@ async def test_games_repeat_button_toast_no_message(session, tenant_cfg, clock):
     first = await _run(session, _games_text())
     assert [p for p, _, _ in first.sent] == [CHAT]
     clock[0] += GAMES_REPEAT - timedelta(seconds=1)
-    ch = await _run(session, _cmd_press(CHAT, PETROV, "игры"))  # другой игрок — пауза общая на беседу
+    ch = await _run(session, _cmd_press(CHAT, VICE, "игры"))  # другой руководитель — пауза общая на беседу
     assert ch.sent == [] and ch.toasts == [GAMES_ABOVE]
 
 
@@ -59,15 +62,18 @@ async def test_games_repeat_text_is_silent(session, tenant_cfg, clock):
     await _run(session, _cmd_press(CHAT, CAPTAIN, "игры"))
     for word in ("игры", "матчи", "расписание"):
         clock[0] += timedelta(minutes=1)
-        ch = await _run(session, IncomingMessage(CHAT, SIDOROV, word, is_chat=True, mentioned=True))
+        ch = await _run(session, IncomingMessage(CHAT, VICE, word, is_chat=True, mentioned=True))
         assert ch.sent == [] and ch.toasts == [], word
+    # рядовому игроку «игры» — в личку, пауза беседы его не касается (ADR 0008)
+    ch = await _run(session, IncomingMessage(CHAT, SIDOROV, "игры", is_chat=True, mentioned=True))
+    assert [p for p, _, _ in ch.sent] == [SIDOROV]
 
 
 async def test_games_after_pause_sent_again(session, tenant_cfg, clock):
     await _ready(session, tenant_cfg)
     first = await _run(session, _games_text())
     clock[0] += GAMES_REPEAT
-    ch = await _run(session, _cmd_press(CHAT, PETROV, "игры"))
+    ch = await _run(session, _cmd_press(CHAT, VICE, "игры"))
     assert ch.sent == first.sent and ch.toasts == [""]
     clock[0] += timedelta(minutes=1)  # пауза отсчитывается от последнего ответа
     ch = await _run(session, _games_text())
@@ -79,7 +85,7 @@ async def test_games_changed_schedule_sent_within_pause(session, tenant_cfg, clo
     first = await _run(session, _games_text())
     await _rel_match(session, entries["abl"], "g1", days=2)  # расписание поменялось
     clock[0] += timedelta(minutes=1)
-    ch = await _run(session, _cmd_press(CHAT, PETROV, "игры"))
+    ch = await _run(session, _cmd_press(CHAT, VICE, "игры"))
     assert len(ch.sent) == 1 and ch.sent[0][1] != first.sent[0][1]
     assert "Соперник g1" in ch.sent[0][1] and ch.toasts == [""]
 
@@ -87,10 +93,11 @@ async def test_games_changed_schedule_sent_within_pause(session, tenant_cfg, clo
 async def test_games_pause_per_chat(session, tenant_cfg, clock):
     tenant, _ = await _ready(session, tenant_cfg)
     ch = FakeChannel()
-    await handlers._chat_reply(session, ch, tenant.id, CHAT, "игры")
-    await handlers._chat_reply(session, ch, tenant.id, "2000000099", "игры")  # другая беседа — независимо
+    await handlers._chat_reply(session, ch, tenant.id, CHAT, "игры", user_id=CAPTAIN)
+    # другая беседа — независимо
+    await handlers._chat_reply(session, ch, tenant.id, "2000000099", "игры", user_id=CAPTAIN)
     assert [p for p, _, _ in ch.sent] == [CHAT, "2000000099"]
-    await handlers._chat_reply(session, ch, tenant.id, "2000000099", "игры")
+    await handlers._chat_reply(session, ch, tenant.id, "2000000099", "игры", user_id=CAPTAIN)
     assert len(ch.sent) == 2
 
 
@@ -105,8 +112,8 @@ async def test_games_dm_no_pause(session, tenant_cfg, clock):
 async def test_other_chat_commands_not_paused(session, tenant_cfg, clock):
     await _ready(session, tenant_cfg)
     for _ in range(2):
-        ch = await _run(session, _cmd_press(CHAT, CAPTAIN, "помощь"))
-        assert [p for p, _, _ in ch.sent] == [CHAT] and ch.toasts == [""]
+        ch = await _run(session, _cmd_press(CHAT, CAPTAIN, "помощь"))  # ADR 0008: ответ в личку
+        assert [p for p, _, _ in ch.sent] == [CAPTAIN] and ch.toasts == [ANSWERED_IN_DM]
 
 
 # ---------- polls.restart ----------
@@ -152,9 +159,9 @@ async def _current(session) -> list[PollMessage]:
     ).all()
 
 
-async def test_restart_resets_votes_new_announce_old_deleted(session, tenant_cfg, monkeypatch):
-    """Одиночный анонс, опрос открыт: отметки сброшены, новое сообщение (пустые списки) закреплено,
-    старое удалено для всех."""
+async def test_restart_resets_votes_in_place(session, tenant_cfg, monkeypatch):
+    """ADR 0008: одиночный анонс, опрос открыт, беседа та же — отметки сброшены, анонс правится на месте
+    (пустые списки, кнопки те же); нового сообщения и закрепа нет, опрос не закрывается."""
     _opens(monkeypatch, True)
     tenant, entries = await _ready(session, tenant_cfg)
     ch = FakeChannel()
@@ -162,20 +169,46 @@ async def test_restart_resets_votes_new_announce_old_deleted(session, tenant_cfg
     petrov, sidorov = await _player(session, tenant, PETROV), await _player(session, tenant, SIDOROV)
     await _vote(session, tenant.id, m, petrov, "going")
     await _vote(session, tenant.id, m, sidorov, "not_going")
+    pins = list(ch.pins)
 
     votes = await polls.restart(session, ch, tenant.id, m)
     assert sorted(votes) == sorted([(petrov.id, Vote.GOING), (sidorov.id, Vote.NOT_GOING)])
     assert (await session.scalars(select(Attendance))).all() == []
     await session.refresh(poll)
-    assert poll.closed_at is not None
-    assert len(ch.sent) == 2
-    _, text, buttons = ch.sent[-1]
-    assert "Буду (0): —" in text and "Не буду (0): —" in text and buttons == polls.vote_buttons(m.id)
+    assert poll.closed_at is None and poll.superseded_by_id is None
+    assert len(ch.sent) == 1, "нового анонса нет"
+    assert ch.pins == pins and ch.deleted == []
+    ref = MessageRef(CHAT, poll.message_ref)
+    assert ch.edits[-1][0] == ref
+    text = ch.messages[(CHAT, poll.message_ref)]
+    assert "✅ Буду (0):\n—\n\n❌ Не буду (0):\n—" in text
+    assert ch.buttons[(CHAT, poll.message_ref)] == [*polls.vote_buttons(m.id), [polls.BOT_BUTTON]]
     (cur,) = await _current(session)
-    assert cur.match_id == m.id and cur.message_ref != poll.message_ref
-    assert ch.pins[-1] == MessageRef(CHAT, cur.message_ref)
+    assert cur.id == poll.id
+
+    # голос на том же сообщении засчитывается заново
+    await handle(session, ch, ButtonPress(CHAT, PETROV, ref, {"m": m.id, "v": "going"}, "e"))
+    assert [a.vote for a in (await session.scalars(select(Attendance))).all()] == [Vote.GOING]
+
+
+async def test_restart_chat_moved_new_announce_in_new_chat(session, tenant_cfg, monkeypatch):
+    """Беседа сменилась — прежнее поведение: новый анонс (пустые списки) в новой беседе, закреплён,
+    старый удалён."""
+    _opens(monkeypatch, True)
+    tenant, entries = await _ready(session, tenant_cfg)
+    ch = FakeChannel()
+    m, poll = await _published(session, entries["abl"], ch)
+    await _vote(session, tenant.id, m, await _player(session, tenant, PETROV), "going")
+    await _move(session, tenant_cfg)
+    await polls.restart(session, ch, tenant.id, m)
+    await session.refresh(poll)
+    assert poll.closed_at is not None
+    [(peer, text, buttons)] = ch.sent[1:]
+    assert peer == NEW and "✅ Буду (0):\n—" in text
+    assert buttons == [*polls.vote_buttons(m.id), [polls.BOT_BUTTON]]
+    (cur,) = await _current(session)
+    assert ch.pins[-1] == MessageRef(NEW, cur.message_ref)
     assert ch.deleted == [MessageRef(CHAT, poll.message_ref)]
-    assert all(ref.message_id != poll.message_ref for ref, _ in ch.edits)
 
 
 @pytest.mark.parametrize("deletable", [True, False], ids=["deleted", "not_deleted"])
@@ -232,11 +265,13 @@ class _FailingSend(FakeChannel):
 
 
 async def test_restart_post_failed_closes_old_in_place(session, tenant_cfg, monkeypatch):
-    """Новый анонс не опубликован — откат: старый не удаляется, а помечается CLOSED_TEXT без кнопок."""
+    """Новый анонс не опубликован — откат: старый не удаляется, а помечается CLOSED_TEXT без кнопок.
+    (Новый анонс нужен, когда сменилась беседа: иначе по ADR 0008 анонс правится на месте.)"""
     _opens(monkeypatch, True)
     tenant, entries = await _ready(session, tenant_cfg)
     ch = _FailingSend()
     m, poll = await _published(session, entries["abl"], ch)
+    await _move(session, tenant_cfg)
     ch.fail = True
     await polls.restart(session, ch, tenant.id, m)
     assert ch.deleted == []
@@ -254,7 +289,16 @@ async def test_vote_on_closed_poll_toast_no_vote(session, tenant_cfg, monkeypatc
     ch = FakeChannel()
     ch.deletable = False
     m, poll = await _published(session, entries["abl"], ch)
+    if is_open:  # общий анонс; игру перенесли на другую неделю — новый анонс с оставшейся игрой
+        other = await _rel_match(session, entries["mlbl"], "b1", days=3)
+        chat = (await session.execute(select(Chat))).scalar_one()
+        await polls.publish(session, ch, chat, other)
+        m.match_date += timedelta(days=polls.GROUP_DAYS + 2)
+        m.start_at += timedelta(days=polls.GROUP_DAYS + 2)
+        await session.commit()
     await polls.restart(session, ch, tenant.id, m)
+    if is_open:
+        assert ch.sent[-1][0] == CHAT and "🏀 МЛБЛ:" in ch.sent[-1][1] and "🏀 АБЛ:" not in ch.sent[-1][1]
     assert ch.messages[(CHAT, poll.message_ref)] == polls.CLOSED_TEXT
     edits = len(ch.edits)
     press = ButtonPress(CHAT, PETROV, MessageRef(CHAT, poll.message_ref), {"m": m.id, "v": "going"}, "e")
@@ -303,13 +347,13 @@ async def test_time_changed_full_scenario(session, tenant_cfg, poll_clock):
     await scheduler.process_changes(session, ch)
 
     chat = [(t, b) for p, t, b in ch.sent if p == CHAT]
-    assert len(chat) == 2, "сообщение о переносе и новый анонс"
-    (note, _), (announce, buttons) = chat
+    assert len(chat) == 1, "только сообщение о переносе; анонс правится на месте (ADR 0008)"
+    [(note, _)] = chat
     assert note.startswith("⏰ Изменилось время матча") and note.endswith(RESET)
     assert "Проверьте свою отметку" not in note
-    assert "18:00" in announce and buttons == polls.vote_buttons(m.id), (
-        "новый анонс — ниже сообщения о переносе"
-    )
+    announce = ch.messages[(CHAT, old.message_ref)]
+    assert "18:00" in announce and "✅ Буду (0):" in announce
+    assert ch.buttons[(CHAT, old.message_ref)] == [*polls.vote_buttons(m.id), [polls.BOT_BUTTON]]
     dms = {p: (t, b) for p, t, b in ch.sent if p != CHAT}
     assert set(dms) == {PETROV, SIDOROV}
     assert "«Буду» сброшена" in dms[PETROV][0] and AGAIN in dms[PETROV][0]
@@ -317,10 +361,10 @@ async def test_time_changed_full_scenario(session, tenant_cfg, poll_clock):
     assert all(b == polls.vote_buttons(m.id) for _, b in dms.values())
     assert (await session.scalars(select(Attendance))).all() == []
     await session.refresh(old)
-    assert old.closed_at is not None
-    assert ch.deleted == [MessageRef(CHAT, old.message_ref)] and ch.edits == []
+    assert old.closed_at is None
+    assert ch.deleted == [] and [ref for ref, _ in ch.edits] == [MessageRef(CHAT, old.message_ref)]
     (current,) = await _current(session)
-    assert current.id != old.id and ch.pins == [MessageRef(CHAT, current.message_ref)]
+    assert current.id == old.id and ch.pins == [], "нового закрепа нет"
 
     # недельный цикл второй анонс не публикует
     ch2 = FakeChannel()
@@ -347,13 +391,13 @@ async def test_rescheduled_and_time_changed_one_restart(session, tenant_cfg, pol
     ch = FakeChannel()
     await scheduler.process_changes(session, ch)
     chat = [(t, b) for p, t, b in ch.sent if p == CHAT]
-    assert len(chat) == 3, "перенос, новый анонс, время"
+    assert len(chat) == 2, "перенос и время; анонс (та же неделя) правится на месте"
     assert chat[0][0].startswith("⚠️ Перенос матча") and chat[0][0].endswith(RESET)
-    assert chat[1][1] == polls.vote_buttons(m.id), "анонс — сразу после сообщения о переносе"
-    assert RESET not in chat[2][0], "второй раз не сбрасываем"
+    assert RESET not in chat[1][0], "второй раз не сбрасываем"
     assert sorted(p for p, _, _ in ch.sent if p != CHAT) == sorted([PETROV, SIDOROV]), "по одной личке"
-    assert ch.deleted == [MessageRef(CHAT, old.message_ref)] and ch.edits == []
-    assert len(await _current(session)) == 1
+    assert ch.deleted == [] and {ref for ref, _ in ch.edits} == {MessageRef(CHAT, old.message_ref)}
+    assert "вс 25.10, 18:00" in ch.messages[(CHAT, old.message_ref)]
+    assert [p.id for p in await _current(session)] == [old.id]
     assert all(e.processed for e in (await session.scalars(select(ChangeEvent))).all())
 
 
@@ -403,19 +447,20 @@ async def test_manual_time_change_creates_event_and_restarts(session, tenant_cfg
     ch = FakeChannel()
     await scheduler.process_changes(session, ch)
     chat = [t for p, t, _ in ch.sent if p == CHAT]
-    assert len(chat) == 2 and "19:30" in chat[0] and chat[0].endswith(RESET)
-    assert "19:30" in chat[1], "новый анонс с новым временем"
+    assert len(chat) == 1 and "19:30" in chat[0] and chat[0].endswith(RESET)
+    assert "19:30" in ch.messages[(CHAT, old.message_ref)], "анонс с новым временем — правкой на месте"
     assert [p for p, _, _ in ch.sent if p != CHAT] == [PETROV]
     await session.refresh(old)
-    assert old.closed_at is not None
-    assert ch.deleted == [MessageRef(CHAT, old.message_ref)]
+    assert old.closed_at is None
+    assert ch.deleted == []
     assert (await session.scalars(select(Attendance))).all() == []
 
 
 async def test_scheduler_tick_processes_manual_change_without_sync(
     session, tenant_cfg, monkeypatch, poll_clock
 ):
-    """process_changes — на каждом тике, даже когда синхронизация не положена (ночь)."""
+    """process_changes — на каждом тике, даже когда синхронизация не положена; но в тихие часы
+    (22:00–10:00 МСК, ADR 0008) сообщение о переносе ждёт 10:00."""
     import httpx
 
     tenant, m, old = await _setup_week(session, tenant_cfg)
@@ -426,11 +471,18 @@ async def test_scheduler_tick_processes_manual_change_without_sync(
     await session.commit()
     ch = FakeChannel()
     async with httpx.AsyncClient() as client:
-        await scheduler.tick(session, ch, client, at(FRI, 3).astimezone())
+        for hh, mm in ((3, 0), (9, 59)):  # ночь и утро до 10:00 — молчим, событие ждёт
+            poll_clock[0] = at(FRI, hh, mm)
+            await scheduler.tick(session, ch, client, at(FRI, hh, mm).astimezone())
+            assert ch.sent == [], (hh, mm)
+        assert not (await session.scalars(select(ChangeEvent))).one().processed
+        assert len((await session.scalars(select(Attendance))).all()) == 2, "отметки ещё не сброшены"
+        poll_clock[0] = at(FRI, 10)
+        await scheduler.tick(session, ch, client, at(FRI, 10).astimezone())
     assert any(p == CHAT and t.endswith(RESET) for p, t, _ in ch.sent)
+    assert (await session.scalars(select(ChangeEvent))).one().processed
     await session.refresh(old)
-    assert old.closed_at is not None
-    assert ch.deleted == [MessageRef(CHAT, old.message_ref)]
+    assert old.closed_at is None and "19:00" in ch.messages[(CHAT, old.message_ref)]
 
 
 async def test_vote_on_superseded_before_restart_not_counted(session, tenant_cfg, monkeypatch):
