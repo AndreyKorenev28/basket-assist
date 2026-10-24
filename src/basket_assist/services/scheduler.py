@@ -46,6 +46,7 @@ HOURLY_FROM, HOURLY_TO = 9, 23
 RESULT_AFTER = timedelta(hours=3)  # через сколько после начала нашего матча забрать счёт
 RESULT_WINDOW = timedelta(hours=12)  # бот был выключен дольше — ждём ночной синхронизации
 MATCH_KINDS = (ChangeKind.RESCHEDULED, ChangeKind.TIME_CHANGED, ChangeKind.TIME_SET, ChangeKind.MATCH_ADDED)
+CHECK_EVERY = timedelta(hours=1)  # самопроверка анонсов: кнопки на месте, анонс закреплён
 RESTART_KINDS = (ChangeKind.RESCHEDULED, ChangeKind.TIME_CHANGED)  # новый опрос: отметки сбрасываются
 
 
@@ -93,6 +94,7 @@ async def run(sessions: async_sessionmaker, channel: ChannelAdapter, client: htt
             await refresh_active_polls(session, channel)
     except Exception:
         log.exception("не удалось обновить анонсы при запуске")
+    last_check: datetime | None = None
     while True:
         try:
             async with sessions() as session:
@@ -104,6 +106,13 @@ async def run(sessions: async_sessionmaker, channel: ChannelAdapter, client: htt
                 await weekly.tick(session, channel)
         except Exception:
             log.exception("ошибка недельного цикла")
+        if last_check is None or utcnow() - last_check >= CHECK_EVERY:
+            last_check = utcnow()
+            try:
+                async with sessions() as session:
+                    await polls.check_announces(session, channel)
+            except Exception:
+                log.exception("ошибка самопроверки анонсов")
         await asyncio.sleep(TICK)
 
 

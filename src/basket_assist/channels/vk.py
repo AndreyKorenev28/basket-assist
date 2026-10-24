@@ -277,15 +277,15 @@ class VkChannel:
         except ChannelError as e:
             log.warning("не удалось отредактировать %s: %s", msg, e)
             return False
-        if buttons and not await self._has_keyboard(msg):
+        if buttons and await self.has_buttons(msg) is False:
             # 23.10: VK принял правку анонса (от 20.10), но кнопки у сообщения пропали — нажатия на
             # закреп давали «Не удалось выполнить запрос». False — вызывающий опубликует заново.
             log.warning("после правки у %s нет кнопок — публикуем заново", msg)
             return False
         return True
 
-    async def _has_keyboard(self, msg: MessageRef) -> bool:
-        """Есть ли у сообщения кнопки. Проверить не удалось — считаем, что есть (не плодим дубли)."""
+    async def has_buttons(self, msg: MessageRef) -> bool | None:
+        """Есть ли у сообщения кнопки. None — проверить не удалось (вызывающий не плодит дубли)."""
         try:
             resp = await self._api.call(
                 "messages.getByConversationMessageId",
@@ -295,10 +295,20 @@ class VkChannel:
             items = resp["items"]
         except (ChannelError, KeyError, TypeError) as e:
             log.warning("не удалось проверить кнопки %s: %s", msg, e)
-            return True
+            return None
         if not items:  # сообщение удалено
             return False
         return bool((items[0].get("keyboard") or {}).get("buttons"))
+
+    async def pinned(self, peer_id: str) -> str | None:
+        try:
+            resp = await self._api.call("messages.getConversationsById", peer_ids=peer_id)
+            settings = resp["items"][0].get("chat_settings") or {}
+        except (ChannelError, KeyError, IndexError, TypeError) as e:
+            log.warning("не удалось узнать закреп в %s: %s", peer_id, e)
+            return None
+        pin = settings.get("pinned_message") or {}
+        return str(pin.get("conversation_message_id") or "")
 
     async def pin(self, msg: MessageRef) -> bool:
         try:

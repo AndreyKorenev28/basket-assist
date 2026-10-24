@@ -9,7 +9,7 @@ from basket_assist.bot.handlers import handle
 from basket_assist.channels.base import ButtonPress, ChannelAdapter
 from basket_assist.channels.vk import VkChannel, VkClient
 from basket_assist.config import Settings
-from basket_assist.services import chats, polls, scheduler
+from basket_assist.services import chats, notify, polls, scheduler
 from basket_assist.sources.base import make_client
 from basket_assist.storage import db
 from basket_assist.storage.tables import Match, TeamEntry
@@ -49,6 +49,8 @@ async def run_bot(settings: Settings) -> None:
 
     async with make_client() as client:
         channel = make_vk_channel(settings, client)
+        admin = getattr(settings, "admin_vk_user_id", None)
+        notify.set_admin(str(admin) if admin else None)
         log.info("бот запущен")
         planner = asyncio.create_task(scheduler.run(sessions, channel, client))
         try:

@@ -44,7 +44,9 @@ HELP_DM = (
     "• мои данные — к каким заявкам на сезон вы привязаны и под каким номером "
     "(если что-то не так — там есть кнопка «Это ошибка»)\n"
     "• помощь — этот список\n\n"
-    "Отметиться на игру — кнопками «Буду / Не буду» в анонсе в беседе команды."
+    "Отметиться на игру — кнопками «Буду / Не буду» в анонсе в беседе команды. "
+    "Если кнопка не сработала — напишите сюда «буду» или «не буду» "
+    "(когда игр несколько — с лигой: «буду АБЛ»)."
 )
 HELP_LEADER = (  # команды, у которых есть кнопки под подсказкой
     "Для руководителей команды.\n\n"
@@ -304,6 +306,8 @@ async def _dm_command(
             await channel.send(peer_id, *await leader.rights_menu(session, tenant_id))
         else:
             await channel.send(peer_id, "Передавать права может только капитан или заместитель.")
+    elif (reply := await polls.text_vote(session, channel, tenant_id, player, text)) is not None:
+        await channel.send(peer_id, reply)
     else:
         await channel.send(peer_id, UNKNOWN, UNKNOWN_BUTTONS)
 

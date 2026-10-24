@@ -37,6 +37,11 @@ class FakeChannel:
         self.members: list[str] | None = None  # участники беседы; None — ключи names
         self.members_error: ChannelError | None = None  # если задано — chat_members падает
         self.mention_sent: list[tuple[str, str]] = []  # send_with_mentions: (peer, текст)
+        self.lost_buttons: set[tuple[str, str]] = set()  # VK «потерял» кнопки у этих сообщений (24.10)
+        self.buttons_unknown = False  # True — has_buttons() не может проверить (None)
+        self.pinned_override: dict[
+            str, str | None
+        ] = {}  # peer -> что вернёт pinned() (закрепил участник / None)
         self._next = 100
 
     async def events(self):
@@ -78,6 +83,20 @@ class FakeChannel:
     async def pin(self, msg: MessageRef) -> bool:
         self.pins.append(msg)
         return True
+
+    async def has_buttons(self, msg: MessageRef) -> bool | None:
+        if self.buttons_unknown:
+            return None
+        key = (msg.peer_id, msg.message_id)
+        if key not in self.messages or key in self.lost_buttons:
+            return False
+        return bool(self.buttons.get(key))
+
+    async def pinned(self, peer_id: str) -> str | None:
+        if peer_id in self.pinned_override:
+            return self.pinned_override[peer_id]
+        mine = [m.message_id for m in self.pins if m.peer_id == peer_id]
+        return mine[-1] if mine else ""
 
     async def delete(self, msg: MessageRef) -> bool:
         if not self.deletable:

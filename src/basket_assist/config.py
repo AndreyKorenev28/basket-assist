@@ -15,6 +15,8 @@ class Settings(BaseSettings):
 
     vk_group_token: SecretStr | None = None
     vk_group_id: int | None = None
+    # администратор сервиса — технические сигналы в личку (пропали кнопки анонса, отметки текстом)
+    admin_vk_user_id: int | None = None
     db_path: Path = Path("data/basket_assist.db")
     tenant_config: Path = Path("config/tenant.toml")
     log_level: str = "INFO"

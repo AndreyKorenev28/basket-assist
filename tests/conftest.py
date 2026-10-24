@@ -78,3 +78,13 @@ def reset_games_pause():
     handlers._last_games.clear()
     yield
     handlers._last_games.clear()
+
+
+@pytest.fixture(autouse=True)
+def reset_service_admin():
+    """Администратор сервиса (notify.set_admin) — состояние процесса: между тестами не переносится."""
+    from basket_assist.services import notify
+
+    notify.set_admin(None)
+    yield
+    notify.set_admin(None)

@@ -12,6 +12,28 @@ from basket_assist.storage.tables import MessengerAccount, NotificationLog
 
 log = logging.getLogger(__name__)
 
+# Администратор сервиса (не капитан): технические сигналы — пропали кнопки анонса, отметки текстом.
+# ID пользователя в канале; задаётся при запуске бота из настроек (ADMIN_VK_USER_ID в .env).
+_admin_user_id: str | None = None
+
+
+def set_admin(user_id: str | None) -> None:
+    global _admin_user_id
+    _admin_user_id = user_id
+
+
+async def admin(channel: ChannelAdapter, text: str) -> bool:
+    """Сообщение администратору сервиса. Не задан или личка закрыта — только в лог."""
+    if not _admin_user_id:
+        log.warning("администратор сервиса не задан, сигнал только в лог: %s", text)
+        return False
+    try:
+        await channel.send(_admin_user_id, text)
+    except ChannelError as e:
+        log.warning("сигнал администратору не доставлен: %s", e)
+        return False
+    return True
+
 
 async def once(
     session: AsyncSession,

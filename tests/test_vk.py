@@ -529,3 +529,48 @@ async def test_send_image_retries_after_transient_upload_failure(first):
     assert server.call_count == 2 and upload.call_count == 2  # новый адрес загрузки на каждую попытку
     assert save.call_count == 1
     assert _form(send.calls[0])["attachment"] == f"photo-{GROUP}_457239017_k3y"
+
+
+# ---------- самопроверка анонса: кнопки и закреп ----------
+
+
+@respx.mock
+@pytest.mark.parametrize(
+    ("check", "expected"),
+    [
+        (_kb_item(True), True),
+        (_kb_item(False), False),  # кнопки потеряны (24.10)
+        ({"response": {"count": 0, "items": []}}, False),  # сообщения нет
+        ({"error": {"error_code": 6, "error_msg": "Too many requests"}}, None),  # проверить не удалось
+        ({"response": {"count": 1}}, None),  # неожиданный ответ
+    ],
+)
+async def test_has_buttons(check, expected):
+    route = respx.post(GET_BY_CMID).respond(json=check)
+    async with httpx.AsyncClient() as client:
+        assert await channel(client).has_buttons(MessageRef("2000000002", "17")) is expected
+    assert b"conversation_message_ids=17" in route.calls[0].request.content
+
+
+GET_CONV = "https://api.vk.com/method/messages.getConversationsById"
+
+
+@respx.mock
+@pytest.mark.parametrize(
+    ("resp", "expected"),
+    [
+        (
+            {"response": {"items": [{"chat_settings": {"pinned_message": {"conversation_message_id": 17}}}]}},
+            "17",
+        ),
+        ({"response": {"items": [{"chat_settings": {"title": "Беседа"}}]}}, ""),  # ничего не закреплено
+        ({"response": {"items": [{"peer": {"id": 2000000002}}]}}, ""),  # без chat_settings
+        ({"response": {"items": []}}, None),  # беседы не видно
+        ({"error": {"error_code": 917, "error_msg": "You don't have access to this chat"}}, None),
+    ],
+)
+async def test_pinned(resp, expected):
+    route = respx.post(GET_CONV).respond(json=resp)
+    async with httpx.AsyncClient() as client:
+        assert await channel(client).pinned("2000000002") == expected
+    assert b"peer_ids=2000000002" in route.calls[0].request.content
