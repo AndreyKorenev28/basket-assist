@@ -277,7 +277,28 @@ class VkChannel:
         except ChannelError as e:
             log.warning("не удалось отредактировать %s: %s", msg, e)
             return False
+        if buttons and not await self._has_keyboard(msg):
+            # 23.10: VK принял правку анонса (от 20.10), но кнопки у сообщения пропали — нажатия на
+            # закреп давали «Не удалось выполнить запрос». False — вызывающий опубликует заново.
+            log.warning("после правки у %s нет кнопок — публикуем заново", msg)
+            return False
         return True
+
+    async def _has_keyboard(self, msg: MessageRef) -> bool:
+        """Есть ли у сообщения кнопки. Проверить не удалось — считаем, что есть (не плодим дубли)."""
+        try:
+            resp = await self._api.call(
+                "messages.getByConversationMessageId",
+                peer_id=msg.peer_id,
+                conversation_message_ids=msg.message_id,
+            )
+            items = resp["items"]
+        except (ChannelError, KeyError, TypeError) as e:
+            log.warning("не удалось проверить кнопки %s: %s", msg, e)
+            return True
+        if not items:  # сообщение удалено
+            return False
+        return bool((items[0].get("keyboard") or {}).get("buttons"))
 
     async def pin(self, msg: MessageRef) -> bool:
         try:

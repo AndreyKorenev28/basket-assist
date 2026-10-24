@@ -109,6 +109,48 @@ async def test_send_returns_cmid_and_edit_failure_is_false():
         assert await ch.edit(ref, "новый текст") is False
 
 
+GET_BY_CMID = "https://api.vk.com/method/messages.getByConversationMessageId"
+VOTE = [[Button("Буду", {"m": 1, "v": "going"}, "positive")]]
+
+
+def _kb_item(with_buttons: bool) -> dict:
+    kb = {"inline": True, "buttons": [[{"action": {"type": "callback", "label": "Буду"}}]]}
+    return {
+        "response": {
+            "count": 1,
+            "items": [{"conversation_message_id": 17, **({"keyboard": kb} if with_buttons else {})}],
+        }
+    }
+
+
+@respx.mock
+@pytest.mark.parametrize(
+    ("check", "expected"),
+    [
+        (_kb_item(True), True),  # кнопки на месте
+        (_kb_item(False), False),  # VK принял правку, но кнопки потерял (случай 23.10) — публиковать заново
+        ({"response": {"count": 0, "items": []}}, False),  # сообщения больше нет
+        ({"error": {"error_code": 6, "error_msg": "Too many requests"}}, True),  # проверка не удалась
+    ],
+)
+async def test_edit_with_buttons_checks_keyboard_kept(check, expected):
+    respx.post("https://api.vk.com/method/messages.edit").respond(json={"response": 1})
+    route = respx.post(GET_BY_CMID).respond(json=check)
+    async with httpx.AsyncClient() as client:
+        ok = await channel(client).edit(MessageRef("2000000002", "17"), "анонс", VOTE)
+    assert ok is expected
+    assert b"conversation_message_ids=17" in route.calls[0].request.content
+
+
+@respx.mock
+async def test_edit_without_buttons_skips_keyboard_check():
+    respx.post("https://api.vk.com/method/messages.edit").respond(json={"response": 1})
+    route = respx.post(GET_BY_CMID).respond(json=_kb_item(False))
+    async with httpx.AsyncClient() as client:
+        assert await channel(client).edit(MessageRef("2000000002", "17"), "анонс устарел") is True
+    assert not route.called
+
+
 @respx.mock
 async def test_api_error_raises():
     respx.post("https://api.vk.com/method/users.get").respond(
