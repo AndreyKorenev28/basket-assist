@@ -5,7 +5,7 @@ import json
 from datetime import date, datetime, timedelta
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import event, select
 
 from basket_assist.bot import handlers, leader
 from basket_assist.bot.handlers import GAMES_ABOVE, GAMES_REPEAT, handle
@@ -119,10 +119,22 @@ def _opens(monkeypatch, is_open: bool) -> None:
 
 @pytest.fixture
 def poll_clock(monkeypatch):
-    """Часы polls (utcnow) для сценариев с фиксированной неделей; задаются через poll_clock[0] (aware)."""
+    """Часы polls (utcnow) для сценариев с фиксированной неделей; задаются через poll_clock[0] (aware).
+
+    Анонс, опубликованный вне weekly.tick (например, новый опрос из scheduler.process_changes), тоже
+    получает posted_at по этим часам, а не по настоящим: иначе напоминание (posted_at + 3 ч) зависит
+    от дня запуска тестов.
+    """
     now = [at(WED, 10)]
     monkeypatch.setattr(polls, "utcnow", lambda: naive_utc(now[0]))
-    return now
+
+    def stamp(_mapper, _conn, target):
+        if target.posted_at is None:
+            target.posted_at = naive_utc(now[0])
+
+    event.listen(PollMessage, "before_insert", stamp)
+    yield now
+    event.remove(PollMessage, "before_insert", stamp)
 
 
 async def _published(session, entry, ch: FakeChannel, days: float = 2):

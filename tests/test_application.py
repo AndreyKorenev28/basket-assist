@@ -17,6 +17,7 @@ from basket_assist.storage.tables import (
     Attendance,
     MessengerAccount,
     Player,
+    PollMessage,
     SeasonRosterEntry,
     TeamEntry,
     Tenant,
@@ -577,6 +578,9 @@ async def test_remind_without_poll_then_later(session, tenant_cfg):
     await weekly._remind_silent(session, ch, entries["abl"], m, now)
     assert ch.sent == [], "без анонса не напоминаем и не помечаем"
     await _publish(session, m)
+    poll = (await session.scalars(select(PollMessage))).one()
+    poll.posted_at = (now - timedelta(hours=20)).replace(tzinfo=None)  # анонс в среду, а не «сейчас» по часам
+    await session.commit()
     await weekly._remind_silent(session, ch, entries["abl"], m, now + timedelta(minutes=1))
     assert set(_reminders(ch)) == {CAPTAIN, PETROV, SIDOROV}
 
