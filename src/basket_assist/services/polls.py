@@ -138,16 +138,25 @@ async def _block(session: AsyncSession, match: Match, tenant_id: int) -> tuple[l
 async def surnames(
     session: AsyncSession, tenant_id: int, players: list[Player], entry: TeamEntry
 ) -> list[str]:
-    """Фамилии, как в заявке на сезон этой лиги (ADR 0008). Не сопоставлен — фамилия из имени в
-    мессенджере со звёздочкой («Петров*»). Одинаковые фамилии — с инициалом («Иванов А.»)."""
+    """Фамилии, как в заявке на сезон этой лиги (ADR 0008). Одинаковые фамилии — с инициалом («Иванов А.»).
+
+    Нет в заявке этой лиги: статус уже разобран («не играет в этой лиге», «нет в заявке на сезон») —
+    фамилия из заявки другой лиги или из имени в мессенджере, без пометки; ещё не сопоставлен —
+    фамилия из имени в мессенджере со звёздочкой («Петров*»): руководителю стоит сопоставить."""
     parts: list[tuple[str, str]] = []  # (фамилия, имя)
     for p in players:
         r = await roster.roster_entry_for(session, tenant_id, p.id, entry.id)
         if r is not None:
             parts.append((r.last_name, r.first_name or ""))
-        else:
-            words = p.display_name.split()
-            parts.append((f"{words[-1]}*" if words else "?", " ".join(words[:-1])))
+            continue
+        status = await roster.roster_status(session, tenant_id, p.id, entry.id)
+        fio = await roster.roster_fio(session, tenant_id, p.id)
+        if status != "unmatched" and fio is not None:
+            parts.append((fio[0], fio[1] or ""))
+            continue
+        words = p.display_name.split()
+        last = words[-1] if words else "?"
+        parts.append((last + ("*" if status == "unmatched" else ""), " ".join(words[:-1])))
     counts: dict[str, int] = {}
     for last, _ in parts:
         counts[last] = counts.get(last, 0) + 1

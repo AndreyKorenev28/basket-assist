@@ -179,7 +179,7 @@ async def test_digest_block_with_removed_and_added(session, tenant_cfg):
     lines = (await digests.match_digest(session, tenant.id, m, "T")).split("\n")
     i = lines.index("Буду (2):")
     assert set(lines[i + 1 : i + 3]) == {
-        "  ⚠️ Команды* — нет в заявке на сезон",  # ADR 0008: в сводке — фамилии
+        "  ⚠️ Команды — нет в заявке на сезон",  # ADR 0008: в сводке — фамилии
         "  ✖️ Петров — убран из заявки руководителем",
     }
     assert lines[i + 3 : i + 8] == [

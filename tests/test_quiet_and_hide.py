@@ -111,6 +111,24 @@ async def test_surnames_roster_star_and_initials(session, tenant_cfg):
     assert await polls.surnames(session, tenant.id, [c], entries["mlbl"]) == ["Гена*"]
 
 
+async def test_surnames_star_only_while_unmatched(session, tenant_cfg):
+    """Звёздочка — только «ещё не сопоставлен». Статус разобран («не играет в этой лиге», «нет в заявке
+    на сезон») — без пометки: фамилия из заявки другой лиги, а если её нет — из имени в мессенджере."""
+    from basket_assist.services import roster
+
+    tenant, entries = await _ready(session, tenant_cfg)
+    abl, mlbl = entries["abl"], entries["mlbl"]
+    c = await _roster_player(session, tenant, abl, "Гена", "Фамилькин", "Геннадий", "x3")
+    u = Player(tenant_id=tenant.id, display_name="Олег Кузьмин")
+    session.add(u)
+    await session.commit()
+    assert await polls.surnames(session, tenant.id, [c, u], mlbl) == ["Гена*", "Кузьмин*"]
+    await roster.mark_not_in_league(session, tenant.id, c.id, mlbl.id, c.id)
+    await roster.mark_not_in_roster(session, tenant.id, u.id, mlbl.id, c.id)
+    await session.commit()
+    assert await polls.surnames(session, tenant.id, [c, u], mlbl) == ["Фамилькин", "Кузьмин"]
+
+
 async def test_announce_names_in_column_without_numbering(session, tenant_cfg):
     tenant, entries = await _ready(session, tenant_cfg)
     m = await _rel_match(session, entries["abl"], "g1", days=2)
